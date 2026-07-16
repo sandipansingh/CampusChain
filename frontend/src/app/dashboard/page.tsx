@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useWalletStore } from "@/state/useWalletStore";
 import { useTransactionStore } from "@/state/useTransactionStore";
 import {
@@ -14,7 +14,8 @@ import {
   useCreateEventMutation,
   useBuyTicketMutation,
 } from "@/hooks/useCampusService";
-import { pollTransactionStatus } from "@/services/contracts";
+import { getRpcServer, NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, pollTransactionStatus } from "@/services/contracts";
+import { decodeEvent, DecodedEvent, ICON_COLORS } from "@/services/eventDecoder";
 import { logger } from "@/services/logger";
 import {
   Wallet,
@@ -27,7 +28,13 @@ import {
   Search,
   SlidersHorizontal,
   ChevronDown,
-  Clock
+  Clock,
+  Lock,
+  Ticket,
+  Users,
+  Droplets,
+  Building,
+  UserCheck,
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -63,6 +70,54 @@ export default function DashboardPage() {
   const addTransaction = useTransactionStore((state) => state.addTransaction);
   const updateTransaction = useTransactionStore((state) => state.updateTransaction);
   const transactions = useTransactionStore((state) => state.transactions);
+
+  // On-chain ledger events
+  const [ledgerEvents, setLedgerEvents] = useState<DecodedEvent[]>([]);
+  const [eventsLoading, setEventsLoading] = useState(true);
+
+  const fetchLedgerEvents = useCallback(async () => {
+    try {
+      const server = getRpcServer();
+      const latestLedger = await server.getLatestLedger();
+      const startLedger = Math.max(1, latestLedger.sequence - 2000);
+
+      const [sRes, tRes] = await Promise.all([
+        server.getEvents({ startLedger, filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] }], limit: 50 }),
+        server.getEvents({ startLedger, filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] }], limit: 50 }),
+      ]);
+
+      const allEvents = [...sRes.events, ...tRes.events]
+        .sort((a, b) => b.ledger - a.ledger)
+        .slice(0, 50);
+
+      const decoded = allEvents.map((evt) => {
+        try {
+          return decodeEvent({
+            id: evt.id,
+            ledger: evt.ledger,
+            ledgerClosedAt: evt.ledgerClosedAt,
+            txHash: evt.txHash,
+            topic: evt.topic as unknown[],
+            value: evt.value as unknown,
+          });
+        } catch {
+          return null;
+        }
+      }).filter((e): e is DecodedEvent => e !== null);
+
+      setLedgerEvents(decoded);
+    } catch (err) {
+      logger.error("Failed to fetch ledger events", err);
+    } finally {
+      setEventsLoading(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    fetchLedgerEvents();
+    const interval = setInterval(fetchLedgerEvents, 15000);
+    return () => clearInterval(interval);
+  }, [fetchLedgerEvents]);
 
   const getRoleLabel = (r?: number) => {
     if (r === 1) return "Student";
@@ -204,16 +259,16 @@ export default function DashboardPage() {
     });
   };
 
-  // Filter transactions
-  const filteredTransactions = transactions.filter((tx) => {
-    const query = txSearchQuery.toLowerCase().trim();
-    if (!query) return true;
-    return (
-      tx.hash.toLowerCase().includes(query) ||
-      tx.method.toLowerCase().includes(query) ||
-      tx.status.toLowerCase().includes(query)
-    );
-  });
+  const ICON_MAP = {
+    transfer: ArrowRightLeft,
+    escrow: Lock,
+    ticket: Ticket,
+    role: UserCheck,
+    university: Building,
+    membership: Users,
+    faucet: Droplets,
+    system: Clock,
+  } as const;
 
   // Static chart data mapping days of week
   const weeklyData = [
@@ -741,123 +796,95 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity Table */}
+      {/* Recent Activity Feed */}
       <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-base font-semibold text-slate-900">
-              Recent Transactions
-            </h3>
+            <h3 className="text-base font-semibold text-slate-900">Recent Ledger Events</h3>
+            <p className="text-xs text-slate-400 mt-0.5">Last {ledgerEvents.length} on-chain events across both contracts</p>
           </div>
           <div className="flex items-center gap-3">
-            {/* Table controls */}
             <div className="relative flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-1.5 text-xs text-slate-700 font-semibold focus-within:border-slate-300 transition-all shadow-sm">
               <Search className="w-3.5 h-3.5 text-slate-700 mr-2 shrink-0" />
               <input
                 type="text"
-                placeholder="Search transactions..."
+                placeholder="Search events..."
                 value={txSearchQuery}
                 onChange={(e) => setTxSearchQuery(e.target.value)}
                 className="bg-transparent outline-none w-36 placeholder-slate-400 font-medium"
               />
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-705 shadow-sm">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-700" />
-              <span>Sort by</span>
-            </div>
           </div>
         </div>
 
-        {filteredTransactions.length === 0 ? (
+        {eventsLoading ? (
+          <div className="flex flex-col items-center justify-center py-12 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Fetching Ledger Events...</span>
+          </div>
+        ) : ledgerEvents.length === 0 ? (
           <div className="border border-dashed border-slate-200 rounded-[24px] p-12 text-center flex flex-col items-center justify-center gap-3">
             <Clock className="w-8 h-8 text-slate-700" />
-            <span className="font-semibold text-slate-700 text-xs uppercase tracking-widest">
-              {transactions.length === 0
-                ? "No transactions deployed in this session yet"
-                : "No matching transactions found"}
-            </span>
+            <span className="font-semibold text-slate-700 text-xs uppercase tracking-widest">No on-chain events detected</span>
           </div>
         ) : (
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
                 <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
-                  <th className="py-4 px-3 w-12">
-                    <input type="checkbox" className="rounded border-slate-300 text-accent focus:ring-accent" />
-                  </th>
-                  <th className="py-4 px-3">Hash / ID</th>
-                  <th className="py-4 px-3">Method</th>
-                  <th className="py-4 px-3">Status</th>
-                  <th className="py-4 px-3">Timestamp</th>
-                  <th className="py-4 px-3 text-right">Details</th>
+                  <th className="py-4 px-3">Event</th>
+                  <th className="py-4 px-3">Type</th>
+                  <th className="py-4 px-3">Details</th>
+                  <th className="py-4 px-3">Ledger</th>
+                  <th className="py-4 px-3 text-right">Tx</th>
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-800">
-                {filteredTransactions.map((tx) => (
-                  <tr key={tx.hash} className="hover:bg-slate-50/50 transition-colors">
-                    <td className="py-4 px-3">
-                      <input type="checkbox" className="rounded border-slate-300 text-accent focus:ring-accent" />
-                    </td>
-                    <td className="py-4 px-3 font-mono text-slate-700">
-                      {tx.hash.slice(0, 16)}...{tx.hash.slice(-16)}
-                    </td>
-                    <td className="py-4 px-3 text-slate-900 uppercase tracking-tight">
-                      {tx.method}
-                    </td>
-                    <td className="py-4 px-3">
-                      <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase border ${
-                          tx.status === "pending"
-                            ? "bg-red-50 text-red-700 border-red-100"
-                            : tx.status === "processing"
-                            ? "bg-blue-50 text-blue-700 border-blue-100"
-                            : tx.status === "confirmed"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
-                            : "bg-red-50 text-red-700 border-red-100"
-                        }`}
-                      >
-                        <span
-                          className={`w-1.5 h-1.5 rounded-full ${
-                            tx.status === "pending"
-                              ? "bg-red-500 animate-pulse"
-                              : tx.status === "processing"
-                              ? "bg-blue-500"
-                              : tx.status === "confirmed"
-                              ? "bg-emerald-500"
-                              : "bg-red-500"
-                          }`}
-                        />
-                        {tx.status === "pending" ? "Pending" : tx.status === "confirmed" ? "Completed" : tx.status}
-                      </span>
-                    </td>
-                    <td className="py-4 px-3 text-slate-700">
-                      {new Date(tx.timestamp).toLocaleDateString("en-GB", {
-                        day: "numeric",
-                        month: "short",
-                        year: "numeric"
-                      })}
-                    </td>
-                    <td className="py-4 px-3 text-right">
-                      {tx.explorerUrl && tx.status === "confirmed" ? (
-                        <a
-                          href={tx.explorerUrl}
-                          target="_blank"
-                          rel="noopener noreferrer"
-                          className="inline-flex items-center gap-1 text-accent hover:underline uppercase tracking-wider text-[10px] font-black"
-                        >
-                          Explorer
-                          <ExternalLink className="w-3.5 h-3.5" />
-                        </a>
-                      ) : tx.errorMessage ? (
-                        <span className="text-red-500 font-mono text-[10px] break-all block max-w-[200px] text-right ml-auto">
-                          {tx.errorMessage}
-                        </span>
-                      ) : (
-                        <span className="text-slate-350">-</span>
-                      )}
-                    </td>
-                  </tr>
-                ))}
+                {ledgerEvents
+                  .filter((evt) => {
+                    if (!txSearchQuery.trim()) return true;
+                    const q = txSearchQuery.toLowerCase().trim();
+                    return evt.message.toLowerCase().includes(q) ||
+                      evt.details.toLowerCase().includes(q) ||
+                      evt.title.toLowerCase().includes(q) ||
+                      evt.fullTxHash.toLowerCase().includes(q);
+                  })
+                  .map((evt) => {
+                    const IconComponent = ICON_MAP[evt.icon];
+                    const colorClass = ICON_COLORS[evt.color];
+                    return (
+                      <tr key={evt.id} className="hover:bg-slate-50/50 transition-colors">
+                        <td className="py-4 px-3">
+                          <div className="flex items-center gap-2">
+                            <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${colorClass}`}>
+                              <IconComponent className="w-3.5 h-3.5" />
+                            </div>
+                            <span className="font-bold text-slate-900 uppercase">{evt.title}</span>
+                          </div>
+                        </td>
+                        <td className="py-4 px-3">
+                          <span className="text-slate-500">{evt.message}</span>
+                        </td>
+                        <td className="py-4 px-3">
+                          <span className="text-slate-500 font-mono text-[11px]">{evt.details}</span>
+                        </td>
+                        <td className="py-4 px-3 font-mono text-slate-500">
+                          #{evt.ledger}
+                        </td>
+                        <td className="py-4 px-3 text-right">
+                          <a
+                            href={`https://stellar.expert/explorer/testnet/tx/${evt.fullTxHash}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="inline-flex items-center gap-1 text-accent hover:underline uppercase tracking-wider text-[10px] font-black"
+                          >
+                            Explorer
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        </td>
+                      </tr>
+                    );
+                  })}
               </tbody>
             </table>
           </div>
