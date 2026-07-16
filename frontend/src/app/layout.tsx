@@ -1,11 +1,12 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Space_Grotesk, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const spaceGrotesk = Space_Grotesk({
+  variable: "--font-space-grotesk",
   subsets: ["latin"],
+  weight: ["300", "400", "500", "700"],
 });
 
 const geistMono = Geist_Mono({
@@ -14,9 +15,9 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CampusChain – A Unified Campus Economy Powered by Stellar",
+  title: "CAMPUSCHAIN – UNIFIED CAMPUS ECONOMY",
   description:
-    "A secure Stellar-powered wallet replacing disconnected cash systems with instant QR payments, P2P transfers, marketplace escrow, and digital ticketing.",
+    "Instant merchant payments, P2P transfers, rewards token distribution, marketplace escrow, and digital ticketing powered by Stellar/Soroban.",
 };
 
 export default function RootLayout({
@@ -27,8 +28,9 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased`}
       >
+        <div className="noise-overlay" aria-hidden="true" />
         <Providers>{children}</Providers>
       </body>
     </html>
