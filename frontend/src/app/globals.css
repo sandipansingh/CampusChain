@@ -4,7 +4,7 @@
   --color-background: #f4f6f8;
   --color-foreground: #0f172a;
   --color-muted: #f1f5f9;
-  --color-muted-foreground: #64748b;
+  --color-muted-foreground: #334155;
   --color-accent: #e14e27;
   --color-accent-foreground: #ffffff;
   --color-border: #e2e8f0;
@@ -12,6 +12,14 @@
 
   --font-sans: var(--font-inter), sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
+
+  /* Global Slate overrides for crisp readability */
+  --color-slate-300: #64748b;
+  --color-slate-400: #475569;
+  --color-slate-500: #334155;
+  --color-slate-600: #1e293b;
+  --color-slate-700: #1e293b;
+  --color-slate-800: #0f172a;
 }
 
 :root {
