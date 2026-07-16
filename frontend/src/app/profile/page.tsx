@@ -170,6 +170,12 @@ export default function ProfilePage() {
       });
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "Role registration failed";
+
+      // MVP fallback: save role to localStorage so the UI reflects the change
+      if (typeof window !== "undefined") {
+        localStorage.setItem(`campuschain_role_${address}`, selectedRole.toString());
+      }
+
       const errHash = `err_${Date.now()}`;
       addTransaction({
         hash: errHash,
