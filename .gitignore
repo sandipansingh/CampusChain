@@ -1,0 +1,29 @@
+# Rust / Cargo
+/target/
+Cargo.lock.back
+
+# Node / NPM
+/node_modules/
+/frontend/node_modules/
+/frontend/.next/
+/frontend/out/
+/frontend/build/
+
+# Local Environment Variables
+.env
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+/frontend/.env
+/frontend/.env.local
+
+# IDEs & System
+.vscode/
+.idea/
+.DS_Store
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.swp
