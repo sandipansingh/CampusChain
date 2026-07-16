@@ -4,7 +4,7 @@ All AI agents working on this project must adhere to the following rules and wor
 
 ## 1. Coding Standards (Clean Code)
 - **Always use the `clean-code` skill** when writing or modifying any kind of code in this project.
-- Follow the guidelines defined in [.agents/skills/clean-code/SKILL.md](file:///home/sandipansingh/Projects/CampusChain/.agents/skills/clean-code/SKILL.md) which includes:
+- Follow the guidelines defined in [~/.agents/skills/clean-code/SKILL.md](file:///home/sandipansingh/.agents/skills/clean-code/SKILL.md) which includes:
   - Single Responsibility Principle (SRP)
   - Intention-revealing, clear naming conventions
   - Keeping functions/methods short and focused
