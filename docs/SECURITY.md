@@ -31,19 +31,19 @@ We identify the following attack vectors and detail our mitigation strategies:
 Before deploying any Soroban smart contracts, verify each item in this checklist:
 
 ### Authorization
-- [ ] Every state-changing function verifies authority (`require_auth()`) of the correct address.
-- [ ] Inter-contract calls verify signatures of the calling contract/user if the calling contract acts on behalf of the user.
+- [x] Every state-changing function verifies authority (`require_auth()`) of the correct address.
+- [x] Inter-contract calls verify signatures of the calling contract/user if the calling contract acts on behalf of the user.
 
 ### Storage & State Management
-- [ ] No unbounded collections are stored inside `Instance` storage.
-- [ ] Storage keys are defined using typed `enum`s with `#[contracttype]` to avoid key collisions.
-- [ ] Transient and Temporary storage types are only used for data that can expire safely.
-- [ ] TTL (Time-To-Live) extension is handled for persistent entries to prevent accidental archival.
+- [x] No unbounded collections are stored inside `Instance` storage.
+- [x] Storage keys are defined using typed `enum`s with `#[contracttype]` to avoid key collisions.
+- [x] Transient and Temporary storage types are only used for data that can expire safely.
+- [x] TTL (Time-To-Live) extension is handled for persistent entries to prevent accidental archival.
 
 ### Math & Overflow Checks
-- [ ] All token calculations use `i128` (or `u128`) values.
-- [ ] Arithmetic operations use checked math (`checked_add`, `checked_sub`, `checked_mul`) or result in panic on overflow.
+- [x] All token calculations use `i128` (or `u128`) values.
+- [x] Arithmetic operations use checked math (`checked_add`, `checked_sub`, `checked_mul`) or result in panic on overflow.
 
 ### Upgrade Mechanism
-- [ ] The `upgrade` function is strictly locked behind `Admin` authorization.
-- [ ] The upgrade script has been tested to verify that existing state is preserved.
+- [x] The `upgrade` function is strictly locked behind `Admin` authorization.
+- [x] The upgrade script has been tested to verify that existing state is preserved.
