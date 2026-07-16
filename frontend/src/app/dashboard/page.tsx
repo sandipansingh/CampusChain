@@ -18,9 +18,6 @@ import { pollTransactionStatus } from "@/services/contracts";
 import { logger } from "@/services/logger";
 import {
   Wallet,
-  Lock,
-  Calendar,
-  Send,
   Loader2,
   TrendingUp,
   ExternalLink,
@@ -51,6 +48,9 @@ export default function DashboardPage() {
 
   const [activeTab, setActiveTab] = useState<"send" | "escrow" | "events">("send");
   const [hoveredBar, setHoveredBar] = useState<number | null>(null);
+
+  // Search state
+  const [txSearchQuery, setTxSearchQuery] = useState("");
 
   // Mutation Hooks
   const transferMut = useTransferMutation();
@@ -211,6 +211,17 @@ export default function DashboardPage() {
     });
   };
 
+  // Filter transactions
+  const filteredTransactions = transactions.filter((tx) => {
+    const query = txSearchQuery.toLowerCase().trim();
+    if (!query) return true;
+    return (
+      tx.hash.toLowerCase().includes(query) ||
+      tx.method.toLowerCase().includes(query) ||
+      tx.status.toLowerCase().includes(query)
+    );
+  });
+
   // Static chart data mapping days of week
   const weeklyData = [
     { day: "Fri", amount: 15400 },
@@ -234,8 +245,7 @@ export default function DashboardPage() {
             Analyze campus metrics, transfer rewards, and log secure smart contract escrows.
           </p>
         </div>
-        <div className="flex items-center gap-3 bg-white border border-border px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700">
-          <Clock className="w-4 h-4 text-accent" />
+        <div className="flex items-center gap-2 bg-white border border-border px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700">
           <span>July 16, 2026</span>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
         </div>
@@ -249,9 +259,7 @@ export default function DashboardPage() {
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Total Balance
             </span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent">
-              <Wallet className="w-5 h-5" />
-            </div>
+            <Wallet className="w-5 h-5 text-slate-400" />
           </div>
           <div className="mt-4 flex flex-col">
             <span className="text-3xl font-bold tracking-tight text-slate-900 font-mono">
@@ -261,11 +269,11 @@ export default function DashboardPage() {
                 `${balance?.toFixed(2)} CAMP`
               )}
             </span>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px] font-bold text-emerald-600 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-100">
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[10px] font-bold text-emerald-600">
                 ↑ 12.4%
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">From merit rewards</span>
+              <span className="text-[10px] text-slate-400 font-medium">from merit rewards</span>
             </div>
           </div>
         </div>
@@ -276,19 +284,17 @@ export default function DashboardPage() {
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Profile Type
             </span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent">
-              <Shield className="w-5 h-5" />
-            </div>
+            <Shield className="w-5 h-5 text-slate-400" />
           </div>
           <div className="mt-4 flex flex-col">
             <span className="text-3xl font-bold tracking-tight text-slate-900 truncate">
               {getRoleLabel(role)}
             </span>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px] font-bold text-blue-600 bg-blue-50 px-2 py-0.5 rounded-full border border-blue-100">
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[10px] font-bold text-blue-600">
                 On-Chain
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">Authorized on Stellar</span>
+              <span className="text-[10px] text-slate-400 font-medium">authorized on Stellar</span>
             </div>
           </div>
         </div>
@@ -299,19 +305,17 @@ export default function DashboardPage() {
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Session Transactions
             </span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent">
-              <ArrowRightLeft className="w-5 h-5" />
-            </div>
+            <ArrowRightLeft className="w-5 h-5 text-slate-400" />
           </div>
           <div className="mt-4 flex flex-col">
             <span className="text-3xl font-bold tracking-tight text-slate-900 font-mono">
               {transactions.length}
             </span>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px] font-bold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full border border-purple-100">
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[10px] font-bold text-purple-600">
                 Tracked
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">Pending state transitions</span>
+              <span className="text-[10px] text-slate-400 font-medium">pending state transitions</span>
             </div>
           </div>
         </div>
@@ -322,16 +326,14 @@ export default function DashboardPage() {
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Ledger Network
             </span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent">
-              <TrendingUp className="w-5 h-5" />
-            </div>
+            <TrendingUp className="w-5 h-5 text-slate-400" />
           </div>
           <div className="mt-4 flex flex-col">
             <span className="text-3xl font-bold tracking-tight text-slate-900 uppercase">
               {network}
             </span>
-            <div className="flex items-center gap-2 mt-2">
-              <span className="text-[10px] font-bold text-amber-600 bg-amber-50 px-2 py-0.5 rounded-full border border-amber-100">
+            <div className="flex items-center gap-1.5 mt-2">
+              <span className="text-[10px] font-bold text-amber-600">
                 5s Finality
               </span>
               <span className="text-[10px] text-slate-400 font-medium">RPC active</span>
@@ -549,37 +551,29 @@ export default function DashboardPage() {
                   <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Recipient Wallet Address
                   </label>
-                  <div className="relative">
-                    <Send className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
-                    <input
-                      type="text"
-                      required
-                      placeholder="G..."
-                      value={transferRecipient}
-                      onChange={(e) => setTransferRecipient(e.target.value)}
-                      className="w-full h-12 bg-slate-50 border border-border rounded-xl pl-11 pr-4 text-sm font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all uppercase font-mono"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter G... Address"
+                    value={transferRecipient}
+                    onChange={(e) => setTransferRecipient(e.target.value)}
+                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all uppercase font-mono"
+                  />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Amount (CAMP)
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      placeholder="0.00"
-                      value={transferAmount}
-                      onChange={(e) => setTransferAmount(e.target.value)}
-                      className="w-full h-12 bg-slate-50 border border-border rounded-xl pl-8 pr-4 text-sm font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="Enter amount"
+                    value={transferAmount}
+                    onChange={(e) => setTransferAmount(e.target.value)}
+                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                  />
                 </div>
 
                 <button
@@ -606,37 +600,29 @@ export default function DashboardPage() {
                   <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Seller / Merchant Address
                   </label>
-                  <div className="relative">
-                    <Send className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
-                    <input
-                      type="text"
-                      required
-                      placeholder="G..."
-                      value={escrowSeller}
-                      onChange={(e) => setEscrowSeller(e.target.value)}
-                      className="w-full h-12 bg-slate-50 border border-border rounded-xl pl-11 pr-4 text-sm font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all uppercase font-mono"
-                    />
-                  </div>
+                  <input
+                    type="text"
+                    required
+                    placeholder="Enter G... Address"
+                    value={escrowSeller}
+                    onChange={(e) => setEscrowSeller(e.target.value)}
+                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all uppercase font-mono"
+                  />
                 </div>
 
                 <div className="flex flex-col gap-2">
                   <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                     Escrow Amount (CAMP)
                   </label>
-                  <div className="relative">
-                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                      $
-                    </span>
-                    <input
-                      type="number"
-                      step="0.01"
-                      required
-                      placeholder="0.00"
-                      value={escrowAmount}
-                      onChange={(e) => setEscrowAmount(e.target.value)}
-                      className="w-full h-12 bg-slate-50 border border-border rounded-xl pl-8 pr-4 text-sm font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
-                    />
-                  </div>
+                  <input
+                    type="number"
+                    step="0.01"
+                    required
+                    placeholder="Enter amount"
+                    value={escrowAmount}
+                    onChange={(e) => setEscrowAmount(e.target.value)}
+                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                  />
                 </div>
 
                 <button
@@ -669,35 +655,27 @@ export default function DashboardPage() {
                       <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                         Ticket Price (CAMP)
                       </label>
-                      <div className="relative">
-                        <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-sm font-bold text-slate-400">
-                          $
-                        </span>
-                        <input
-                          type="number"
-                          placeholder="0"
-                          value={eventPrice}
-                          onChange={(e) => setEventPrice(e.target.value)}
-                          className="w-full h-12 bg-slate-50 border border-border rounded-xl pl-8 pr-4 text-sm font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
-                        />
-                      </div>
+                      <input
+                        type="number"
+                        placeholder="Enter price"
+                        value={eventPrice}
+                        onChange={(e) => setEventPrice(e.target.value)}
+                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                      />
                     </div>
 
                     <div className="flex flex-col gap-2">
                       <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                         Max Capacity (Tickets)
                       </label>
-                      <div className="relative">
-                        <Calendar className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
-                        <input
-                          type="number"
-                          required
-                          placeholder="50"
-                          value={eventCapacity}
-                          onChange={(e) => setEventCapacity(e.target.value)}
-                          className="w-full h-12 bg-slate-50 border border-border rounded-xl pl-11 pr-4 text-sm font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
-                        />
-                      </div>
+                      <input
+                        type="number"
+                        required
+                        placeholder="Enter max capacity"
+                        value={eventCapacity}
+                        onChange={(e) => setEventCapacity(e.target.value)}
+                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                      />
                     </div>
 
                     <button
@@ -725,17 +703,14 @@ export default function DashboardPage() {
                       <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
                         Event ID (Ledger Index)
                       </label>
-                      <div className="relative">
-                        <Lock className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4.5 h-4.5 text-slate-400 pointer-events-none" />
-                        <input
-                          type="number"
-                          required
-                          placeholder="1"
-                          value={buyTicketEventId}
-                          onChange={(e) => setBuyTicketEventId(e.target.value)}
-                          className="w-full h-12 bg-slate-50 border border-border rounded-xl pl-11 pr-4 text-sm font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
-                        />
-                      </div>
+                      <input
+                        type="number"
+                        required
+                        placeholder="Enter Event ID"
+                        value={buyTicketEventId}
+                        onChange={(e) => setBuyTicketEventId(e.target.value)}
+                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                      />
                     </div>
 
                     <button
@@ -776,7 +751,9 @@ export default function DashboardPage() {
               <input
                 type="text"
                 placeholder="Search..."
-                className="bg-transparent outline-none w-28 placeholder-slate-400"
+                value={txSearchQuery}
+                onChange={(e) => setTxSearchQuery(e.target.value)}
+                className="bg-transparent outline-none w-36 placeholder-slate-400 font-medium"
               />
             </div>
             <div className="flex items-center gap-1.5 bg-slate-50 border border-border px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600">
@@ -786,11 +763,13 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {transactions.length === 0 ? (
+        {filteredTransactions.length === 0 ? (
           <div className="border border-dashed border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
             <Clock className="w-8 h-8 text-slate-300" />
             <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">
-              No transactions deployed in this session yet
+              {transactions.length === 0
+                ? "No transactions deployed in this session yet"
+                : "No matching transactions found"}
             </span>
           </div>
         ) : (
@@ -809,7 +788,7 @@ export default function DashboardPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-600">
-                {transactions.map((tx) => (
+                {filteredTransactions.map((tx) => (
                   <tr key={tx.hash} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-4 px-3">
                       <input type="checkbox" className="rounded border-slate-300 text-accent focus:ring-accent" />

@@ -68,7 +68,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       items: [
         { name: "My Wallet", href: "/wallet", icon: Wallet },
         { name: "Profile", href: "/profile", icon: User },
-        { name: "Notifications", href: "/notifications", icon: Bell, badge: "2" },
+        { name: "Notifications", href: "/notifications", icon: Bell },
       ],
     },
     {
@@ -175,15 +175,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                           />
                           <span>{item.name}</span>
                         </div>
-                        {item.badge && (
-                          <span
-                            className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                              isActive ? "bg-white/20 text-white" : "bg-red-50 text-red-600 border border-red-100"
-                            }`}
-                          >
-                            {item.badge}
-                          </span>
-                        )}
                       </Link>
                     );
                   })}
@@ -273,15 +264,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                               <Icon className="w-4 h-4" />
                               <span>{item.name}</span>
                             </div>
-                            {item.badge && (
-                              <span
-                                className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${
-                                  isActive ? "bg-white/25 text-white" : "bg-red-50 text-red-600"
-                                }`}
-                              >
-                                {item.badge}
-                              </span>
-                            )}
                           </Link>
                         );
                       })}

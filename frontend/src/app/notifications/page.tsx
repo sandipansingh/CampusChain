@@ -10,7 +10,9 @@ import {
   Bell,
   Clock,
   Trash2,
-  Loader2
+  Loader2,
+  Search,
+  SlidersHorizontal
 } from "lucide-react";
 
 interface NotificationItem {
@@ -29,6 +31,10 @@ export default function NotificationsPage() {
   const clearTransactions = useTransactionStore((state) => state.clearTransactions);
   const [notifications, setNotifications] = useState<NotificationItem[]>([]);
   const [loading, setLoading] = useState(true);
+
+  // Filters state
+  const [searchQuery, setSearchQuery] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
 
   useEffect(() => {
     async function fetchLedgerNotifications() {
@@ -166,6 +172,18 @@ export default function NotificationsPage() {
     setNotifications([]);
   };
 
+  // Filter notifications
+  const filteredNotifications = notifications.filter((n) => {
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = !query ||
+      n.title.toLowerCase().includes(query) ||
+      n.description.toLowerCase().includes(query);
+
+    const matchesType = typeFilter === "all" || n.type === typeFilter;
+
+    return matchesSearch && matchesType;
+  });
+
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
       {/* Title */}
@@ -189,12 +207,41 @@ export default function NotificationsPage() {
         )}
       </div>
 
-      {/* Notifications Card - Flat design (no shadow, no hover line, no accent bar) */}
+      {/* Notifications Card - Flat design */}
       <div className="bg-white border border-border rounded-2xl p-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Ledger & Session Feed ({notifications.length})
+            Ledger & Session Feed ({filteredNotifications.length})
           </span>
+          <div className="flex items-center gap-3">
+            {/* Search Input */}
+            <div className="relative flex items-center bg-slate-50 border border-border rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold focus-within:border-accent/40 transition-all">
+              <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent outline-none w-36 placeholder-slate-400 font-medium"
+              />
+            </div>
+            {/* Filter Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-border px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+              <select
+                value={typeFilter}
+                onChange={(e) => setTypeFilter(e.target.value)}
+                className="bg-transparent outline-none cursor-pointer pr-1"
+              >
+                <option value="all">All Events</option>
+                <option value="TRANSFER">Transfers</option>
+                <option value="ESCROW">Escrows</option>
+                <option value="TICKET">Tickets</option>
+                <option value="ROLE">Roles</option>
+                <option value="SYSTEM">System</option>
+              </select>
+            </div>
+          </div>
         </div>
 
         {loading ? (
@@ -204,19 +251,23 @@ export default function NotificationsPage() {
               Querying Ledger Telemetry...
             </span>
           </div>
-        ) : notifications.length === 0 ? (
+        ) : filteredNotifications.length === 0 ? (
           <div className="border border-dashed border-slate-200 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-3">
             <Bell className="w-8 h-8 text-slate-300" />
             <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">
-              No on-chain activity detected yet
+              {notifications.length === 0
+                ? "No on-chain activity detected yet"
+                : "No matching notifications found"}
             </span>
-            <p className="text-[10px] text-slate-400 font-medium">
-              Transactions and events concerning your address will appear here once executed.
-            </p>
+            {notifications.length === 0 && (
+              <p className="text-[10px] text-slate-400 font-medium">
+                Transactions and events concerning your address will appear here once executed.
+              </p>
+            )}
           </div>
         ) : (
           <div className="flex flex-col divide-y divide-slate-100">
-            {notifications.map((item) => (
+            {filteredNotifications.map((item) => (
               <div
                 key={item.id}
                 className="py-5 first:pt-0 last:pb-0 flex items-start justify-between gap-4"

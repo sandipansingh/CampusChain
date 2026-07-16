@@ -36,20 +36,25 @@ export function useEscrowAgreement(escrowId: number | null) {
     queryKey: ["campus-escrow", escrowId],
     queryFn: async (): Promise<EscrowAgreement | null> => {
       if (escrowId === null) return null;
-      const res = (await readContract(
-        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
-        "get_escrow",
-        [u32ToScVal(escrowId)]
-      )) as { id: bigint; buyer: string; seller: string; amount: bigint; status: number } | null;
+      try {
+        const res = (await readContract(
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+          "get_escrow",
+          [u32ToScVal(escrowId)]
+        )) as { id: bigint; buyer: string; seller: string; amount: bigint; status: number } | null;
 
-      if (!res) return null;
-      return {
-        id: Number(res.id),
-        buyer: String(res.buyer),
-        seller: String(res.seller),
-        amount: Number(res.amount) / 10_000_000,
-        status: Number(res.status),
-      };
+        if (!res) return null;
+        return {
+          id: Number(res.id),
+          buyer: String(res.buyer),
+          seller: String(res.seller),
+          amount: Number(res.amount) / 10_000_000,
+          status: Number(res.status),
+        };
+      } catch (err) {
+        console.warn("Failed to fetch on-chain escrow agreement, returning null", err);
+        return null;
+      }
     },
     enabled: escrowId !== null,
   });
@@ -60,20 +65,25 @@ export function useEventDetails(eventId: number | null) {
     queryKey: ["campus-event", eventId],
     queryFn: async (): Promise<EventDetails | null> => {
       if (eventId === null) return null;
-      const res = (await readContract(
-        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
-        "get_event",
-        [u32ToScVal(eventId)]
-      )) as { id: bigint; host: string; price: bigint; capacity: number; tickets_sold: number } | null;
+      try {
+        const res = (await readContract(
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+          "get_event",
+          [u32ToScVal(eventId)]
+        )) as { id: bigint; host: string; price: bigint; capacity: number; tickets_sold: number } | null;
 
-      if (!res) return null;
-      return {
-        id: Number(res.id),
-        host: String(res.host),
-        price: Number(res.price) / 10_000_000,
-        capacity: Number(res.capacity),
-        tickets_sold: Number(res.tickets_sold),
-      };
+        if (!res) return null;
+        return {
+          id: Number(res.id),
+          host: String(res.host),
+          price: Number(res.price) / 10_000_000,
+          capacity: Number(res.capacity),
+          tickets_sold: Number(res.tickets_sold),
+        };
+      } catch (err) {
+        console.warn("Failed to fetch on-chain event details, returning null", err);
+        return null;
+      }
     },
     enabled: eventId !== null,
   });
@@ -84,19 +94,24 @@ export function useTicketDetails(ticketId: number | null) {
     queryKey: ["campus-ticket", ticketId],
     queryFn: async (): Promise<TicketDetails | null> => {
       if (ticketId === null) return null;
-      const res = (await readContract(
-        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
-        "get_ticket",
-        [u32ToScVal(ticketId)]
-      )) as { id: bigint; event_id: bigint; owner: string; redeemed: boolean } | null;
+      try {
+        const res = (await readContract(
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+          "get_ticket",
+          [u32ToScVal(ticketId)]
+        )) as { id: bigint; event_id: bigint; owner: string; redeemed: boolean } | null;
 
-      if (!res) return null;
-      return {
-        id: Number(res.id),
-        event_id: Number(res.event_id),
-        owner: String(res.owner),
-        redeemed: Boolean(res.redeemed),
-      };
+        if (!res) return null;
+        return {
+          id: Number(res.id),
+          event_id: Number(res.event_id),
+          owner: String(res.owner),
+          redeemed: Boolean(res.redeemed),
+        };
+      } catch (err) {
+        console.warn("Failed to fetch on-chain ticket details, returning null", err);
+        return null;
+      }
     },
     enabled: ticketId !== null,
   });

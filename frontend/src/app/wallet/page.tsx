@@ -13,11 +13,8 @@ import { useTransactionStore } from "@/state/useTransactionStore";
 import { logger } from "@/services/logger";
 import {
   Wallet,
-  ArrowUpRight,
-  Lock,
   Unlock,
   RefreshCw,
-  Search,
   Loader2,
   AlertTriangle
 } from "lucide-react";
@@ -104,7 +101,6 @@ export default function WalletPage() {
 
   const fundTestnetAccount = () => {
     if (!address) return;
-    // Redirect to Friendbot or copy command instruction
     window.open(`https://friendbot.stellar.org/?addr=${address}`, "_blank");
   };
 
@@ -124,7 +120,7 @@ export default function WalletPage() {
           onClick={() => { refetchBalance(); if (activeEscrowId !== null) refetchEscrow(); }}
           className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-50 flex items-center gap-2 active:scale-95 transition-all"
         >
-          <RefreshCw className="w-4 h-4" />
+          <RefreshCw className="w-4 h-4 text-slate-400" />
           Refresh State
         </button>
       </div>
@@ -135,21 +131,17 @@ export default function WalletPage() {
         {/* Left Side: Wallet Card & Ledger details */}
         <div className="lg:col-span-1 flex flex-col gap-6">
           
-          {/* Card: Wallet Balance - Flat, no shadow */}
-          <div className="bg-slate-900 text-white rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between min-h-[220px]">
-            {/* Top wave/watermark decoration */}
-            <div className="absolute right-0 top-0 w-32 h-32 bg-accent/20 rounded-full blur-3xl pointer-events-none" />
-            <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-44 h-12 bg-gradient-to-t from-accent/15 to-transparent rounded-full blur-xl pointer-events-none" />
-
-            <div className="flex justify-between items-start z-10">
+          {/* Card: Wallet Balance - Clean Flat Light design */}
+          <div className="bg-white border border-border text-slate-900 rounded-2xl p-6 flex flex-col justify-between min-h-[220px]">
+            <div className="flex justify-between items-start">
               <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
                 Stellar Account Card
               </span>
-              <Wallet className="w-5 h-5 text-accent" />
+              <Wallet className="w-5 h-5 text-slate-400" />
             </div>
 
-            <div className="my-6 z-10 flex flex-col">
-              <span className="text-4xl font-extrabold tracking-tight font-mono">
+            <div className="my-6 flex flex-col">
+              <span className="text-4xl font-extrabold tracking-tight font-mono text-slate-900">
                 {balanceLoading ? "..." : balance?.toFixed(2)}
               </span>
               <span className="text-xs font-bold tracking-widest uppercase text-accent mt-1">
@@ -157,15 +149,15 @@ export default function WalletPage() {
               </span>
             </div>
 
-            <div className="z-10 border-t border-white/10 pt-4 flex flex-col gap-1">
-              <span className="text-[9px] font-bold text-slate-500 uppercase">Public Key</span>
-              <span className="text-[10px] font-mono text-slate-300 truncate">
+            <div className="border-t border-slate-100 pt-4 flex flex-col gap-1">
+              <span className="text-[9px] font-bold text-slate-400 uppercase">Public Key</span>
+              <span className="text-[10px] font-mono text-slate-500 truncate">
                 {address}
               </span>
             </div>
           </div>
 
-          {/* Card: Testnet Faucet (Gas helper) - Flat, no shadow */}
+          {/* Card: Testnet Faucet (Gas helper) - Flat design */}
           <div className="bg-white border border-border rounded-2xl p-6 flex flex-col gap-4">
             <h3 className="text-sm font-extrabold text-slate-900 uppercase">
               Sandbox Gas Helper
@@ -175,15 +167,14 @@ export default function WalletPage() {
             </p>
             <button
               onClick={fundTestnetAccount}
-              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+              className="w-full h-11 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
             >
-              <ArrowUpRight className="w-4 h-4 text-accent" />
               Request Testnet XLM
             </button>
           </div>
         </div>
 
-        {/* Right Side: On-Chain Escrow Console - Flat, no shadow */}
+        {/* Right Side: On-Chain Escrow Console - Flat design */}
         <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-6 flex flex-col gap-6">
           <div className="border-b border-slate-100 pb-4">
             <h3 className="text-base font-extrabold text-slate-900 uppercase">
@@ -194,19 +185,16 @@ export default function WalletPage() {
             </p>
           </div>
 
-          {/* Lookup Input Form */}
+          {/* Lookup Input Form - Clean input with no icon */}
           <form onSubmit={handleLookup} className="flex gap-3">
-            <div className="relative flex-1">
-              <Search className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-              <input
-                type="number"
-                required
-                placeholder="Enter Escrow ID (e.g., 1, 2, 3)"
-                value={escrowIdInput}
-                onChange={(e) => setEscrowIdInput(e.target.value)}
-                className="w-full h-11 bg-slate-50 border border-border rounded-xl pl-10 pr-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
-              />
-            </div>
+            <input
+              type="number"
+              required
+              placeholder="Enter Escrow ID (e.g., 1, 2, 3)"
+              value={escrowIdInput}
+              onChange={(e) => setEscrowIdInput(e.target.value)}
+              className="flex-1 h-11 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+            />
             <button
               type="submit"
               className="h-11 px-6 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center gap-2 active:scale-95 transition-all"
@@ -218,7 +206,6 @@ export default function WalletPage() {
           {/* Lookup Result Content */}
           {activeEscrowId === null ? (
             <div className="border border-dashed border-slate-200 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-3 bg-slate-50/20">
-              <Lock className="w-8 h-8 text-slate-300" />
               <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">
                 Search for an Escrow Agreement to review details
               </span>
@@ -301,11 +288,6 @@ export default function WalletPage() {
                     onClick={() => handleEscrowAction("refund")}
                     className="flex-1 h-12 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
                   >
-                    {refundEscrowMut.isPending ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4" />
-                    )}
                     Refund Escrow
                   </button>
                 </div>

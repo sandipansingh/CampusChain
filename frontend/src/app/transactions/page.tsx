@@ -1,15 +1,31 @@
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import { useTransactionStore } from "@/state/useTransactionStore";
 import {
   History,
   Trash2,
-  ArrowUpRight
+  ArrowUpRight,
+  Search,
+  SlidersHorizontal
 } from "lucide-react";
 
 export default function TransactionsPage() {
   const { transactions, clearTransactions } = useTransactionStore();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState("all");
+
+  const filteredTransactions = transactions.filter((tx) => {
+    const query = searchQuery.toLowerCase().trim();
+    const matchesSearch = !query ||
+      tx.hash.toLowerCase().includes(query) ||
+      tx.method.toLowerCase().includes(query) ||
+      (tx.errorMessage && tx.errorMessage.toLowerCase().includes(query));
+
+    const matchesStatus = statusFilter === "all" || tx.status === statusFilter;
+
+    return matchesSearch && matchesStatus;
+  });
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
@@ -26,7 +42,7 @@ export default function TransactionsPage() {
         {transactions.length > 0 && (
           <button
             onClick={clearTransactions}
-            className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 flex items-center gap-2 active:scale-95 transition-all shadow-sm"
+            className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 flex items-center gap-2 active:scale-95 transition-all"
           >
             <Trash2 className="w-4 h-4" />
             Clear Log
@@ -36,17 +52,47 @@ export default function TransactionsPage() {
 
       {/* Main transactions container */}
       <div className="bg-white border border-border rounded-2xl p-6">
-        <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Session History ({transactions.length})
+            Session History ({filteredTransactions.length})
           </span>
+          <div className="flex items-center gap-3">
+            {/* Search Input */}
+            <div className="relative flex items-center bg-slate-50 border border-border rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold focus-within:border-accent/40 transition-all">
+              <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
+              <input
+                type="text"
+                placeholder="Search..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="bg-transparent outline-none w-36 placeholder-slate-400 font-medium"
+              />
+            </div>
+            {/* Filter Selector */}
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-border px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+              <select
+                value={statusFilter}
+                onChange={(e) => setStatusFilter(e.target.value)}
+                className="bg-transparent outline-none cursor-pointer pr-1"
+              >
+                <option value="all">All Statuses</option>
+                <option value="pending">Pending</option>
+                <option value="processing">Processing</option>
+                <option value="confirmed">Confirmed</option>
+                <option value="failed">Failed</option>
+              </select>
+            </div>
+          </div>
         </div>
 
-        {transactions.length === 0 ? (
+        {filteredTransactions.length === 0 ? (
           <div className="border border-dashed border-slate-200 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-3">
             <History className="w-8 h-8 text-slate-300" />
             <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">
-              No transactions deployed in this session yet
+              {transactions.length === 0
+                ? "No transactions deployed in this session yet"
+                : "No matching transactions found"}
             </span>
           </div>
         ) : (
@@ -65,7 +111,7 @@ export default function TransactionsPage() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-600">
-                {transactions.map((tx) => (
+                {filteredTransactions.map((tx) => (
                   <tr key={tx.hash} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-4 px-3">
                       <input type="checkbox" className="rounded border-slate-300 text-accent focus:ring-accent" />

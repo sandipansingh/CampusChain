@@ -12,9 +12,10 @@ CampusChain is a unified, decentralized campus economy platform that replaces di
 
 * **Live Demo Portal**: `https://campuschain-demo.vercel.app` (Placeholder)
 * **Demo Video Tour**: `https://youtube.com/watch?v=campuschain-demo` (Placeholder - 1-2 min walkthrough)
-* **CampusToken Contract Address**: `CDP3PGBJ3E7D3F6JNE27PDUWUX2VGDLOMFGBQZ2L24LGTDTKCS5G6AMP`
-* **CampusService Contract Address**: `CA5W44S3S7WTRHPHHY5W7RPHHY5W7RPHHY5W7RPHHY5W7RPHHY5W7RPH`
-* **Sample Escrow Interaction Hash**: `4ff73bd91223e7fde89182ab9128f9d0cba768d9018bcdef786e34ac12dfae7a` (Placeholder)
+* **CampusToken Contract Address**: `CBDN7REWPLUZX3CFPF4KUIIDSOJ4HN73VOQF7UPYFPKR6SH2USM6CWAN`
+* **CampusService Contract Address**: `CBSWJFE4HPAROL2LMLEABBS25O6VMC4VVMKEZRUKPMYGQ75E5IIRB6M4`
+* **CampusToken Deploy Tx Hash**: [0e3bb8bba5ce033e95ee6f9c5559d3cd37eb8a1da77a70865f4fe742c8602d90](https://stellar.expert/explorer/testnet/tx/0e3bb8bba5ce033e95ee6f9c5559d3cd37eb8a1da77a70865f4fe742c8602d90)
+* **CampusService Init Tx Hash**: [30d914f78d4247a5498641bf7b41c35198edea05924662b59ab9e89e28a9b18d](https://stellar.expert/explorer/testnet/tx/30d914f78d4247a5498641bf7b41c35198edea05924662b59ab9e89e28a9b18d)
 <!-- PLACEHOLDER_END -->
 
 ### Screenshots
