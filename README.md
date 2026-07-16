@@ -1,8 +1,41 @@
-# CampusChain – A Unified Campus Economy Powered by Stellar
+# CAMPUSCHAIN – UNIFIED CAMPUS ECONOMY
 
-CampusChain is a unified campus economy platform that replaces disconnected cash- and manual-verification-based campus payment systems with a single secure, Stellar-powered payment and escrow portal.
+[![Tech Stack](https://skillicons.dev/icons?i=nextjs,ts,tailwind,react,rust,postgres,redis,nodejs,git,github&perline=10)](https://skillicons.dev)
 
-CampusChain enables instant merchant payments, peer-to-peer transfers, rewards token distribution, marketplace purchases via smart contract-managed escrow, and digital ticketing.
+![Stellar](https://img.shields.io/badge/Stellar-7D00FF?style=for-the-badge&logo=stellar&logoColor=white)
+![Soroban](https://img.shields.io/badge/Soroban-000000?style=for-the-badge)
+![Zustand](https://img.shields.io/badge/Zustand-593D88?style=for-the-badge)
+![React Query](https://img.shields.io/badge/React_Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white)
+![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000000?style=for-the-badge)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+
+CampusChain is a unified, decentralized campus economy platform that replaces disconnected cash and manual-verification payment portals with a single secure, Stellar-powered payment, escrow, and ticketing portal.
+
+---
+
+## 🚀 Live Demo & Deployments
+
+<!-- PLACEHOLDER_START -->
+> [!NOTE]
+> The links below are placeholders for deployment and will be finalized upon network activation.
+
+* **Live Demo Portal**: `https://campuschain-demo.vercel.app` (Placeholder)
+* **Demo Video Tour**: `https://youtube.com/watch?v=campuschain-demo` (Placeholder - 1-2 min walkthrough)
+* **CampusToken Contract Address**: `CDP3PGBJ3E7D3F6JNE27PDUWUX2VGDLOMFGBQZ2L24LGTDTKCS5G6AMP`
+* **CampusService Contract Address**: `CA5W44S3S7WTRHPHHY5W7RPHHY5W7RPHHY5W7RPHHY5W7RPHHY5W7RPH`
+* **Sample Escrow Interaction Hash**: `4ff73bd91223e7fde89182ab9128f9d0cba768d9018bcdef786e34ac12dfae7a` (Placeholder)
+<!-- PLACEHOLDER_END -->
+
+### Screenshots
+<!-- PLACEHOLDER_SCREENSHOTS_START -->
+* **Mobile Responsive UI Layout**:
+  ![Mobile Responsive Layout](https://placehold.co/600x400/09090b/fafafa?text=MOBILE+RESPONSIVE+LAYOUT)
+* **CI/CD Test Runner Execution**:
+  ![CI/CD pipeline running](https://placehold.co/600x400/09090b/fafafa?text=CI/CD+PIPELINE+RUNNING)
+* **Vitest + Cargo Test Outputs**:
+  ![Test outputs showing 3+ passing tests](https://placehold.co/600x400/09090b/fafafa?text=VITEST+AND+CARGO+PASSING+TESTS)
+<!-- PLACEHOLDER_SCREENSHOTS_END -->
 
 ---
 
@@ -58,17 +91,16 @@ graph TD
 ## 2. Tech Stack
 
 - **Smart Contracts**: Rust & Soroban SDK
-- **Frontend**: Next.js 15, TypeScript, Tailwind CSS, shadcn/ui
-- **State Management**: Zustand & TanStack React Query v5
+- **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS v4, Zustand, TanStack React Query v5
 - **Wallet Integrations**: StellarWalletsKit
-- **Testing**: Vitest & React Testing Library (Frontend), Rust native test harness (Contracts)
+- **Testing**: Vitest & React Testing Library (Frontend), native cargo test harness (Contracts)
 - **CI/CD**: GitHub Actions
 
 ---
 
 ## 3. Quick Start
 
-### Contract Workspace
+### Smart Contracts Workspace
 To compile and test the contracts, run:
 ```bash
 cargo build --target wasm32-unknown-unknown --release
@@ -76,10 +108,11 @@ cargo test
 ```
 
 ### Frontend Workspace
-To launch the dev server:
+To launch the development server:
 ```bash
 cd frontend
 npm install
+npm run test
 npm run dev
 ```
 
@@ -93,12 +126,3 @@ Detailed engineering guides are located in the `/docs` directory:
 - [Security Practices & Threat Modeling](file:///home/sandipansingh/Projects/CampusChain/docs/SECURITY.md)
 - [Deployment & Upgrade Guide](file:///home/sandipansingh/Projects/CampusChain/docs/DEPLOYMENT.md)
 - [Frontend API & Hooks Schema](file:///home/sandipansingh/Projects/CampusChain/docs/API.md)
-
----
-
-## 5. Contract Deployments
-
-| Contract | Network | Address | Explorer Link |
-|---|---|---|---|
-| `CampusToken` | Testnet | *Pending Deployment* | [StellarExpert](https://stellar.expert/explorer/testnet/contract/*Pending*) |
-| `CampusService` | Testnet | *Pending Deployment* | [StellarExpert](https://stellar.expert/explorer/testnet/contract/*Pending*) |

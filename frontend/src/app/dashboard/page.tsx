@@ -16,6 +16,7 @@ import {
   useBuyTicketMutation,
 } from "@/hooks/useCampusService";
 import { pollTransactionStatus } from "@/services/contracts";
+import { logger } from "@/services/logger";
 
 export default function DashboardPage() {
   const { address } = useWalletStore();
@@ -60,6 +61,7 @@ export default function DashboardPage() {
     mutationCall: () => Promise<string>,
     onComplete?: () => void
   ) => {
+    const startTime = Date.now();
     try {
       const hash = await mutationCall();
       addTransaction({
@@ -69,23 +71,40 @@ export default function DashboardPage() {
         timestamp: Date.now(),
         explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}`,
       });
+      logger.trackTransaction({ hash, method: name, status: "pending" });
 
       updateTransaction(hash, { status: "processing" });
+      logger.trackTransaction({ hash, method: name, status: "processing" });
 
       // Poll transaction completion
       await pollTransactionStatus(hash);
       updateTransaction(hash, { status: "confirmed" });
+      logger.trackTransaction({
+        hash,
+        method: name,
+        status: "confirmed",
+        durationMs: Date.now() - startTime,
+      });
 
       if (onComplete) onComplete();
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "Transaction failed";
+      const errHash = `err_${Date.now()}`;
       // Fail transaction logging
       addTransaction({
-        hash: `err_${Date.now()}`,
+        hash: errHash,
         status: "failed",
         method: name,
         timestamp: Date.now(),
         errorMessage: errMsg,
+      });
+      logger.error(`Transaction failed: ${name}`, err);
+      logger.trackTransaction({
+        hash: errHash,
+        method: name,
+        status: "failed",
+        errorMessage: errMsg,
+        durationMs: Date.now() - startTime,
       });
     }
   };

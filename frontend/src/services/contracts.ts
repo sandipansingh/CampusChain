@@ -8,6 +8,7 @@ import {
   xdr,
 } from "@stellar/stellar-sdk";
 import { signTx } from "@/services/wallet";
+import { logger } from "@/services/logger";
 
 export const NEXT_PUBLIC_STELLAR_RPC_URL =
   process.env.NEXT_PUBLIC_STELLAR_RPC_URL || "https://soroban-testnet.stellar.org";
@@ -101,18 +102,23 @@ export async function invokeContractMethod(
 export async function pollTransactionStatus(
   hash: string
 ): Promise<rpc.Api.GetTransactionResponse> {
+  logger.info(`Polling transaction status`, { hash });
   const server = getRpcServer();
   for (let i = 0; i < 40; i++) {
     const status = await server.getTransaction(hash);
     if (status.status === "SUCCESS") {
+      logger.info(`Transaction confirmed on-chain`, { hash });
       return status;
     }
     if (status.status === "FAILED") {
-      throw new Error(`Transaction execution failed: ${JSON.stringify(status.resultXdr)}`);
+      const errMsg = `Transaction execution failed: ${JSON.stringify(status.resultXdr)}`;
+      logger.error(errMsg, null, { hash });
+      throw new Error(errMsg);
     }
     // Wait 1.5 seconds between polls
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
+  logger.warn(`Transaction verification timed out`, { hash });
   throw new Error("Transaction verification timed out");
 }
 
