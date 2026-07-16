@@ -313,7 +313,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           </div>
 
           {/* Header Center/Right: Search bar (Finexy Style) */}
-          <div className="hidden md:flex items-center bg-slate-50 border border-border rounded-2xl px-4 py-2.5 w-80 focus-within:border-accent/40 transition-all">
+          <div className="hidden md:flex items-center bg-slate-50 border border-border rounded-2xl px-4 py-2.5 w-80 focus-within:border-slate-300 transition-all">
             <Search className="w-4 h-4 text-slate-400 mr-2.5 shrink-0" />
             <input
               type="text"

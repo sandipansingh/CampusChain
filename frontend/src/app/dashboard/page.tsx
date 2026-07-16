@@ -563,7 +563,7 @@ export default function DashboardPage() {
                     placeholder="Enter G... Address"
                     value={transferRecipient}
                     onChange={(e) => setTransferRecipient(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all uppercase font-mono"
+                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all uppercase font-mono"
                   />
                 </div>
 
@@ -578,7 +578,7 @@ export default function DashboardPage() {
                     placeholder="Enter amount"
                     value={transferAmount}
                     onChange={(e) => setTransferAmount(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                   />
                 </div>
 
@@ -627,7 +627,7 @@ export default function DashboardPage() {
                     placeholder="Enter amount"
                     value={escrowAmount}
                     onChange={(e) => setEscrowAmount(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                   />
                 </div>
 
@@ -666,7 +666,7 @@ export default function DashboardPage() {
                         placeholder="Enter price"
                         value={eventPrice}
                         onChange={(e) => setEventPrice(e.target.value)}
-                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                       />
                     </div>
 
@@ -680,7 +680,7 @@ export default function DashboardPage() {
                         placeholder="Enter max capacity"
                         value={eventCapacity}
                         onChange={(e) => setEventCapacity(e.target.value)}
-                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                       />
                     </div>
 
@@ -715,7 +715,7 @@ export default function DashboardPage() {
                         placeholder="Enter Event ID"
                         value={buyTicketEventId}
                         onChange={(e) => setBuyTicketEventId(e.target.value)}
-                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                       />
                     </div>
 
@@ -751,7 +751,7 @@ export default function DashboardPage() {
           </div>
           <div className="flex items-center gap-3">
             {/* Table controls */}
-            <div className="relative flex items-center bg-slate-50 border border-border rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold focus-within:border-accent/40 transition-all">
+            <div className="relative flex items-center bg-slate-50 border border-border rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold focus-within:border-slate-300 transition-all">
               <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
               <input
                 type="text"

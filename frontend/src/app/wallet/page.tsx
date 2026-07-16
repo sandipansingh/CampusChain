@@ -193,7 +193,7 @@ export default function WalletPage() {
               placeholder="Enter Escrow ID (e.g., 1, 2, 3)"
               value={escrowIdInput}
               onChange={(e) => setEscrowIdInput(e.target.value)}
-              className="flex-1 h-11 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all font-mono"
+              className="flex-1 h-11 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
             />
             <button
               type="submit"
