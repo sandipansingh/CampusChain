@@ -232,24 +232,24 @@ export default function DashboardPage() {
       {/* Welcome Title Banner */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
-          Sales Overview
+          Campus Overview
         </h1>
-        <div className="flex items-center gap-2 bg-white border border-border px-4 py-2 rounded-2xl text-xs font-semibold text-slate-700">
-          <Calendar className="w-4 h-4 text-slate-400" />
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl text-xs font-semibold text-slate-705 shadow-sm">
+          <Calendar className="w-4 h-4 text-slate-700" />
           <span>April 10, 2026 - May 11, 2026</span>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+          <ChevronDown className="w-3.5 h-3.5 text-slate-700" />
         </div>
       </div>
 
-      {/* Grid of Stats Cards (Finexy Style) - Flat, no shadow, no accentbar, no hover border line */}
+      {/* Grid of Stats Cards - Flat borderless style */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Balance */}
-        <div className="bg-white border border-border p-6 rounded-[24px] flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400">
-              Total Balance
+            <span className="text-xs font-semibold text-slate-700">
+              Wallet Balance
             </span>
-            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400">
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-700">
               <Wallet className="w-4 h-4" />
             </div>
           </div>
@@ -257,7 +257,7 @@ export default function DashboardPage() {
             <div className="flex items-baseline gap-2">
               <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">
                 {balanceLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-700" />
                 ) : (
                   balance?.toFixed(0)
                 )}
@@ -266,19 +266,19 @@ export default function DashboardPage() {
                 ↑ 4.9%
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 font-semibold mt-2">
+            <span className="text-[10px] text-slate-700 font-semibold mt-2">
               Last month: {(balance || 0) - 234}
             </span>
           </div>
         </div>
 
         {/* Card 2: Wallet Role */}
-        <div className="bg-white border border-border p-6 rounded-[24px] flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400">
-              Profile Type
+            <span className="text-xs font-semibold text-slate-700">
+              User Profile Role
             </span>
-            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400">
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-700">
               <Shield className="w-4 h-4" />
             </div>
           </div>
@@ -291,19 +291,19 @@ export default function DashboardPage() {
                 ↑ 7.5%
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 font-semibold mt-2">
+            <span className="text-[10px] text-slate-700 font-semibold mt-2">
               Last month: Guest
             </span>
           </div>
         </div>
 
         {/* Card 3: Session Actions */}
-        <div className="bg-white border border-border p-6 rounded-[24px] flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400">
-              Session Transactions
+            <span className="text-xs font-semibold text-slate-700">
+              Session Operations
             </span>
-            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400">
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-700">
               <ArrowRightLeft className="w-4 h-4" />
             </div>
           </div>
@@ -316,19 +316,19 @@ export default function DashboardPage() {
                 ↓ 6.0%
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 font-semibold mt-2">
+            <span className="text-[10px] text-slate-700 font-semibold mt-2">
               Last month: 0
             </span>
           </div>
         </div>
 
         {/* Card 4: Ledger Network */}
-        <div className="bg-white border border-border p-6 rounded-[24px] flex flex-col justify-between min-h-[140px]">
+        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-400">
+            <span className="text-xs font-semibold text-slate-700">
               Ledger Network
             </span>
-            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400">
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-700">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
@@ -337,11 +337,11 @@ export default function DashboardPage() {
               <span className="text-3xl font-semibold tracking-tight text-slate-900 uppercase truncate max-w-[130px]">
                 {network}
               </span>
-              <span className="text-xs font-semibold text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-150 leading-none">
+              <span className="text-xs font-semibold text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-150 leading-none font-bold">
                 Active
               </span>
             </div>
-            <span className="text-[10px] text-slate-400 font-semibold mt-2">
+            <span className="text-[10px] text-slate-700 font-semibold mt-2">
               Last month: TESTNET
             </span>
           </div>
@@ -350,19 +350,19 @@ export default function DashboardPage() {
 
       {/* Grid: Charts (Left) & Controls (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart Column (Finexy inspired charts) */}
+        {/* Chart Column - Flat borderless design */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          {/* Revenue Analytics (Weekly Volume Chart) - Flat design */}
-          <div className="bg-white border border-border rounded-[24px] p-6 flex flex-col justify-between">
+          {/* Daily Transaction Volume Chart */}
+          <div className="bg-white rounded-[24px] p-6 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
-                  Revenue analytics
+                  Daily Transaction Volume
                 </h3>
               </div>
-              <div className="flex items-center gap-1.5 bg-white border border-border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">
+              <div className="flex items-center gap-1.5 bg-white border border-slate-100 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer shadow-sm">
                 <span>This Week</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
+                <ChevronDown className="w-3.5 h-3.5 text-slate-700" />
               </div>
             </div>
 
@@ -378,7 +378,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Y Axis Labels */}
-              <div className="absolute left-0 top-4 text-[10px] font-semibold text-slate-400 flex flex-col justify-between h-60 pointer-events-none">
+              <div className="absolute left-0 top-4 text-[10px] font-semibold text-slate-700 flex flex-col justify-between h-60 pointer-events-none">
                 <span>30k</span>
                 <span>20k</span>
                 <span>10k</span>
@@ -401,7 +401,7 @@ export default function DashboardPage() {
                       {/* Tooltip on Hover */}
                       {isHovered && (
                         <div className="absolute -top-10 bg-accent text-white text-[10px] font-semibold px-2.5 py-1.5 rounded-lg z-20 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100">
-                          ${data.amount.toLocaleString()}
+                          {data.amount.toLocaleString()} CAMP
                           <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-accent w-0 h-0" />
                         </div>
                       )}
@@ -414,7 +414,7 @@ export default function DashboardPage() {
                           backgroundColor: isHovered ? "#d3411b" : "#e14e27",
                         }}
                       />
-                      <span className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-900 transition-colors">
+                      <span className="text-[10px] font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
                         {data.day}
                       </span>
                     </div>
@@ -424,23 +424,23 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Profit & Loss Stacked Chart with Diagonal Stripes - Flat design */}
-          <div className="bg-white border border-border rounded-[24px] p-6">
+          {/* Flow Analytics Stacked Chart - Flat borderless design */}
+          <div className="bg-white rounded-[24px] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
-                  Total Income
+                  Minted vs Transferred Flow
                 </h3>
-                <p className="text-xs text-slate-400 font-medium">View your income in a certain period of time</p>
+                <p className="text-xs text-slate-700 font-semibold mt-1">Comparison of rewards distributions vs peer token settlements.</p>
               </div>
               <div className="flex items-center gap-4 text-xs font-semibold">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-                  <span className="text-slate-600">Profit</span>
+                  <span className="text-slate-800">Minted</span>
                 </div>
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-slate-900" />
-                  <span className="text-slate-600">Loss</span>
+                  <span className="text-slate-800">Transferred</span>
                 </div>
               </div>
             </div>
@@ -464,7 +464,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Y Axis Labels */}
-              <div className="absolute left-0 top-0 text-[10px] font-semibold text-slate-400 flex flex-col justify-between h-40 pointer-events-none">
+              <div className="absolute left-0 top-0 text-[10px] font-semibold text-slate-700 flex flex-col justify-between h-40 pointer-events-none">
                 <span>50k</span>
                 <span>25k</span>
                 <span>0k</span>
@@ -495,7 +495,7 @@ export default function DashboardPage() {
                         style={{ height: `${item.t * 2.5}px` }}
                       />
                     </div>
-                    <span className="text-[10px] font-semibold text-slate-400 mt-1">
+                    <span className="text-[10px] font-semibold text-slate-700 mt-1">
                       {item.m}
                     </span>
                   </div>
@@ -505,23 +505,23 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Interactive Action Controls (Right Panel) - Flat design */}
-        <div className="bg-white border border-border rounded-[24px] p-6 flex flex-col gap-6">
+        {/* Interactive Action Controls (Right Panel) - Flat borderless design */}
+        <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
             <h3 className="text-base font-semibold text-slate-900">
               Action Center
             </h3>
-            <SlidersHorizontal className="w-4 h-4 text-slate-400" />
+            <SlidersHorizontal className="w-4 h-4 text-slate-700" />
           </div>
 
           {/* Action Tabs Selector */}
-          <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-200">
+          <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-150">
             <button
               onClick={() => setActiveTab("send")}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
                 activeTab === "send"
                   ? "bg-white text-slate-900 border border-slate-200"
-                  : "text-slate-450 hover:text-slate-700"
+                  : "text-slate-500 hover:text-slate-700"
               }`}
             >
               Transfer
@@ -531,7 +531,7 @@ export default function DashboardPage() {
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
                 activeTab === "escrow"
                   ? "bg-white text-slate-900 border border-slate-200"
-                  : "text-slate-450 hover:text-slate-700"
+                  : "text-slate-500 hover:text-slate-700"
               }`}
             >
               Escrow
@@ -541,7 +541,7 @@ export default function DashboardPage() {
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
                 activeTab === "events"
                   ? "bg-white text-slate-900 border border-slate-200"
-                  : "text-slate-450 hover:text-slate-700"
+                  : "text-slate-500 hover:text-slate-700"
               }`}
             >
               Events
@@ -554,7 +554,7 @@ export default function DashboardPage() {
             {activeTab === "send" && (
               <form onSubmit={executeTransfer} className="flex flex-col gap-5 h-full">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
                     Recipient Wallet Address
                   </label>
                   <input
@@ -563,12 +563,12 @@ export default function DashboardPage() {
                     placeholder="Enter G... Address"
                     value={transferRecipient}
                     onChange={(e) => setTransferRecipient(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all uppercase font-mono"
+                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all uppercase font-mono"
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
                     Amount (CAMP)
                   </label>
                   <input
@@ -578,7 +578,7 @@ export default function DashboardPage() {
                     placeholder="Enter amount"
                     value={transferAmount}
                     onChange={(e) => setTransferAmount(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
+                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                   />
                 </div>
 
@@ -603,7 +603,7 @@ export default function DashboardPage() {
             {activeTab === "escrow" && (
               <form onSubmit={executeEscrow} className="flex flex-col gap-5 h-full">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
                     Seller / Merchant Address
                   </label>
                   <input
@@ -612,12 +612,12 @@ export default function DashboardPage() {
                     placeholder="Enter G... Address"
                     value={escrowSeller}
                     onChange={(e) => setEscrowSeller(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-accent/40 focus:ring-1 focus:ring-accent/15 transition-all uppercase font-mono"
+                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all uppercase font-mono"
                   />
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                  <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
                     Escrow Amount (CAMP)
                   </label>
                   <input
@@ -627,7 +627,7 @@ export default function DashboardPage() {
                     placeholder="Enter amount"
                     value={escrowAmount}
                     onChange={(e) => setEscrowAmount(e.target.value)}
-                    className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
+                    className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                   />
                 </div>
 
@@ -658,7 +658,7 @@ export default function DashboardPage() {
                       Club Admin Controls
                     </span>
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
                         Ticket Price (CAMP)
                       </label>
                       <input
@@ -666,12 +666,12 @@ export default function DashboardPage() {
                         placeholder="Enter price"
                         value={eventPrice}
                         onChange={(e) => setEventPrice(e.target.value)}
-                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
+                        className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                       />
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
                         Max Capacity (Tickets)
                       </label>
                       <input
@@ -680,7 +680,7 @@ export default function DashboardPage() {
                         placeholder="Enter max capacity"
                         value={eventCapacity}
                         onChange={(e) => setEventCapacity(e.target.value)}
-                        className="w-full h-12 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
+                        className="w-full h-12 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
                       />
                     </div>
 
@@ -706,7 +706,7 @@ export default function DashboardPage() {
                       Student Event Pass
                     </span>
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+                      <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">
                         Event ID (Ledger Index)
                       </label>
                       <input
@@ -741,37 +741,37 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity Table (Finexy Style) - Flat design */}
-      <div className="bg-white border border-border rounded-[24px] p-6 flex flex-col gap-6">
+      {/* Recent Activity Table - Flat borderless design */}
+      <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-semibold text-slate-900">
-              Recent orders
+              Recent Transactions
             </h3>
           </div>
           <div className="flex items-center gap-3">
             {/* Table controls */}
-            <div className="relative flex items-center bg-slate-50 border border-border rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold focus-within:border-slate-300 transition-all">
-              <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
+            <div className="relative flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-1.5 text-xs text-slate-700 font-semibold focus-within:border-slate-300 transition-all shadow-sm">
+              <Search className="w-3.5 h-3.5 text-slate-700 mr-2 shrink-0" />
               <input
                 type="text"
-                placeholder="Search..."
+                placeholder="Search transactions..."
                 value={txSearchQuery}
                 onChange={(e) => setTxSearchQuery(e.target.value)}
                 className="bg-transparent outline-none w-36 placeholder-slate-400 font-medium"
               />
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600">
-              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-slate-100 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-705 shadow-sm">
+              <SlidersHorizontal className="w-3.5 h-3.5 text-slate-700" />
               <span>Sort by</span>
             </div>
           </div>
         </div>
 
         {filteredTransactions.length === 0 ? (
-          <div className="border border-dashed border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
-            <Clock className="w-8 h-8 text-slate-300" />
-            <span className="font-semibold text-slate-400 text-xs uppercase tracking-widest">
+          <div className="border border-dashed border-slate-200 rounded-[24px] p-12 text-center flex flex-col items-center justify-center gap-3">
+            <Clock className="w-8 h-8 text-slate-700" />
+            <span className="font-semibold text-slate-700 text-xs uppercase tracking-widest">
               {transactions.length === 0
                 ? "No transactions deployed in this session yet"
                 : "No matching transactions found"}
@@ -781,27 +781,27 @@ export default function DashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
+                <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-700 uppercase tracking-wider">
                   <th className="py-4 px-3 w-12">
                     <input type="checkbox" className="rounded border-slate-300 text-accent focus:ring-accent" />
                   </th>
-                  <th className="py-4 px-3">Transaction ID / Hash</th>
+                  <th className="py-4 px-3">Hash / ID</th>
                   <th className="py-4 px-3">Method</th>
                   <th className="py-4 px-3">Status</th>
                   <th className="py-4 px-3">Timestamp</th>
                   <th className="py-4 px-3 text-right">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-600">
+              <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-800">
                 {filteredTransactions.map((tx) => (
                   <tr key={tx.hash} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-4 px-3">
                       <input type="checkbox" className="rounded border-slate-300 text-accent focus:ring-accent" />
                     </td>
-                    <td className="py-4 px-3 font-mono text-slate-400">
+                    <td className="py-4 px-3 font-mono text-slate-700">
                       {tx.hash.slice(0, 16)}...{tx.hash.slice(-16)}
                     </td>
-                    <td className="py-4 px-3 text-slate-800 uppercase tracking-tight">
+                    <td className="py-4 px-3 text-slate-900 uppercase tracking-tight">
                       {tx.method}
                     </td>
                     <td className="py-4 px-3">
@@ -830,7 +830,7 @@ export default function DashboardPage() {
                         {tx.status === "pending" ? "Pending" : tx.status === "confirmed" ? "Completed" : tx.status}
                       </span>
                     </td>
-                    <td className="py-4 px-3 text-slate-400">
+                    <td className="py-4 px-3 text-slate-700">
                       {new Date(tx.timestamp).toLocaleDateString("en-GB", {
                         day: "numeric",
                         month: "short",
@@ -853,7 +853,7 @@ export default function DashboardPage() {
                           {tx.errorMessage}
                         </span>
                       ) : (
-                        <span className="text-slate-300">-</span>
+                        <span className="text-slate-350">-</span>
                       )}
                     </td>
                   </tr>

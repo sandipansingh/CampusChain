@@ -16,9 +16,31 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "CAMPUSCHAIN – UNIFIED CAMPUS ECONOMY",
+  title: "CampusChain – Unified Campus Economy",
   description:
     "Instant merchant payments, P2P transfers, rewards token distribution, marketplace escrow, and digital ticketing powered by Stellar/Soroban.",
+  keywords: ["stellar", "soroban", "blockchain", "campus economy", "smart contracts", "payments", "escrow"],
+  authors: [{ name: "CampusChain Team" }],
+  openGraph: {
+    title: "CampusChain – Unified Campus Economy",
+    description:
+      "Instant merchant payments, P2P transfers, rewards token distribution, marketplace escrow, and digital ticketing powered by Stellar/Soroban.",
+    url: "https://campuschain.local",
+    siteName: "CampusChain",
+    type: "website",
+    locale: "en_US",
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "CampusChain – Unified Campus Economy",
+    description:
+      "Instant merchant payments, P2P transfers, rewards token distribution, marketplace escrow, and digital ticketing powered by Stellar/Soroban.",
+  },
+  icons: {
+    icon: "/icon.svg",
+    shortcut: "/icon.svg",
+    apple: "/icon.svg",
+  },
 };
 
 export default function RootLayout({

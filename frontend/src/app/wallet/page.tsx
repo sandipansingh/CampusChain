@@ -26,6 +26,7 @@ export default function WalletPage() {
   // Escrow lookup state
   const [escrowIdInput, setEscrowIdInput] = useState("");
   const [activeEscrowId, setActiveEscrowId] = useState<number | null>(null);
+  const [copied, setCopied] = useState(false);
 
   const { data: escrow, isLoading: escrowLoading, refetch: refetchEscrow } = useEscrowAgreement(activeEscrowId);
 
@@ -40,6 +41,13 @@ export default function WalletPage() {
     e.preventDefault();
     if (!escrowIdInput) return;
     setActiveEscrowId(parseInt(escrowIdInput));
+  };
+
+  const handleCopy = () => {
+    if (!address) return;
+    navigator.clipboard.writeText(address);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
   };
 
   const getEscrowStatusLabel = (status?: number) => {
@@ -105,43 +113,43 @@ export default function WalletPage() {
   };
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
       {/* Title */}
       <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 uppercase">
+          <h1 className="text-2xl font-semibold tracking-tight text-slate-900 uppercase">
             My Wallet
           </h1>
-          <p className="text-slate-500 text-sm mt-1">
+          <p className="text-slate-700 text-xs font-semibold mt-1">
             Manage your CAMP balances, acquire testnet gas tokens, and release secure smart contract escrows.
           </p>
         </div>
         <button
           onClick={() => { refetchBalance(); if (activeEscrowId !== null) refetchEscrow(); }}
-          className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-50 flex items-center gap-2 active:scale-95 transition-all"
+          className="h-11 px-4 bg-white text-xs font-bold text-slate-800 rounded-xl hover:bg-slate-50 flex items-center gap-2 active:scale-95 transition-all shadow-sm"
         >
-          <RefreshCw className="w-4 h-4 text-slate-400" />
+          <RefreshCw className="w-4 h-4 text-slate-700" />
           Refresh State
         </button>
       </div>
 
       {/* Grid: Wallet Details (Left) & Escrow Console (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         
         {/* Left Side: Wallet Card & Ledger details */}
         <div className="lg:col-span-1 flex flex-col gap-6">
           
-          {/* Card: Wallet Balance - Clean Flat Light design */}
-          <div className="bg-white border border-border text-slate-900 rounded-2xl p-6 flex flex-col justify-between min-h-[220px]">
+          {/* Card: Wallet Balance - Clean Flat Light borderless design */}
+          <div className="bg-white text-slate-900 rounded-[24px] p-6 flex flex-col justify-between min-h-[220px]">
             <div className="flex justify-between items-start">
-              <span className="text-[10px] font-black uppercase tracking-widest text-slate-400">
+              <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
                 Stellar Account Card
               </span>
-              <Wallet className="w-5 h-5 text-slate-400" />
+              <Wallet className="w-5 h-5 text-slate-700" />
             </div>
 
             <div className="my-6 flex flex-col">
-              <span className="text-4xl font-extrabold tracking-tight font-mono text-slate-900">
+              <span className="text-4xl font-bold tracking-tight font-mono text-slate-900">
                 {balanceLoading ? "..." : balance?.toFixed(2)}
               </span>
               <span className="text-xs font-bold tracking-widest uppercase text-accent mt-1">
@@ -150,19 +158,28 @@ export default function WalletPage() {
             </div>
 
             <div className="border-t border-slate-100 pt-4 flex flex-col gap-1">
-              <span className="text-[9px] font-bold text-slate-400 uppercase">Public Key</span>
-              <span className="text-[10px] font-mono text-slate-500 truncate">
-                {address}
-              </span>
+              <span className="text-[9px] font-bold text-slate-700 uppercase">Public Key</span>
+              <button
+                onClick={handleCopy}
+                className="text-left w-full focus:outline-none flex items-center justify-between group/copy"
+                title="Click to copy address"
+              >
+                <span className="text-[10px] font-mono text-slate-800 truncate font-semibold mr-2 group-hover/copy:text-accent transition-colors">
+                  {address}
+                </span>
+                <span className="text-[9px] font-bold uppercase text-slate-700 shrink-0 group-hover/copy:text-accent transition-colors">
+                  {copied ? "Copied!" : "Copy"}
+                </span>
+              </button>
             </div>
           </div>
 
           {/* Card: Testnet Faucet (Gas helper) - Flat design */}
-          <div className="bg-white border border-border rounded-2xl p-6 flex flex-col gap-4">
-            <h3 className="text-sm font-extrabold text-slate-900 uppercase">
+          <div className="bg-white rounded-[24px] p-6 flex flex-col gap-4">
+            <h3 className="text-sm font-bold text-slate-900 uppercase">
               Sandbox Gas Helper
             </h3>
-            <p className="text-xs text-slate-500 font-medium leading-relaxed">
+            <p className="text-xs text-slate-800 font-semibold leading-relaxed">
               Running on Stellar Testnet requires XLM to cover transaction gas fees. Use the Friendbot faucet to fund your address.
             </p>
             <button
@@ -174,13 +191,13 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* Right Side: On-Chain Escrow Console - Flat design */}
-        <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-6 flex flex-col gap-6">
+        {/* Right Side: On-Chain Escrow Console - Flat borderless design */}
+        <div className="lg:col-span-2 bg-white rounded-[24px] p-6 flex flex-col gap-6">
           <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-extrabold text-slate-900 uppercase">
+            <h3 className="text-base font-bold text-slate-900 uppercase">
               Escrow Management Console
             </h3>
-            <p className="text-xs text-slate-400 font-medium mt-1">
+            <p className="text-xs text-slate-800 font-semibold mt-1">
               Verify smart contract escrow conditions. Release funds as a Buyer, or request refunds as a Seller.
             </p>
           </div>
@@ -193,7 +210,7 @@ export default function WalletPage() {
               placeholder="Enter Escrow ID (e.g., 1, 2, 3)"
               value={escrowIdInput}
               onChange={(e) => setEscrowIdInput(e.target.value)}
-              className="flex-1 h-11 bg-slate-50 border border-border rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
+              className="flex-1 h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all font-mono"
             />
             <button
               type="submit"
@@ -205,41 +222,41 @@ export default function WalletPage() {
 
           {/* Lookup Result Content */}
           {activeEscrowId === null ? (
-            <div className="border border-dashed border-slate-200 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-3 bg-slate-50/20">
-              <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">
+            <div className="border border-dashed border-slate-200 rounded-[24px] p-16 text-center flex flex-col items-center justify-center gap-3 bg-slate-50/20">
+              <span className="font-bold text-slate-700 text-xs uppercase tracking-widest">
                 Search for an Escrow Agreement to review details
               </span>
             </div>
           ) : escrowLoading ? (
             <div className="flex flex-col items-center justify-center py-16 gap-3">
               <Loader2 className="w-6 h-6 animate-spin text-accent" />
-              <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+              <span className="text-xs font-bold uppercase tracking-wider text-slate-700">
                 Fetching escrow from Soroban state...
               </span>
             </div>
           ) : !escrow ? (
-            <div className="border border-dashed border-red-100 bg-red-50/15 rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
+            <div className="border border-dashed border-red-200 bg-red-50/15 rounded-[24px] p-12 text-center flex flex-col items-center justify-center gap-3">
               <AlertTriangle className="w-8 h-8 text-red-500" />
               <span className="font-bold text-red-700 text-xs uppercase tracking-widest">
                 Escrow ID #{activeEscrowId} not found
               </span>
-              <p className="text-[10px] text-slate-400 font-medium">
+              <p className="text-[10px] text-slate-700 font-semibold">
                 Make sure the ID is correct and you are connected to the right RPC network.
               </p>
             </div>
           ) : (
             /* Escrow Agreement Info Panel */
-            <div className="border border-border rounded-2xl p-6 flex flex-col gap-6 animate-in fade-in duration-200">
+            <div className="bg-slate-50/50 rounded-[24px] p-6 flex flex-col gap-6 animate-in fade-in duration-200">
               <div className="flex items-center justify-between border-b border-slate-100 pb-4">
                 <div className="flex items-center gap-2">
-                  <span className="text-sm font-extrabold text-slate-900">
+                  <span className="text-sm font-bold text-slate-900">
                     Agreement #{escrow.id}
                   </span>
                   <span className={`text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border ${getEscrowStatusLabel(escrow.status).style}`}>
                     {getEscrowStatusLabel(escrow.status).text}
                   </span>
                 </div>
-                <span className="text-base font-extrabold text-accent font-mono">
+                <span className="text-base font-bold text-accent font-mono">
                   {escrow.amount.toFixed(2)} CAMP
                 </span>
               </div>
@@ -247,8 +264,8 @@ export default function WalletPage() {
               {/* Roles detail */}
               <div className="flex flex-col gap-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-1 bg-slate-50 p-4 rounded-xl border border-border">
-                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Buyer</span>
+                  <div className="flex flex-col gap-1 bg-slate-50 p-4 rounded-xl">
+                    <span className="text-[9px] font-bold uppercase text-slate-700 tracking-wider">Buyer</span>
                     <span className="text-xs font-mono font-bold text-slate-800 break-all">{escrow.buyer}</span>
                     {address === escrow.buyer && (
                       <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 self-start mt-2">
@@ -256,8 +273,8 @@ export default function WalletPage() {
                       </span>
                     )}
                   </div>
-                  <div className="flex flex-col gap-1 bg-slate-50 p-4 rounded-xl border border-border">
-                    <span className="text-[9px] font-black uppercase text-slate-400 tracking-wider">Seller</span>
+                  <div className="flex flex-col gap-1 bg-slate-50 p-4 rounded-xl">
+                    <span className="text-[9px] font-bold uppercase text-slate-700 tracking-wider">Seller</span>
                     <span className="text-xs font-mono font-bold text-slate-800 break-all">{escrow.seller}</span>
                     {address === escrow.seller && (
                       <span className="text-[9px] font-bold text-blue-600 bg-blue-50 border border-blue-100 rounded px-1.5 py-0.5 self-start mt-2">
@@ -292,7 +309,7 @@ export default function WalletPage() {
                   </button>
                 </div>
               ) : (
-                <div className="border-t border-slate-100 pt-6 text-center text-xs font-bold text-slate-400 uppercase tracking-wide">
+                <div className="border-t border-slate-100 pt-6 text-center text-xs font-bold text-slate-700 uppercase tracking-wide">
                   This escrow agreement has been finalized and cannot be modified.
                 </div>
               )}
