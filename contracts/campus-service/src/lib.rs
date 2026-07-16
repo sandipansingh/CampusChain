@@ -1,8 +1,8 @@
 #![no_std]
-mod campus_token {
-    soroban_sdk::contractimport!(file = "../../target/wasm32-unknown-unknown/release/campus_token.wasm");
+mod token_wasm {
+    soroban_sdk::contractimport!(file = "wasm/campus_token.wasm");
 }
-use campus_token::Client as CampusTokenClient;
+use token_wasm::Client as CampusTokenClient;
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, Symbol,
 };

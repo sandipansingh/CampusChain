@@ -23,10 +23,11 @@ import {
   ExternalLink,
   Shield,
   ArrowRightLeft,
-  Clock,
+  Calendar,
   Search,
   SlidersHorizontal,
-  ChevronDown
+  ChevronDown,
+  Clock
 } from "lucide-react";
 
 export default function DashboardPage() {
@@ -67,7 +68,7 @@ export default function DashboardPage() {
     if (r === 1) return "Student";
     if (r === 2) return "Merchant";
     if (r === 3) return "Club Organizer";
-    if (r === 4) return "University Admin";
+    if (r === 4) return "Admin";
     return "Member";
   };
 
@@ -106,7 +107,6 @@ export default function DashboardPage() {
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "Transaction failed";
       const errHash = `err_${Date.now()}`;
-      // Fail transaction logging
       addTransaction({
         hash: errHash,
         status: "failed",
@@ -115,13 +115,6 @@ export default function DashboardPage() {
         errorMessage: errMsg,
       });
       logger.error(`Transaction failed: ${name}`, err);
-      logger.trackTransaction({
-        hash: errHash,
-        method: name,
-        status: "failed",
-        errorMessage: errMsg,
-        durationMs: Date.now() - startTime,
-      });
     }
   };
 
@@ -234,19 +227,16 @@ export default function DashboardPage() {
   ];
 
   return (
-    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
+    <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
+      
       {/* Welcome Title Banner */}
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 uppercase">
-            Campus Overview
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Analyze campus metrics, transfer rewards, and log secure smart contract escrows.
-          </p>
-        </div>
-        <div className="flex items-center gap-2 bg-white border border-border px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700">
-          <span>July 16, 2026</span>
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
+          Sales Overview
+        </h1>
+        <div className="flex items-center gap-2 bg-white border border-border px-4 py-2 rounded-2xl text-xs font-semibold text-slate-700">
+          <Calendar className="w-4 h-4 text-slate-400" />
+          <span>April 10, 2026 - May 11, 2026</span>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
         </div>
       </div>
@@ -254,109 +244,125 @@ export default function DashboardPage() {
       {/* Grid of Stats Cards (Finexy Style) - Flat, no shadow, no accentbar, no hover border line */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Balance */}
-        <div className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
+        <div className="bg-white border border-border p-6 rounded-[24px] flex flex-col justify-between min-h-[140px]">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+            <span className="text-xs font-semibold text-slate-400">
               Total Balance
             </span>
-            <Wallet className="w-5 h-5 text-slate-400" />
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400">
+              <Wallet className="w-4 h-4" />
+            </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <span className="text-3xl font-bold tracking-tight text-slate-900 font-mono">
-              {balanceLoading ? (
-                <Loader2 className="w-6 h-6 animate-spin text-slate-400" />
-              ) : (
-                `${balance?.toFixed(2)} CAMP`
-              )}
-            </span>
-            <div className="flex items-center gap-1.5 mt-2">
-              <span className="text-[10px] font-bold text-emerald-600">
-                ↑ 12.4%
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">
+                {balanceLoading ? (
+                  <Loader2 className="w-4 h-4 animate-spin text-slate-400" />
+                ) : (
+                  balance?.toFixed(0)
+                )}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">from merit rewards</span>
+              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 leading-none">
+                ↑ 4.9%
+              </span>
             </div>
+            <span className="text-[10px] text-slate-400 font-semibold mt-2">
+              Last month: {(balance || 0) - 234}
+            </span>
           </div>
         </div>
 
         {/* Card 2: Wallet Role */}
-        <div className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
+        <div className="bg-white border border-border p-6 rounded-[24px] flex flex-col justify-between min-h-[140px]">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+            <span className="text-xs font-semibold text-slate-400">
               Profile Type
             </span>
-            <Shield className="w-5 h-5 text-slate-400" />
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400">
+              <Shield className="w-4 h-4" />
+            </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <span className="text-3xl font-bold tracking-tight text-slate-900 truncate">
-              {getRoleLabel(role)}
-            </span>
-            <div className="flex items-center gap-1.5 mt-2">
-              <span className="text-[10px] font-bold text-blue-600">
-                On-Chain
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-semibold tracking-tight text-slate-900 truncate max-w-[130px]">
+                {getRoleLabel(role)}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">authorized on Stellar</span>
+              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 leading-none">
+                ↑ 7.5%
+              </span>
             </div>
+            <span className="text-[10px] text-slate-400 font-semibold mt-2">
+              Last month: Guest
+            </span>
           </div>
         </div>
 
         {/* Card 3: Session Actions */}
-        <div className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
+        <div className="bg-white border border-border p-6 rounded-[24px] flex flex-col justify-between min-h-[140px]">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+            <span className="text-xs font-semibold text-slate-400">
               Session Transactions
             </span>
-            <ArrowRightLeft className="w-5 h-5 text-slate-400" />
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400">
+              <ArrowRightLeft className="w-4 h-4" />
+            </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <span className="text-3xl font-bold tracking-tight text-slate-900 font-mono">
-              {transactions.length}
-            </span>
-            <div className="flex items-center gap-1.5 mt-2">
-              <span className="text-[10px] font-bold text-purple-600">
-                Tracked
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">
+                {transactions.length}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">pending state transitions</span>
+              <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 leading-none">
+                ↓ 6.0%
+              </span>
             </div>
+            <span className="text-[10px] text-slate-400 font-semibold mt-2">
+              Last month: 0
+            </span>
           </div>
         </div>
 
         {/* Card 4: Ledger Network */}
-        <div className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
+        <div className="bg-white border border-border p-6 rounded-[24px] flex flex-col justify-between min-h-[140px]">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+            <span className="text-xs font-semibold text-slate-400">
               Ledger Network
             </span>
-            <TrendingUp className="w-5 h-5 text-slate-400" />
+            <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-400">
+              <TrendingUp className="w-4 h-4" />
+            </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <span className="text-3xl font-bold tracking-tight text-slate-900 uppercase">
-              {network}
-            </span>
-            <div className="flex items-center gap-1.5 mt-2">
-              <span className="text-[10px] font-bold text-amber-600">
-                5s Finality
+            <div className="flex items-baseline gap-2">
+              <span className="text-3xl font-semibold tracking-tight text-slate-900 uppercase truncate max-w-[130px]">
+                {network}
               </span>
-              <span className="text-[10px] text-slate-400 font-medium">RPC active</span>
+              <span className="text-xs font-semibold text-slate-600 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-150 leading-none">
+                Active
+              </span>
             </div>
+            <span className="text-[10px] text-slate-400 font-semibold mt-2">
+              Last month: TESTNET
+            </span>
           </div>
         </div>
       </div>
 
       {/* Grid: Charts (Left) & Controls (Right) */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         {/* Chart Column (Finexy inspired charts) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           {/* Revenue Analytics (Weekly Volume Chart) - Flat design */}
-          <div className="bg-white border border-border rounded-2xl p-6 flex flex-col justify-between">
+          <div className="bg-white border border-border rounded-[24px] p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-base font-bold text-slate-900 uppercase">
-                  Transaction Telemetry
+                <h3 className="text-base font-semibold text-slate-900">
+                  Revenue analytics
                 </h3>
-                <p className="text-xs text-slate-400 font-medium">Weekly activity index in CAMP tokens</p>
               </div>
-              <div className="text-xs font-bold bg-slate-50 border border-border px-3 py-1.5 rounded-lg text-slate-600">
-                This Week
+              <div className="flex items-center gap-1.5 bg-white border border-border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 cursor-pointer">
+                <span>This Week</span>
+                <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
               </div>
             </div>
 
@@ -372,7 +378,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Y Axis Labels */}
-              <div className="absolute left-0 top-4 text-[10px] font-bold text-slate-400 flex flex-col justify-between h-60 pointer-events-none">
+              <div className="absolute left-0 top-4 text-[10px] font-semibold text-slate-400 flex flex-col justify-between h-60 pointer-events-none">
                 <span>30k</span>
                 <span>20k</span>
                 <span>10k</span>
@@ -394,21 +400,21 @@ export default function DashboardPage() {
                     >
                       {/* Tooltip on Hover */}
                       {isHovered && (
-                        <div className="absolute -top-10 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded z-20 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100">
-                          {data.amount.toLocaleString()} CAMP
+                        <div className="absolute -top-10 bg-accent text-white text-[10px] font-semibold px-2.5 py-1.5 rounded-lg z-20 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100">
+                          ${data.amount.toLocaleString()}
+                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-accent w-0 h-0" />
                         </div>
                       )}
 
-                      {/* Bar Pillar */}
+                      {/* Bar Pillar - Rounded Pill shape */}
                       <div
-                        className="w-8 rounded-full cursor-pointer transition-all duration-300 relative overflow-hidden"
+                        className="w-7 rounded-full cursor-pointer transition-all duration-300 relative overflow-hidden"
                         style={{
                           height: `${pct}%`,
-                          backgroundColor: isHovered ? "#e14e27" : "#f15a30",
-                          opacity: isHovered ? 1 : 0.85,
+                          backgroundColor: isHovered ? "#d3411b" : "#e14e27",
                         }}
                       />
-                      <span className="text-[10px] font-bold text-slate-400 group-hover:text-slate-900 transition-colors uppercase">
+                      <span className="text-[10px] font-semibold text-slate-400 group-hover:text-slate-900 transition-colors">
                         {data.day}
                       </span>
                     </div>
@@ -419,22 +425,22 @@ export default function DashboardPage() {
           </div>
 
           {/* Profit & Loss Stacked Chart with Diagonal Stripes - Flat design */}
-          <div className="bg-white border border-border rounded-2xl p-6">
+          <div className="bg-white border border-border rounded-[24px] p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
-                <h3 className="text-base font-bold text-slate-900 uppercase">
-                  Flow Analytics
+                <h3 className="text-base font-semibold text-slate-900">
+                  Total Income
                 </h3>
-                <p className="text-xs text-slate-400 font-medium">Minting rewards vs Transaction expenses</p>
+                <p className="text-xs text-slate-400 font-medium">View your income in a certain period of time</p>
               </div>
-              <div className="flex items-center gap-4 text-xs font-bold">
+              <div className="flex items-center gap-4 text-xs font-semibold">
                 <div className="flex items-center gap-1.5">
                   <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-                  <span className="text-slate-600">Rewards</span>
+                  <span className="text-slate-600">Profit</span>
                 </div>
                 <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded bg-slate-900" />
-                  <span className="text-slate-600">Transfers</span>
+                  <span className="w-2.5 h-2.5 rounded-full bg-slate-900" />
+                  <span className="text-slate-600">Loss</span>
                 </div>
               </div>
             </div>
@@ -458,7 +464,7 @@ export default function DashboardPage() {
               </div>
 
               {/* Y Axis Labels */}
-              <div className="absolute left-0 top-0 text-[10px] font-bold text-slate-400 flex flex-col justify-between h-40 pointer-events-none">
+              <div className="absolute left-0 top-0 text-[10px] font-semibold text-slate-400 flex flex-col justify-between h-40 pointer-events-none">
                 <span>50k</span>
                 <span>25k</span>
                 <span>0k</span>
@@ -477,7 +483,7 @@ export default function DashboardPage() {
                   { m: "Aug", r: 16, t: 15 },
                 ].map((item) => (
                   <div key={item.m} className="flex flex-col items-center gap-2">
-                    <div className="flex flex-col w-6 h-32 justify-end">
+                    <div className="flex flex-col w-5 h-32 justify-end">
                       {/* Top Stacked Bar (Striped - Rewards) */}
                       <div
                         className="w-full rounded-t-md relative overflow-hidden"
@@ -489,7 +495,7 @@ export default function DashboardPage() {
                         style={{ height: `${item.t * 2.5}px` }}
                       />
                     </div>
-                    <span className="text-[10px] font-bold text-slate-400 uppercase mt-1">
+                    <span className="text-[10px] font-semibold text-slate-400 mt-1">
                       {item.m}
                     </span>
                   </div>
@@ -500,9 +506,9 @@ export default function DashboardPage() {
         </div>
 
         {/* Interactive Action Controls (Right Panel) - Flat design */}
-        <div className="bg-white border border-border rounded-2xl p-6 flex flex-col gap-6">
+        <div className="bg-white border border-border rounded-[24px] p-6 flex flex-col gap-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
-            <h3 className="text-base font-extrabold text-slate-900 uppercase">
+            <h3 className="text-base font-semibold text-slate-900">
               Action Center
             </h3>
             <SlidersHorizontal className="w-4 h-4 text-slate-400" />
@@ -512,30 +518,30 @@ export default function DashboardPage() {
           <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-200">
             <button
               onClick={() => setActiveTab("send")}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition-all duration-200 ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
                 activeTab === "send"
                   ? "bg-white text-slate-900 border border-slate-200"
-                  : "text-slate-400 hover:text-slate-700"
+                  : "text-slate-450 hover:text-slate-700"
               }`}
             >
               Transfer
             </button>
             <button
               onClick={() => setActiveTab("escrow")}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition-all duration-200 ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
                 activeTab === "escrow"
                   ? "bg-white text-slate-900 border border-slate-200"
-                  : "text-slate-400 hover:text-slate-700"
+                  : "text-slate-450 hover:text-slate-700"
               }`}
             >
               Escrow
             </button>
             <button
               onClick={() => setActiveTab("events")}
-              className={`flex-1 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition-all duration-200 ${
+              className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
                 activeTab === "events"
                   ? "bg-white text-slate-900 border border-slate-200"
-                  : "text-slate-400 hover:text-slate-700"
+                  : "text-slate-450 hover:text-slate-700"
               }`}
             >
               Events
@@ -548,7 +554,7 @@ export default function DashboardPage() {
             {activeTab === "send" && (
               <form onSubmit={executeTransfer} className="flex flex-col gap-5 h-full">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                     Recipient Wallet Address
                   </label>
                   <input
@@ -562,7 +568,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                     Amount (CAMP)
                   </label>
                   <input
@@ -579,7 +585,7 @@ export default function DashboardPage() {
                 <button
                   type="submit"
                   disabled={transferMut.isPending}
-                  className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
+                  className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {transferMut.isPending ? (
                     <>
@@ -597,7 +603,7 @@ export default function DashboardPage() {
             {activeTab === "escrow" && (
               <form onSubmit={executeEscrow} className="flex flex-col gap-5 h-full">
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                     Seller / Merchant Address
                   </label>
                   <input
@@ -611,7 +617,7 @@ export default function DashboardPage() {
                 </div>
 
                 <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                  <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                     Escrow Amount (CAMP)
                   </label>
                   <input
@@ -628,7 +634,7 @@ export default function DashboardPage() {
                 <button
                   type="submit"
                   disabled={createEscrowMut.isPending || approveMut.isPending}
-                  className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
+                  className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {createEscrowMut.isPending || approveMut.isPending ? (
                     <>
@@ -648,11 +654,11 @@ export default function DashboardPage() {
                 {role === 3 || role === 4 ? (
                   /* Create Event Form */
                   <form onSubmit={executeCreateEvent} className="flex flex-col gap-5 h-full">
-                    <span className="text-[10px] font-bold text-accent uppercase tracking-wider">
+                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">
                       Club Admin Controls
                     </span>
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                         Ticket Price (CAMP)
                       </label>
                       <input
@@ -665,7 +671,7 @@ export default function DashboardPage() {
                     </div>
 
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                         Max Capacity (Tickets)
                       </label>
                       <input
@@ -681,7 +687,7 @@ export default function DashboardPage() {
                     <button
                       type="submit"
                       disabled={createEventMut.isPending}
-                      className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
+                      className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                     >
                       {createEventMut.isPending ? (
                         <>
@@ -696,11 +702,11 @@ export default function DashboardPage() {
                 ) : (
                   /* Buy Ticket Form */
                   <form onSubmit={executeBuyTicket} className="flex flex-col gap-5 h-full justify-between">
-                    <span className="text-[10px] font-bold text-accent uppercase tracking-wider">
+                    <span className="text-[10px] font-semibold text-accent uppercase tracking-wider">
                       Student Event Pass
                     </span>
                     <div className="flex flex-col gap-2">
-                      <label className="text-[10px] font-bold tracking-widest text-slate-400 uppercase">
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
                         Event ID (Ledger Index)
                       </label>
                       <input
@@ -716,7 +722,7 @@ export default function DashboardPage() {
                     <button
                       type="submit"
                       disabled={buyTicketMut.isPending || approveMut.isPending}
-                      className="w-full h-12 mt-8 bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
+                      className="w-full h-12 mt-8 bg-accent hover:opacity-95 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                     >
                       {buyTicketMut.isPending || approveMut.isPending ? (
                         <>
@@ -736,13 +742,12 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity Table (Finexy Style) - Flat design */}
-      <div className="bg-white border border-border rounded-2xl p-6 flex flex-col gap-6">
+      <div className="bg-white border border-border rounded-[24px] p-6 flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
-            <h3 className="text-base font-extrabold text-slate-900 uppercase">
-              Recent Transactions
+            <h3 className="text-base font-semibold text-slate-900">
+              Recent orders
             </h3>
-            <p className="text-xs text-slate-400 font-medium">Session-specific ledger interactions</p>
           </div>
           <div className="flex items-center gap-3">
             {/* Table controls */}
@@ -756,7 +761,7 @@ export default function DashboardPage() {
                 className="bg-transparent outline-none w-36 placeholder-slate-400 font-medium"
               />
             </div>
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-border px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600">
+            <div className="flex items-center gap-1.5 bg-slate-50 border border-border px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600">
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
               <span>Sort by</span>
             </div>
@@ -766,7 +771,7 @@ export default function DashboardPage() {
         {filteredTransactions.length === 0 ? (
           <div className="border border-dashed border-slate-200 rounded-2xl p-12 text-center flex flex-col items-center justify-center gap-3">
             <Clock className="w-8 h-8 text-slate-300" />
-            <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">
+            <span className="font-semibold text-slate-400 text-xs uppercase tracking-widest">
               {transactions.length === 0
                 ? "No transactions deployed in this session yet"
                 : "No matching transactions found"}
@@ -776,7 +781,7 @@ export default function DashboardPage() {
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
               <thead>
-                <tr className="border-b border-slate-100 text-[10px] font-black text-slate-400 uppercase tracking-widest">
+                <tr className="border-b border-slate-100 text-[10px] font-bold text-slate-400 uppercase tracking-wider">
                   <th className="py-4 px-3 w-12">
                     <input type="checkbox" className="rounded border-slate-300 text-accent focus:ring-accent" />
                   </th>
@@ -787,7 +792,7 @@ export default function DashboardPage() {
                   <th className="py-4 px-3 text-right">Details</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-xs font-bold text-slate-600">
+              <tbody className="divide-y divide-slate-100 text-xs font-semibold text-slate-600">
                 {filteredTransactions.map((tx) => (
                   <tr key={tx.hash} className="hover:bg-slate-50/50 transition-colors">
                     <td className="py-4 px-3">
@@ -801,20 +806,20 @@ export default function DashboardPage() {
                     </td>
                     <td className="py-4 px-3">
                       <span
-                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold uppercase border ${
+                        className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-semibold uppercase border ${
                           tx.status === "pending"
-                            ? "bg-yellow-50 text-yellow-700 border-yellow-200"
+                            ? "bg-red-50 text-red-700 border-red-100"
                             : tx.status === "processing"
-                            ? "bg-blue-50 text-blue-700 border-blue-200"
+                            ? "bg-blue-50 text-blue-700 border-blue-100"
                             : tx.status === "confirmed"
-                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                            : "bg-red-50 text-red-700 border-red-200"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-100"
+                            : "bg-red-50 text-red-700 border-red-100"
                         }`}
                       >
                         <span
                           className={`w-1.5 h-1.5 rounded-full ${
                             tx.status === "pending"
-                              ? "bg-yellow-500 animate-pulse"
+                              ? "bg-red-500 animate-pulse"
                               : tx.status === "processing"
                               ? "bg-blue-500"
                               : tx.status === "confirmed"
@@ -822,11 +827,15 @@ export default function DashboardPage() {
                               : "bg-red-500"
                           }`}
                         />
-                        {tx.status}
+                        {tx.status === "pending" ? "Pending" : tx.status === "confirmed" ? "Completed" : tx.status}
                       </span>
                     </td>
                     <td className="py-4 px-3 text-slate-400">
-                      {new Date(tx.timestamp).toLocaleTimeString()}
+                      {new Date(tx.timestamp).toLocaleDateString("en-GB", {
+                        day: "numeric",
+                        month: "short",
+                        year: "numeric"
+                      })}
                     </td>
                     <td className="py-4 px-3 text-right">
                       {tx.explorerUrl && tx.status === "confirmed" ? (

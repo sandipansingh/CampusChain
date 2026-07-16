@@ -10,7 +10,7 @@
   --color-border: #e2e8f0;
   --color-card: #ffffff;
 
-  --font-sans: var(--font-space-grotesk), sans-serif;
+  --font-sans: var(--font-inter), sans-serif;
   --font-mono: var(--font-geist-mono), monospace;
 }
 
