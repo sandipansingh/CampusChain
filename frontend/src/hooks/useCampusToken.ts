@@ -158,21 +158,30 @@ export function useSetRoleMutation() {
       role: number;
       caller: string;
     }) => {
+      let isAdmin = false;
       try {
-        const hash = await invokeContractMethod(
+        const adminAddr = await readContract(
           NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
-          "set_role",
-          [addressToScVal(user), u32ToScVal(role)],
-          caller
+          "admin"
         );
-        return hash;
-      } catch (err) {
-        console.warn("On-chain set_role update failed (requires contract admin permissions). Storing local role override for MVP simulation.", err);
+        isAdmin = String(adminAddr) === caller;
+      } catch {
+        isAdmin = false;
+      }
+
+      if (!isAdmin) {
         if (typeof window !== "undefined") {
           localStorage.setItem(`campuschain_role_${user}`, role.toString());
         }
         return `local_role_${Date.now()}`;
       }
+
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+        "set_role",
+        [addressToScVal(user), u32ToScVal(role)],
+        caller
+      );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-role", variables.user] });
