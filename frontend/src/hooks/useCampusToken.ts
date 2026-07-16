@@ -45,6 +45,14 @@ export function useCampusTokenMetadata() {
   return useQuery({
     queryKey: ["campus-token-metadata"],
     queryFn: async () => {
+      if (typeof window === "undefined") {
+        return {
+          name: "CampusChain Token",
+          symbol: "CAMP",
+          decimals: 7,
+          totalSupply: 1000000,
+        };
+      }
       const name = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "name");
       const symbol = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "symbol");
       const decimals = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "decimals");
