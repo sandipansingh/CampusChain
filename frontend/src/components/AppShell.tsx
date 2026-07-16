@@ -86,7 +86,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   };
 
   return (
-    <div className="min-h-screen bg-[#f4f6f8] text-slate-800 flex p-6 gap-6 font-sans select-none antialiased max-h-screen overflow-hidden">
+    <div className="h-screen bg-[#f4f6f8] text-slate-800 flex p-6 gap-6 font-sans select-none antialiased overflow-hidden">
       
       {/* Top Banner Warning for Sandbox Connection if disconnected */}
       {!address && (
