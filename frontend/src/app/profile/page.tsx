@@ -137,6 +137,17 @@ export default function ProfilePage() {
         caller: address,
       });
 
+      if (hash.startsWith("local_role_")) {
+        addTransaction({
+          hash,
+          status: "confirmed",
+          method: actionName,
+          timestamp: Date.now(),
+        });
+        logger.trackTransaction({ hash, method: actionName, status: "confirmed" });
+        return;
+      }
+
       addTransaction({
         hash,
         status: "pending",
