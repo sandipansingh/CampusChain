@@ -580,6 +580,21 @@ export function useClaimFaucetMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
+      queryClient.invalidateQueries({ queryKey: ["has-claimed-faucet", variables.recipient] });
     },
+  });
+}
+
+export function useHasClaimedFaucet(address?: string) {
+  return useQuery({
+    queryKey: ["has-claimed-faucet", address],
+    queryFn: () =>
+      readContract(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "has_claimed_faucet",
+        [addressToScVal(address!)]
+      ),
+    enabled: !!address,
+    refetchInterval: 30000,
   });
 }

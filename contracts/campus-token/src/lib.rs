@@ -14,6 +14,7 @@ pub enum Error {
     InsufficientAllowance = 5,
     InvalidAmount = 6,
     InvalidRole = 7,
+    AlreadyClaimed = 8,
 }
 
 #[contracttype]
@@ -391,6 +392,11 @@ impl CampusToken {
         Ok(env.storage().persistent().get(&key).unwrap_or(0u32)) // Default to 0 (Guest)
     }
 
+    pub fn has_claimed_faucet(env: Env, address: Address) -> bool {
+        let claimed_key = DataKey::FaucetClaimed(address);
+        env.storage().persistent().get::<DataKey, bool>(&claimed_key).unwrap_or(false)
+    }
+
     pub fn faucet(env: Env, to: Address, amount: i128) -> Result<(), Error> {
         to.require_auth();
 
@@ -404,7 +410,7 @@ impl CampusToken {
         let claimed_key = DataKey::FaucetClaimed(to.clone());
         extend_persistent(&env, &claimed_key);
         if env.storage().persistent().get::<DataKey, bool>(&claimed_key).unwrap_or(false) {
-            return Err(Error::InsufficientBalance); // already claimed
+            return Err(Error::AlreadyClaimed);
         }
 
         let to_key = DataKey::Balance(to.clone());

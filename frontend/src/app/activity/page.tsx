@@ -6,7 +6,7 @@ import {
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
 } from "@/services/contracts";
-import { scValToNative } from "@stellar/stellar-sdk";
+import { scValToNative, xdr } from "@stellar/stellar-sdk";
 import {
   ArrowRightLeft,
   Lock,
@@ -79,8 +79,8 @@ function decodeEvent(evt: {
   topic: unknown[];
   value: unknown;
 }): DecodedEvent {
-  const rawTopic = evt.topic;
-  const rawValue = evt.value;
+  const rawTopic = evt.topic as unknown as xdr.ScVal[];
+  const rawValue = evt.value as unknown as xdr.ScVal | null;
 
   const topicNative = rawTopic.map((t) => scValToNative(t));
   const valueNative = rawValue ? scValToNative(rawValue) : null;
@@ -218,7 +218,6 @@ function decodeEvent(evt: {
   }
   if (eventName === "escrow_released") {
     const id = decodeNative(topicNative[1]);
-    const buyer = typeof topicNative[2] === "string" ? topicNative[2] : "";
     const seller = typeof topicNative[3] === "string" ? topicNative[3] : "";
     const amountI128 = decodeNative(valueNative) ?? 0;
     const amount = Number(amountI128) / 10_000_000;
@@ -434,17 +433,27 @@ export default function ActivityFeedPage() {
       else setLoading(true);
 
       const server = getRpcServer();
-      const latestLedger = await server.getLatestLedger();
 
-      const res = await server.getEvents({
-        startLedger: Math.max(1, latestLedger.sequence - 5000),
-        filters: [
-          { type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] },
-          { type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] },
-        ],
-        limit: 40,
-        ...(isLoadMore && cursor ? { cursor } : {}),
-      });
+      const baseFilters = [
+        { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] },
+        { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] },
+      ];
+
+      let res;
+      if (isLoadMore && cursor) {
+        res = await server.getEvents({
+          filters: baseFilters,
+          cursor,
+          limit: 40,
+        });
+      } else {
+        const latestLedger = await server.getLatestLedger();
+        res = await server.getEvents({
+          startLedger: Math.max(1, latestLedger.sequence - 5000),
+          filters: baseFilters,
+          limit: 40,
+        });
+      }
 
       const decodedEvents = res.events
         .map((evt) => {
@@ -452,7 +461,7 @@ export default function ActivityFeedPage() {
             return decodeEvent({
               id: evt.id,
               ledger: evt.ledger,
-              ledgerClosedAt: (evt as Record<string, unknown>).ledgerClosedAt as string | null ?? null,
+              ledgerClosedAt: evt.ledgerClosedAt,
               txHash: evt.txHash,
               topic: evt.topic as unknown[],
               value: evt.value as unknown,
@@ -474,11 +483,7 @@ export default function ActivityFeedPage() {
       }
 
       setHasMore(res.events.length >= 40);
-      // Use the last event's ledger as cursor for next page
-      if (res.events.length > 0) {
-        const lastEvent = res.events[res.events.length - 1];
-        setCursor((lastEvent as Record<string, unknown>).pagingToken as string ?? null);
-      }
+      setCursor(res.cursor ?? null);
     } catch {
       // silent fail on RPC errors
     } finally {

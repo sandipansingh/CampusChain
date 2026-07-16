@@ -110,3 +110,35 @@ fn test_rbac_roles() {
     client.set_role(&user, &2);
     assert_eq!(client.get_role(&user), 2);
 }
+
+#[test]
+fn test_faucet_claim_and_has_claimed() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let user = Address::generate(&env);
+
+    let token_id = env.register_contract(None, CampusToken);
+    let client = CampusTokenClient::new(&env, &token_id);
+
+    let name = String::from_str(&env, "Campus Token");
+    let symbol = String::from_str(&env, "CAMP");
+    client.initialize(&admin, &name, &symbol, &7);
+
+    // Before claim: has_claimed should be false, balance 0
+    assert!(!client.has_claimed_faucet(&user));
+    assert_eq!(client.balance(&user), 0i128);
+
+    // Claim 100 CAMP (100 * 10^7 stroops)
+    let amount = 100 * 10i128.pow(7);
+    client.faucet(&user, &amount);
+    assert_eq!(client.balance(&user), amount);
+
+    // After claim: has_claimed should be true
+    assert!(client.has_claimed_faucet(&user));
+
+    // Double claim should fail with AlreadyClaimed error
+    let result = client.try_faucet(&user, &amount);
+    assert!(result.is_err());
+}

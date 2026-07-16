@@ -8,17 +8,17 @@ CampusChain is a unified, decentralized campus economy platform that replaces di
 
 | Contract | Address |
 |---|---|
-| **CampusToken** | `CADNFSTOVRNFJGDLCL3MUYDABRR5EPPVY5QOWV6VY7XTIAPQDOSKG4M7` |
-| **CampusService** | `CBM4I26Z3Q47FQWU2BFF7ALYERMQALIRWGY47P63FCRT5CH6ZT35PSQ7` |
+| **CampusToken** | `CA5OK6BWFRN67257RITZMLAY2YJ6T6FTU2ZM3UY76QYIE6DXB5QUAPMV` |
+| **CampusService** | `CA5BDN2A2FM5AR3FEOBPPUCEAJCNKPKRRQFSLZ66SP7LGDKVJEKRPYTK` |
 
 ### Recent Transactions
 
 | Action | Tx Hash |
 |---|---|
-| CampusToken deploy | [f7df2c2c1956ad71411607216f5563c4abb6f313682927aea5708ee2bb25f29d](https://stellar.expert/explorer/testnet/tx/f7df2c2c1956ad71411607216f5563c4abb6f313682927aea5708ee2bb25f29d) |
-| CampusToken init | [9a6482fbeedb69576a713110db94570f9a1ea87c9ad1ded2dc65f236f2e152ff](https://stellar.expert/explorer/testnet/tx/9a6482fbeedb69576a713110db94570f9a1ea87c9ad1ded2dc65f236f2e152ff) |
-| CampusService deploy | [d4a15761af413cbd78643e4ce351f1abab7b8ec8e3224b5e7bc56fe969c4c6fe](https://stellar.expert/explorer/testnet/tx/d4a15761af413cbd78643e4ce351f1abab7b8ec8e3224b5e7bc56fe969c4c6fe) |
-| CampusService init | [3ff7889ca6f48e6aa246ab17b968013ff49ccfb3e70b514454b154c133a547b3](https://stellar.expert/explorer/testnet/tx/3ff7889ca6f48e6aa246ab17b968013ff49ccfb3e70b514454b154c133a547b3) |
+| CampusToken deploy | [0bf506c9111fe357723c8464d395985981d4d043026959ced2a2ac543a29c335](https://stellar.expert/explorer/testnet/tx/0bf506c9111fe357723c8464d395985981d4d043026959ced2a2ac543a29c335) |
+| CampusToken init | [0bebcbc914413d73964e7b29e78d79c8081557b14903b2605ee65a713b4fadb0](https://stellar.expert/explorer/testnet/tx/0bebcbc914413d73964e7b29e78d79c8081557b14903b2605ee65a713b4fadb0) |
+| CampusService deploy | [e96b73c167de52d2d80e64f9d680e679729ab4726a663e2b93c99a377ec8cd5c](https://stellar.expert/explorer/testnet/tx/e96b73c167de52d2d80e64f9d680e679729ab4726a663e2b93c99a377ec8cd5c) |
+| CampusService init | [32644dc1c49608e6299016024a025abc70c5cdaec7ff75e445a2a8b6e0910b75](https://stellar.expert/explorer/testnet/tx/32644dc1c49608e6299016024a025abc70c5cdaec7ff75e445a2a8b6e0910b75) |
 
 ---
 
@@ -161,8 +161,8 @@ Copy `frontend/.env.local` with:
 ```
 NEXT_PUBLIC_STELLAR_RPC_URL="https://soroban-testnet.stellar.org"
 NEXT_PUBLIC_STELLAR_PASSPHRASE="Test SDF Network ; September 2015"
-NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID="CADNFSTOVRNFJGDLCL3MUYDABRR5EPPVY5QOWV6VY7XTIAPQDOSKG4M7"
-NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID="CBM4I26Z3Q47FQWU2BFF7ALYERMQALIRWGY47P63FCRT5CH6ZT35PSQ7"
+NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID="CA5OK6BWFRN67257RITZMLAY2YJ6T6FTU2ZM3UY76QYIE6DXB5QUAPMV"
+NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID="CA5BDN2A2FM5AR3FEOBPPUCEAJCNKPKRRQFSLZ66SP7LGDKVJEKRPYTK"
 ```
 
 ---

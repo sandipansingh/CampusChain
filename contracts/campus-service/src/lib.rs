@@ -26,6 +26,7 @@ pub enum Error {
     AlreadyMember = 13,
     NotAMember = 14,
     AlreadyClaimed = 15,
+    ContractError = 16,
 }
 
 #[contracttype]
@@ -860,6 +861,15 @@ impl CampusService {
     }
 
     // --- TOKEN FAUCET ---
+
+    pub fn has_claimed_faucet(env: Env, address: Address) -> bool {
+        let token_addr = match get_token_contract(&env) {
+            Ok(addr) => addr,
+            Err(_) => return false,
+        };
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+        token_client.has_claimed_faucet(&address)
+    }
 
     pub fn claim_faucet(env: Env, recipient: Address) -> Result<(), Error> {
         recipient.require_auth();

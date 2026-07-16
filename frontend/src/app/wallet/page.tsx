@@ -8,6 +8,7 @@ import {
   useReleaseEscrowMutation,
   useRefundEscrowMutation,
   useClaimFaucetMutation,
+  useHasClaimedFaucet,
 } from "@/hooks/useCampusService";
 import { pollTransactionStatus } from "@/services/contracts";
 import { useTransactionStore } from "@/state/useTransactionStore";
@@ -23,6 +24,7 @@ import {
 export default function WalletPage() {
   const { address } = useWalletStore();
   const { data: balance, isLoading: balanceLoading, refetch: refetchBalance } = useCampusBalance(address);
+  const { data: hasClaimed } = useHasClaimedFaucet(address ?? undefined);
 
   // Escrow lookup state
   const [escrowIdInput, setEscrowIdInput] = useState("");
@@ -168,10 +170,11 @@ export default function WalletPage() {
               <span className="text-4xl font-bold tracking-tight font-mono text-slate-900">
                 {balanceLoading ? "..." : balance?.toFixed(2)}
               </span>
-              <span className="text-xs font-bold tracking-widest uppercase text-accent mt-1">
-                CAMP Tokens Available
-              </span>
+            <span className="text-xs font-bold tracking-widest uppercase text-accent mt-1">
+              CAMP Tokens Available
+            </span>
 
+            {!hasClaimed && (
               <button
                 onClick={handleClaimFaucet}
                 disabled={claimFaucetMut.isPending}
@@ -180,7 +183,8 @@ export default function WalletPage() {
                 {claimFaucetMut.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
                 Claim 100 CAMP Tokens
               </button>
-            </div>
+            )}
+          </div>
 
             <div className="border-t border-slate-100 pt-4 flex flex-col gap-1">
               <span className="text-[9px] font-bold text-slate-700 uppercase">Public Key</span>
