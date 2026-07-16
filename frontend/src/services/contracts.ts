@@ -6,6 +6,7 @@ import {
   scValToNative,
   Transaction,
   xdr,
+  Account,
 } from "@stellar/stellar-sdk";
 import { signTx } from "@/services/wallet";
 import { logger } from "@/services/logger";
@@ -26,13 +27,12 @@ export function getRpcServer(): rpc.Server {
 export async function readContract(
   contractId: string,
   methodName: string,
-  args: xdr.ScVal[] = []
+  args: xdr.ScVal[] = [],
+  sourceAddress?: string
 ): Promise<unknown> {
   const server = getRpcServer();
-
-  // Use a generic valid public key to serve as source account during simulation
-  const dummyPublicKey = "GDQ6NVSZ22MHTMXG7Q5CGF6V2YCYUNMXL6QGZYYJZ6KJV7Y6N3Y44444";
-  const sourceAccount = await server.getAccount(dummyPublicKey);
+  const srcAddress = sourceAddress || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
+  const sourceAccount = new Account(srcAddress, "0");
 
   const contract = new Contract(contractId);
   const operation = contract.call(methodName, ...args);

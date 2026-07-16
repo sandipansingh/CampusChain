@@ -7,6 +7,7 @@ import {
   u32ToScVal,
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
 } from "@/services/contracts";
+import { useWalletStore } from "@/state/useWalletStore";
 
 export function useCampusBalance(address: string | null) {
   return useQuery({
@@ -17,7 +18,8 @@ export function useCampusBalance(address: string | null) {
         const res = await readContract(
           NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
           "balance",
-          [addressToScVal(address)]
+          [addressToScVal(address)],
+          address
         );
         return Number(res) / 10_000_000;
       } catch (err) {
@@ -38,7 +40,8 @@ export function useCampusUserRole(address: string | null) {
         const res = await readContract(
           NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
           "get_role",
-          [addressToScVal(address)]
+          [addressToScVal(address)],
+          address
         );
         return Number(res);
       } catch (err) {
@@ -54,11 +57,12 @@ export function useCampusTokenMetadata() {
   return useQuery({
     queryKey: ["campus-token-metadata"],
     queryFn: async () => {
+      const address = useWalletStore.getState().address || undefined;
       try {
-        const name = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "name");
-        const symbol = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "symbol");
-        const decimals = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "decimals");
-        const totalSupply = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "total_supply");
+        const name = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "name", [], address);
+        const symbol = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "symbol", [], address);
+        const decimals = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "decimals", [], address);
+        const totalSupply = await readContract(NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, "total_supply", [], address);
 
         return {
           name: String(name || "CampusChain Token"),

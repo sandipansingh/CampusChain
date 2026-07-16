@@ -7,6 +7,7 @@ import {
   u32ToScVal,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
 } from "@/services/contracts";
+import { useWalletStore } from "@/state/useWalletStore";
 
 export interface EscrowAgreement {
   id: number;
@@ -37,10 +38,12 @@ export function useEscrowAgreement(escrowId: number | null) {
     queryFn: async (): Promise<EscrowAgreement | null> => {
       if (escrowId === null) return null;
       try {
+        const address = useWalletStore.getState().address || undefined;
         const res = (await readContract(
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
           "get_escrow",
-          [u32ToScVal(escrowId)]
+          [u32ToScVal(escrowId)],
+          address
         )) as { id: bigint; buyer: string; seller: string; amount: bigint; status: number } | null;
 
         if (!res) return null;
@@ -66,10 +69,12 @@ export function useEventDetails(eventId: number | null) {
     queryFn: async (): Promise<EventDetails | null> => {
       if (eventId === null) return null;
       try {
+        const address = useWalletStore.getState().address || undefined;
         const res = (await readContract(
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
           "get_event",
-          [u32ToScVal(eventId)]
+          [u32ToScVal(eventId)],
+          address
         )) as { id: bigint; host: string; price: bigint; capacity: number; tickets_sold: number } | null;
 
         if (!res) return null;
@@ -95,10 +100,12 @@ export function useTicketDetails(ticketId: number | null) {
     queryFn: async (): Promise<TicketDetails | null> => {
       if (ticketId === null) return null;
       try {
+        const address = useWalletStore.getState().address || undefined;
         const res = (await readContract(
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
           "get_ticket",
-          [u32ToScVal(ticketId)]
+          [u32ToScVal(ticketId)],
+          address
         )) as { id: bigint; event_id: bigint; owner: string; redeemed: boolean } | null;
 
         if (!res) return null;
