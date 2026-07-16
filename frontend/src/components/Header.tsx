@@ -32,7 +32,7 @@ export default function Header() {
         {/* Logo */}
         <Link href="/" className="group">
           <div className="text-3xl font-bold tracking-tighter text-foreground group-hover:text-accent transition-colors duration-300">
-            CAMPUSCHAIN//
+            CAMPUSCHAIN
           </div>
         </Link>
 

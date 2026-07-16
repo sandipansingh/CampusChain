@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import { Space_Grotesk, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
+import AppShell from "@/components/AppShell";
 
 const spaceGrotesk = Space_Grotesk({
   variable: "--font-space-grotesk",
@@ -31,7 +32,9 @@ export default function RootLayout({
         className={`${spaceGrotesk.variable} ${geistMono.variable} font-sans antialiased`}
       >
         <div className="noise-overlay" aria-hidden="true" />
-        <Providers>{children}</Providers>
+        <Providers>
+          <AppShell>{children}</AppShell>
+        </Providers>
       </body>
     </html>
   );

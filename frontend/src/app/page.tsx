@@ -75,8 +75,8 @@ export default function LandingPage() {
         </div>
 
         {/* Huge decorative watermark background number */}
-        <div className="absolute right-0 bottom-0 text-[18rem] md:text-[32rem] font-bold text-muted opacity-5 leading-none translate-y-1/4 pointer-events-none select-none">
-          887
+        <div className="absolute right-0 bottom-0 text-[18rem] md:text-[24rem] font-bold text-muted opacity-5 leading-none translate-y-1/4 pointer-events-none select-none">
+          CAMPUS
         </div>
       </section>
 
@@ -102,73 +102,73 @@ export default function LandingPage() {
         <div className="max-w-[95vw] mx-auto flex flex-col gap-16">
           <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-8">
             <h2 className="text-5xl md:text-7xl font-bold tracking-tighter uppercase leading-none">
-              {"CAMPUS PROTOCOLS //"}
-            </h2>
-            <span className="text-muted-foreground text-lg md:text-xl font-medium max-w-md">
-              Custom Soroban smart contracts orchestrating decentralized services with absolute security.
-            </span>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-            {features.map((feat) => (
-              <div
-                key={feat.num}
-                className="group border-2 border-border bg-background p-8 flex flex-col justify-between min-h-[350px] transition-all duration-300 hover:bg-accent hover:border-accent hover:text-accent-foreground"
-              >
-                <div>
-                  <span className="text-4xl font-bold text-muted group-hover:text-accent-foreground/50 transition-colors duration-300 font-mono">
-                    {feat.num}
-                  </span>
-                  <h3 className="text-2xl font-bold tracking-tight mt-6 uppercase leading-none">
-                    {feat.title}
-                  </h3>
-                </div>
-                <p className="text-muted-foreground group-hover:text-accent-foreground font-medium text-base mt-6">
-                  {feat.desc}
-                </p>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* Slower News Marquee */}
-      <section className="w-full bg-background py-8 border-b-2 border-border overflow-hidden flex items-center">
-        <div className="animate-marquee-rtl animate-marquee-slow flex gap-16 whitespace-nowrap text-xl md:text-2xl font-bold tracking-widest uppercase text-muted-foreground">
-          <span>{"// NEW MERCHANDISE ESCROWS LIVE NOW"}</span>
-          <span>{"// UNIVERSITY ACCREDITATION SCHOLARSHIPS ACTIVE"}</span>
-          <span>{"// CLUB EVENTS TICKETING PIPELINE DEPLOYED ON TESTNET"}</span>
-          <span>{"// SWK SUPPORT EXTENDED TO FREIGHTER AND ALBEDO WALLETS"}</span>
-          {/* Duplicate for infinite loop */}
-          <span>{"// NEW MERCHANDISE ESCROWS LIVE NOW"}</span>
-          <span>{"// UNIVERSITY ACCREDITATION SCHOLARSHIPS ACTIVE"}</span>
-          <span>{"// CLUB EVENTS TICKETING PIPELINE DEPLOYED ON TESTNET"}</span>
-          <span>{"// SWK SUPPORT EXTENDED TO FREIGHTER AND ALBEDO WALLETS"}</span>
-        </div>
-      </section>
-
-      {/* Call to Action Section */}
-      <section className="w-full py-32 bg-background relative overflow-hidden flex flex-col items-center justify-center">
-        <div className="max-w-[95vw] w-full text-center flex flex-col items-center gap-8 z-10">
-          <h2 className="text-4xl md:text-8xl font-bold tracking-tighter uppercase leading-[0.85] max-w-4xl">
-            JOIN THE DIGITAL TRANSFORMATION
+            CAMPUS PROTOCOLS
           </h2>
-          <p className="max-w-xl text-lg md:text-xl text-muted-foreground font-medium">
-            Equip your phone with freighter wallet, load testnet XLM, and dive into a fully
-            decentralized campus economy ecosystem.
-          </p>
-          <button
-            onClick={connectWallet}
-            disabled={isConnecting}
-            className="h-20 px-16 bg-accent text-accent-foreground uppercase tracking-tighter font-bold text-xl transition-all duration-300 hover:scale-105 active:scale-95"
-          >
-            {isConnecting ? "CONNECTING..." : "CONNECT WALLET NOW"}
-          </button>
+          <span className="text-muted-foreground text-lg md:text-xl font-medium max-w-md">
+            Custom Soroban smart contracts orchestrating decentralized services with absolute security.
+          </span>
         </div>
 
-        {/* Decorative background grids */}
-        <div className="absolute inset-0 bg-[linear-gradient(to_right,#3F3F46_1px,transparent_1px),linear-gradient(to_bottom,#3F3F46_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-10 pointer-events-none" />
-      </section>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          {features.map((feat) => (
+            <div
+              key={feat.num}
+              className="group border-2 border-border bg-background p-8 flex flex-col justify-between min-h-[350px] transition-all duration-300 hover:bg-accent hover:border-accent hover:text-accent-foreground rounded-2xl"
+            >
+              <div>
+                <span className="text-4xl font-bold text-muted group-hover:text-accent-foreground/50 transition-colors duration-300 font-mono">
+                  {feat.num}
+                </span>
+                <h3 className="text-2xl font-bold tracking-tight mt-6 uppercase leading-none">
+                  {feat.title}
+                </h3>
+              </div>
+              <p className="text-muted-foreground group-hover:text-accent-foreground font-medium text-base mt-6">
+                {feat.desc}
+              </p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+
+    {/* Slower News Marquee */}
+    <section className="w-full bg-background py-8 border-b-2 border-border overflow-hidden flex items-center">
+      <div className="animate-marquee-rtl animate-marquee-slow flex gap-16 whitespace-nowrap text-xl md:text-2xl font-bold tracking-widest uppercase text-muted-foreground">
+        <span>{"// NEW MERCHANDISE ESCROWS LIVE NOW"}</span>
+        <span>{"// UNIVERSITY ACCREDITATION SCHOLARSHIPS ACTIVE"}</span>
+        <span>{"// CLUB EVENTS TICKETING PIPELINE DEPLOYED ON TESTNET"}</span>
+        <span>{"// SWK SUPPORT EXTENDED TO FREIGHTER AND ALBEDO WALLETS"}</span>
+        {/* Duplicate for infinite loop */}
+        <span>{"// NEW MERCHANDISE ESCROWS LIVE NOW"}</span>
+        <span>{"// UNIVERSITY ACCREDITATION SCHOLARSHIPS ACTIVE"}</span>
+        <span>{"// CLUB EVENTS TICKETING PIPELINE DEPLOYED ON TESTNET"}</span>
+        <span>{"// SWK SUPPORT EXTENDED TO FREIGHTER AND ALBEDO WALLETS"}</span>
+      </div>
+    </section>
+
+    {/* Call to Action Section */}
+    <section className="w-full py-32 bg-background relative overflow-hidden flex flex-col items-center justify-center">
+      <div className="max-w-[95vw] w-full text-center flex flex-col items-center gap-8 z-10">
+        <h2 className="text-4xl md:text-8xl font-bold tracking-tighter uppercase leading-[0.85] max-w-4xl">
+          JOIN THE DIGITAL TRANSFORMATION
+        </h2>
+        <p className="max-w-xl text-lg md:text-xl text-muted-foreground font-medium">
+          Equip your phone with freighter wallet, load testnet XLM, and dive into a fully
+          decentralized campus economy ecosystem.
+        </p>
+        <button
+          onClick={connectWallet}
+          disabled={isConnecting}
+          className="h-20 px-16 bg-accent text-accent-foreground uppercase tracking-tighter font-bold text-xl rounded-2xl transition-all duration-300 hover:scale-105 active:scale-95 shadow-lg shadow-accent/25"
+        >
+          {isConnecting ? "CONNECTING..." : "CONNECT WALLET NOW"}
+        </button>
+      </div>
+
+      {/* Decorative background grids */}
+      <div className="absolute inset-0 bg-[linear-gradient(to_right,#cbd5e1_1px,transparent_1px),linear-gradient(to_bottom,#cbd5e1_1px,transparent_1px)] bg-[size:4rem_4rem] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_50%,#000_70%,transparent_100%)] opacity-15 pointer-events-none" />
+    </section>
 
       {/* Footer */}
       <footer className="w-full border-t-2 border-border py-12 bg-background mt-auto">
