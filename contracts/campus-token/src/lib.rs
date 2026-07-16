@@ -27,6 +27,7 @@ pub enum DataKey {
     Balance(Address),
     Allowance(Address, Address),
     Role(Address),
+    FaucetClaimed(Address),
 }
 
 #[contracttype]
@@ -388,6 +389,44 @@ impl CampusToken {
         let key = DataKey::Role(address);
         extend_persistent(&env, &key);
         Ok(env.storage().persistent().get(&key).unwrap_or(0u32)) // Default to 0 (Guest)
+    }
+
+    pub fn faucet(env: Env, to: Address, amount: i128) -> Result<(), Error> {
+        to.require_auth();
+
+        if !has_admin(&env) {
+            return Err(Error::NotInitialized);
+        }
+        if amount <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+
+        let claimed_key = DataKey::FaucetClaimed(to.clone());
+        extend_persistent(&env, &claimed_key);
+        if env.storage().persistent().get::<DataKey, bool>(&claimed_key).unwrap_or(false) {
+            return Err(Error::InsufficientBalance); // already claimed
+        }
+
+        let to_key = DataKey::Balance(to.clone());
+        extend_persistent(&env, &to_key);
+
+        let balance = env.storage().persistent().get(&to_key).unwrap_or(0i128);
+        env.storage().persistent().set(&to_key, &(balance + amount));
+
+        let total_supply_key = DataKey::TotalSupply;
+        let total_supply: i128 = env.storage().instance().get(&total_supply_key).unwrap_or(0i128);
+        env.storage().instance().set(&total_supply_key, &(total_supply + amount));
+
+        env.storage().persistent().set(&claimed_key, &true);
+
+        extend_instance(&env);
+
+        env.events().publish(
+            (Symbol::new(&env, "faucet"), to),
+            amount,
+        );
+
+        Ok(())
     }
 
     pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), Error> {

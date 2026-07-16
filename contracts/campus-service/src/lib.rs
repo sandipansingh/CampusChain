@@ -4,7 +4,7 @@ mod token_wasm {
 }
 use token_wasm::Client as CampusTokenClient;
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, Symbol,
+    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, String, Symbol, Vec,
 };
 
 #[contracterror]
@@ -21,6 +21,11 @@ pub enum Error {
     TicketNotFound = 8,
     TicketAlreadyRedeemed = 9,
     TokenError = 10,
+    UniversityNotFound = 11,
+    JoinRequestNotFound = 12,
+    AlreadyMember = 13,
+    NotAMember = 14,
+    AlreadyClaimed = 15,
 }
 
 #[contracttype]
@@ -34,6 +39,13 @@ pub enum DataKey {
     Escrow(u64),
     Event(u64),
     Ticket(u64),
+    UniversityCounter,
+    University(u64),
+    UniversityMember(Address),
+    JoinRequestCounter,
+    JoinRequest(u64),
+    InviteCounter,
+    Invite(u64),
 }
 
 #[contracttype]
@@ -64,6 +76,37 @@ pub struct TicketDetails {
     pub owner: Address,
     pub redeemed: bool,
 }
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct University {
+    pub id: u64,
+    pub name: String,
+    pub location: String,
+    pub description: String,
+    pub admin: Address,
+    pub member_count: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct JoinRequest {
+    pub id: u64,
+    pub university_id: u64,
+    pub applicant: Address,
+    pub status: u32, // 0: pending, 1: approved, 2: denied
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct Invite {
+    pub id: u64,
+    pub university_id: u64,
+    pub invitee: Address,
+    pub status: u32, // 0: pending, 1: accepted, 2: declined
+}
+
+const FAUCET_AMOUNT: i128 = 100_000_0000; // 100 CAMP (7 decimals)
 
 const LEDGER_THRESHOLD_INSTANCE: u32 = 1000;
 const LEDGER_EXTEND_TO_INSTANCE: u32 = 10000;
@@ -438,6 +481,397 @@ impl CampusService {
         env.events().publish(
             (Symbol::new(&env, "ticket_redeemed"), ticket_id, ticket.event_id, host),
             (),
+        );
+
+        Ok(())
+    }
+
+    // --- UNIVERSITY OPERATIONS ---
+
+    pub fn register_university(
+        env: Env,
+        admin: Address,
+        name: String,
+        location: String,
+        description: String,
+    ) -> Result<u64, Error> {
+        admin.require_auth();
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        // Require role 4 (University Admin)
+        let role = token_client.get_role(&admin);
+        if role != 4 {
+            return Err(Error::Unauthorized);
+        }
+
+        extend_instance(&env);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::UniversityCounter)
+            .unwrap_or(0);
+        counter += 1;
+        env.storage()
+            .instance()
+            .set(&DataKey::UniversityCounter, &counter);
+
+        let university = University {
+            id: counter,
+            name,
+            location,
+            description,
+            admin: admin.clone(),
+            member_count: 0,
+        };
+
+        let key = DataKey::University(counter);
+        env.storage().persistent().set(&key, &university);
+        extend_persistent(&env, &key);
+
+        env.events().publish(
+            (Symbol::new(&env, "university_registered"), counter, admin),
+            (),
+        );
+
+        Ok(counter)
+    }
+
+    pub fn get_university(env: Env, id: u64) -> Result<University, Error> {
+        let key = DataKey::University(id);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::UniversityNotFound)
+    }
+
+    pub fn list_universities(env: Env) -> Result<Vec<University>, Error> {
+        extend_instance(&env);
+        let counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::UniversityCounter)
+            .unwrap_or(0);
+
+        let mut universities = Vec::new(&env);
+        for id in 1..=counter {
+            let key = DataKey::University(id);
+            if let Some(uni) = env.storage().persistent().get::<DataKey, University>(&key) {
+                universities.push_back(uni);
+            }
+        }
+        Ok(universities)
+    }
+
+    // --- MEMBERSHIP OPERATIONS ---
+
+    pub fn request_join(
+        env: Env,
+        university_id: u64,
+        applicant: Address,
+    ) -> Result<u64, Error> {
+        applicant.require_auth();
+
+        // Verify university exists
+        let uni_key = DataKey::University(university_id);
+        extend_persistent(&env, &uni_key);
+        if !env.storage().persistent().has(&uni_key) {
+            return Err(Error::UniversityNotFound);
+        }
+
+        // Check not already a member
+        let member_key = DataKey::UniversityMember(applicant.clone());
+        if env.storage().persistent().has(&member_key) {
+            return Err(Error::AlreadyMember);
+        }
+
+        extend_instance(&env);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::JoinRequestCounter)
+            .unwrap_or(0);
+        counter += 1;
+        env.storage()
+            .instance()
+            .set(&DataKey::JoinRequestCounter, &counter);
+
+        let request = JoinRequest {
+            id: counter,
+            university_id,
+            applicant: applicant.clone(),
+            status: 0, // pending
+        };
+
+        let key = DataKey::JoinRequest(counter);
+        env.storage().persistent().set(&key, &request);
+        extend_persistent(&env, &key);
+
+        env.events().publish(
+            (Symbol::new(&env, "join_requested"), counter, university_id, applicant),
+            (),
+        );
+
+        Ok(counter)
+    }
+
+    pub fn approve_member(
+        env: Env,
+        request_id: u64,
+        admin: Address,
+    ) -> Result<(), Error> {
+        admin.require_auth();
+
+        let req_key = DataKey::JoinRequest(request_id);
+        extend_persistent(&env, &req_key);
+
+        let mut request: JoinRequest = env
+            .storage()
+            .persistent()
+            .get(&req_key)
+            .ok_or(Error::JoinRequestNotFound)?;
+
+        if request.status != 0 {
+            return Err(Error::JoinRequestNotFound);
+        }
+
+        // Verify caller is the university admin
+        let uni_key = DataKey::University(request.university_id);
+        let university: University = env
+            .storage()
+            .persistent()
+            .get(&uni_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if university.admin != admin {
+            return Err(Error::Unauthorized);
+        }
+
+        // Approve and assign member
+        request.status = 1;
+        env.storage().persistent().set(&req_key, &request);
+
+        let member_key = DataKey::UniversityMember(request.applicant.clone());
+        env.storage()
+            .persistent()
+            .set(&member_key, &request.university_id);
+        extend_persistent(&env, &member_key);
+
+        // Increment university member count
+        let mut uni = university;
+        uni.member_count += 1;
+        env.storage().persistent().set(&uni_key, &uni);
+
+        env.events().publish(
+            (Symbol::new(&env, "member_approved"), request_id, request.applicant),
+            request.university_id,
+        );
+
+        Ok(())
+    }
+
+    pub fn deny_member(
+        env: Env,
+        request_id: u64,
+        admin: Address,
+    ) -> Result<(), Error> {
+        admin.require_auth();
+
+        let req_key = DataKey::JoinRequest(request_id);
+        extend_persistent(&env, &req_key);
+
+        let mut request: JoinRequest = env
+            .storage()
+            .persistent()
+            .get(&req_key)
+            .ok_or(Error::JoinRequestNotFound)?;
+
+        let uni_key = DataKey::University(request.university_id);
+        let university: University = env
+            .storage()
+            .persistent()
+            .get(&uni_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if university.admin != admin {
+            return Err(Error::Unauthorized);
+        }
+
+        request.status = 2;
+        env.storage().persistent().set(&req_key, &request);
+
+        Ok(())
+    }
+
+    pub fn get_join_request(env: Env, id: u64) -> Result<JoinRequest, Error> {
+        let key = DataKey::JoinRequest(id);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::JoinRequestNotFound)
+    }
+
+    pub fn invite_member(
+        env: Env,
+        university_id: u64,
+        invitee: Address,
+        admin: Address,
+    ) -> Result<u64, Error> {
+        admin.require_auth();
+
+        let uni_key = DataKey::University(university_id);
+        let university: University = env
+            .storage()
+            .persistent()
+            .get(&uni_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if university.admin != admin {
+            return Err(Error::Unauthorized);
+        }
+
+        extend_instance(&env);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::InviteCounter)
+            .unwrap_or(0);
+        counter += 1;
+        env.storage()
+            .instance()
+            .set(&DataKey::InviteCounter, &counter);
+
+        let invite = Invite {
+            id: counter,
+            university_id,
+            invitee: invitee.clone(),
+            status: 0,
+        };
+
+        let key = DataKey::Invite(counter);
+        env.storage().persistent().set(&key, &invite);
+        extend_persistent(&env, &key);
+
+        env.events().publish(
+            (Symbol::new(&env, "member_invited"), counter, university_id, invitee),
+            (),
+        );
+
+        Ok(counter)
+    }
+
+    pub fn accept_invite(env: Env, invite_id: u64, invitee: Address) -> Result<(), Error> {
+        invitee.require_auth();
+
+        let inv_key = DataKey::Invite(invite_id);
+        extend_persistent(&env, &inv_key);
+
+        let mut invite: Invite = env
+            .storage()
+            .persistent()
+            .get(&inv_key)
+            .ok_or(Error::JoinRequestNotFound)?;
+
+        if invite.invitee != invitee {
+            return Err(Error::Unauthorized);
+        }
+        if invite.status != 0 {
+            return Err(Error::JoinRequestNotFound);
+        }
+
+        let member_key = DataKey::UniversityMember(invitee.clone());
+        if env.storage().persistent().has(&member_key) {
+            return Err(Error::AlreadyMember);
+        }
+
+        invite.status = 1;
+        env.storage().persistent().set(&inv_key, &invite);
+
+        env.storage()
+            .persistent()
+            .set(&member_key, &invite.university_id);
+        extend_persistent(&env, &member_key);
+
+        let uni_key = DataKey::University(invite.university_id);
+        let mut university: University = env
+            .storage()
+            .persistent()
+            .get(&uni_key)
+            .ok_or(Error::UniversityNotFound)?;
+        university.member_count += 1;
+        env.storage().persistent().set(&uni_key, &university);
+
+        env.events().publish(
+            (Symbol::new(&env, "invite_accepted"), invite_id, invitee),
+            invite.university_id,
+        );
+
+        Ok(())
+    }
+
+    pub fn leave_university(env: Env, member: Address) -> Result<(), Error> {
+        member.require_auth();
+
+        let member_key = DataKey::UniversityMember(member.clone());
+        if !env.storage().persistent().has(&member_key) {
+            return Err(Error::NotAMember);
+        }
+
+        env.storage().persistent().remove(&member_key);
+
+        env.events().publish(
+            (Symbol::new(&env, "member_left"), member),
+            (),
+        );
+
+        Ok(())
+    }
+
+    pub fn list_pending_requests(env: Env, university_id: u64) -> Result<Vec<JoinRequest>, Error> {
+        extend_instance(&env);
+        let counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::JoinRequestCounter)
+            .unwrap_or(0);
+
+        let mut requests = Vec::new(&env);
+        for id in 1..=counter {
+            let key = DataKey::JoinRequest(id);
+            if let Some(req) = env.storage().persistent().get::<DataKey, JoinRequest>(&key) {
+                if req.university_id == university_id && req.status == 0 {
+                    requests.push_back(req);
+                }
+            }
+        }
+        Ok(requests)
+    }
+
+    pub fn get_membership(env: Env, member: Address) -> Result<u64, Error> {
+        let key = DataKey::UniversityMember(member);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::NotAMember)
+    }
+
+    // --- TOKEN FAUCET ---
+
+    pub fn claim_faucet(env: Env, recipient: Address) -> Result<(), Error> {
+        recipient.require_auth();
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        token_client.faucet(&recipient, &FAUCET_AMOUNT);
+
+        env.events().publish(
+            (Symbol::new(&env, "faucet_claimed"), recipient),
+            FAUCET_AMOUNT,
         );
 
         Ok(())

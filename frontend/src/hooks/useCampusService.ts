@@ -5,6 +5,7 @@ import {
   addressToScVal,
   i128ToScVal,
   u32ToScVal,
+  stringToScVal,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
 } from "@/services/contracts";
 import { useWalletStore } from "@/state/useWalletStore";
@@ -269,6 +270,316 @@ export function useRedeemTicketMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-ticket", variables.ticketId] });
+    },
+  });
+}
+
+// --- UNIVERSITY & MEMBERSHIP HOOKS ---
+
+export interface University {
+  id: number;
+  name: string;
+  location: string;
+  description: string;
+  admin: string;
+  member_count: number;
+}
+
+export interface JoinRequest {
+  id: number;
+  university_id: number;
+  applicant: string;
+  status: number;
+}
+
+export interface Invite {
+  id: number;
+  university_id: number;
+  invitee: string;
+  status: number;
+}
+
+export function useUniversities() {
+  return useQuery({
+    queryKey: ["universities"],
+    queryFn: async (): Promise<University[]> => {
+      try {
+        const address = useWalletStore.getState().address || undefined;
+        const res = await readContract(
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+          "list_universities",
+          [],
+          address
+        );
+        return (res as University[]).map((u) => ({
+          id: Number(u.id),
+          name: String(u.name),
+          location: String(u.location),
+          description: String(u.description),
+          admin: String(u.admin),
+          member_count: Number(u.member_count),
+        }));
+      } catch (err) {
+        console.warn("Failed to fetch universities", err);
+        return [];
+      }
+    },
+  });
+}
+
+export function useUniversity(id: number | null) {
+  return useQuery({
+    queryKey: ["university", id],
+    queryFn: async (): Promise<University | null> => {
+      if (id === null) return null;
+      try {
+        const address = useWalletStore.getState().address || undefined;
+        const res = await readContract(
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+          "get_university",
+          [u32ToScVal(id)],
+          address
+        );
+        const u = res as University;
+        return {
+          id: Number(u.id),
+          name: String(u.name),
+          location: String(u.location),
+          description: String(u.description),
+          admin: String(u.admin),
+          member_count: Number(u.member_count),
+        };
+      } catch {
+        return null;
+      }
+    },
+    enabled: id !== null,
+  });
+}
+
+export function useMembership(address: string | null) {
+  return useQuery({
+    queryKey: ["membership", address],
+    queryFn: async (): Promise<number | null> => {
+      if (!address) return null;
+      try {
+        const res = await readContract(
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+          "get_membership",
+          [addressToScVal(address)],
+          address
+        );
+        return Number(res);
+      } catch {
+        return null;
+      }
+    },
+    enabled: !!address,
+  });
+}
+
+export function usePendingRequests(universityId: number | null) {
+  return useQuery({
+    queryKey: ["pending-requests", universityId],
+    queryFn: async (): Promise<JoinRequest[]> => {
+      if (universityId === null) return [];
+      try {
+        const address = useWalletStore.getState().address || undefined;
+        const res = await readContract(
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+          "list_pending_requests",
+          [u32ToScVal(universityId)],
+          address
+        );
+        return (res as JoinRequest[]).map((r) => ({
+          id: Number(r.id),
+          university_id: Number(r.university_id),
+          applicant: String(r.applicant),
+          status: Number(r.status),
+        }));
+      } catch {
+        return [];
+      }
+    },
+    enabled: universityId !== null,
+  });
+}
+
+export function useRegisterUniversityMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      admin,
+      name,
+      location,
+      description,
+    }: {
+      admin: string;
+      name: string;
+      location: string;
+      description: string;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "register_university",
+        [addressToScVal(admin), stringToScVal(name), stringToScVal(location), stringToScVal(description)],
+        admin
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["universities"] });
+    },
+  });
+}
+
+export function useRequestJoinMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      universityId,
+      applicant,
+    }: {
+      universityId: number;
+      applicant: string;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "request_join",
+        [u32ToScVal(universityId), addressToScVal(applicant)],
+        applicant
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["membership", variables.applicant] });
+    },
+  });
+}
+
+export function useApproveMemberMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      requestId,
+      admin,
+    }: {
+      requestId: number;
+      admin: string;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "approve_member",
+        [u32ToScVal(requestId), addressToScVal(admin)],
+        admin
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["universities"] });
+      queryClient.invalidateQueries({ queryKey: ["membership"] });
+    },
+  });
+}
+
+export function useDenyMemberMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      requestId,
+      admin,
+    }: {
+      requestId: number;
+      admin: string;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "deny_member",
+        [u32ToScVal(requestId), addressToScVal(admin)],
+        admin
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["universities"] });
+    },
+  });
+}
+
+export function useInviteMemberMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      universityId,
+      invitee,
+      admin,
+    }: {
+      universityId: number;
+      invitee: string;
+      admin: string;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "invite_member",
+        [u32ToScVal(universityId), addressToScVal(invitee), addressToScVal(admin)],
+        admin
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["universities"] });
+    },
+  });
+}
+
+export function useAcceptInviteMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      inviteId,
+      invitee,
+    }: {
+      inviteId: number;
+      invitee: string;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "accept_invite",
+        [u32ToScVal(inviteId), addressToScVal(invitee)],
+        invitee
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["membership", variables.invitee] });
+    },
+  });
+}
+
+export function useLeaveUniversityMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ member }: { member: string }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "leave_university",
+        [addressToScVal(member)],
+        member
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["membership", variables.member] });
+    },
+  });
+}
+
+export function useClaimFaucetMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ recipient }: { recipient: string }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "claim_faucet",
+        [addressToScVal(recipient)],
+        recipient
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
     },
   });
 }

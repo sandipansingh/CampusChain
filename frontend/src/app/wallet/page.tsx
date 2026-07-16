@@ -6,7 +6,8 @@ import { useCampusBalance } from "@/hooks/useCampusToken";
 import {
   useEscrowAgreement,
   useReleaseEscrowMutation,
-  useRefundEscrowMutation
+  useRefundEscrowMutation,
+  useClaimFaucetMutation,
 } from "@/hooks/useCampusService";
 import { pollTransactionStatus } from "@/services/contracts";
 import { useTransactionStore } from "@/state/useTransactionStore";
@@ -33,9 +34,24 @@ export default function WalletPage() {
   // Mutations
   const releaseEscrowMut = useReleaseEscrowMutation();
   const refundEscrowMut = useRefundEscrowMutation();
+  const claimFaucetMut = useClaimFaucetMutation();
 
   const addTransaction = useTransactionStore((state) => state.addTransaction);
   const updateTransaction = useTransactionStore((state) => state.updateTransaction);
+
+  const handleClaimFaucet = async () => {
+    if (!address) return;
+    try {
+      const hash = await claimFaucetMut.mutateAsync({ recipient: address });
+      addTransaction({ hash, status: "pending", method: "CLAIM FAUCET", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
+      updateTransaction(hash, { status: "processing" });
+      await pollTransactionStatus(hash);
+      updateTransaction(hash, { status: "confirmed" });
+      refetchBalance();
+    } catch (err) {
+      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "CLAIM FAUCET", timestamp: Date.now(), errorMessage: String(err) });
+    }
+  };
 
   const handleLookup = (e: React.FormEvent) => {
     e.preventDefault();
@@ -155,6 +171,15 @@ export default function WalletPage() {
               <span className="text-xs font-bold tracking-widest uppercase text-accent mt-1">
                 CAMP Tokens Available
               </span>
+
+              <button
+                onClick={handleClaimFaucet}
+                disabled={claimFaucetMut.isPending}
+                className="mt-3 h-9 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+              >
+                {claimFaucetMut.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                Claim 100 CAMP Tokens
+              </button>
             </div>
 
             <div className="border-t border-slate-100 pt-4 flex flex-col gap-1">
