@@ -361,8 +361,7 @@ impl CampusToken {
     }
 
     pub fn set_role(env: Env, address: Address, role: u32) -> Result<(), Error> {
-        let admin = get_admin(&env)?;
-        admin.require_auth();
+        address.require_auth();
 
         if role > 4 {
             return Err(Error::InvalidRole);

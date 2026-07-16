@@ -11,7 +11,12 @@ echo "========================================================="
 NETWORK="testnet"
 RPC_URL="https://soroban-testnet.stellar.org"
 PASSPHRASE="Test SDF Network ; September 2015"
-ADMIN_KEY="SA5..." # Replace with actual secret key or load from env
+if [ -z "$CAMPUSCHAIN_ADMIN_KEY" ]; then
+    echo "Usage: CAMPUSCHAIN_ADMIN_KEY=<secret_key> ./scripts/deploy.sh"
+    echo "  Or export CAMPUSCHAIN_ADMIN_KEY in your shell profile."
+    exit 1
+fi
+ADMIN_KEY="$CAMPUSCHAIN_ADMIN_KEY"
 
 # Check if stellar CLI is installed
 if ! command -v stellar &> /dev/null; then
@@ -86,7 +91,8 @@ stellar contract invoke \
     --network "$NETWORK" \
     -- \
     initialize \
-    --token_id "$TOKEN_CONTRACT_ID"
+    --admin "$ADMIN_ADDRESS" \
+    --token_contract "$TOKEN_CONTRACT_ID"
 
 echo "========================================================="
 echo " DEPLOYMENT COMPLETED SUCCESSFULLY"

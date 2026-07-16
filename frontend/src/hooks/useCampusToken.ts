@@ -34,15 +34,6 @@ export function useCampusUserRole(address: string | null) {
     queryKey: ["campus-role", address],
     queryFn: async () => {
       if (!address) return 0;
-
-      // Check local storage override first (enables role switching for non-admin testers)
-      if (typeof window !== "undefined") {
-        const localOverride = localStorage.getItem(`campuschain_role_${address}`);
-        if (localOverride !== null) {
-          return parseInt(localOverride);
-        }
-      }
-
       try {
         const res = await readContract(
           NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
@@ -52,7 +43,7 @@ export function useCampusUserRole(address: string | null) {
         return Number(res);
       } catch (err) {
         console.warn("Failed to fetch on-chain user role, using default fallback", err);
-        return 1; // Default to Student (1)
+        return 1;
       }
     },
     enabled: !!address,
@@ -158,24 +149,6 @@ export function useSetRoleMutation() {
       role: number;
       caller: string;
     }) => {
-      let isAdmin = false;
-      try {
-        const adminAddr = await readContract(
-          NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
-          "admin"
-        );
-        isAdmin = String(adminAddr) === caller;
-      } catch {
-        isAdmin = false;
-      }
-
-      if (!isAdmin) {
-        if (typeof window !== "undefined") {
-          localStorage.setItem(`campuschain_role_${user}`, role.toString());
-        }
-        return `local_role_${Date.now()}`;
-      }
-
       return invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
         "set_role",
