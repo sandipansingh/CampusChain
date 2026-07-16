@@ -241,10 +241,10 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Grid of Stats Cards - Flat borderless style */}
+      {/* Grid of Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Balance */}
-        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
+        <div className="border border-border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-700">
               Wallet Balance
@@ -273,7 +273,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 2: Wallet Role */}
-        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
+        <div className="border border-border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-700">
               User Profile Role
@@ -298,7 +298,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 3: Session Actions */}
-        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
+        <div className="border border-border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-700">
               Session Operations
@@ -323,7 +323,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 4: Ledger Network */}
-        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
+        <div className="border border-border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-700">
               Ledger Network
@@ -337,7 +337,7 @@ export default function DashboardPage() {
               <span className="text-3xl font-semibold tracking-tight text-slate-900 uppercase truncate max-w-[130px]">
                 {network}
               </span>
-              <span className="text-xs font-semibold text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded border border-slate-150 leading-none font-bold">
+              <span className="text-xs font-semibold text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded leading-none font-bold">
                 Active
               </span>
             </div>
@@ -353,7 +353,7 @@ export default function DashboardPage() {
         {/* Chart Column - Flat borderless design */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           {/* Daily Transaction Volume Chart */}
-          <div className="bg-white rounded-[24px] p-6 flex flex-col justify-between shadow-sm">
+          <div className="border border-border bg-white rounded-[24px] p-6 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
@@ -424,8 +424,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Flow Analytics Stacked Chart - Flat borderless design */}
-          <div className="bg-white rounded-[24px] p-6 shadow-sm">
+          {/* Flow Analytics Stacked Chart */}
+          <div className="border border-border bg-white rounded-[24px] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
@@ -505,8 +505,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Interactive Action Controls (Right Panel) - Flat borderless design */}
-        <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
+        {/* Interactive Action Controls (Right Panel) */}
+        <div className="border border-border bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
             <h3 className="text-base font-semibold text-slate-900">
               Action Center
@@ -515,7 +515,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Action Tabs Selector */}
-          <div className="flex bg-slate-50 p-1.5 rounded-xl border border-slate-150">
+          <div className="flex bg-slate-50 p-1.5 rounded-xl">
             <button
               onClick={() => setActiveTab("send")}
               className={`flex-1 py-2 text-xs font-semibold rounded-lg transition-all duration-200 ${
@@ -741,8 +741,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity Table - Flat borderless design */}
-      <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
+      {/* Recent Activity Table */}
+      <div className="border border-border bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-semibold text-slate-900">

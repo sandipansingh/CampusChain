@@ -62,25 +62,41 @@ export default function SettingsPage() {
           {networksList.map((net) => {
             const isSelected = network === net.id;
             const Icon = net.icon;
+
+            // Configure soft background colors & icons for active networks to avoid monochromatic styles
+            let activeBgClass = "bg-white";
+            let activeIconClass = "bg-slate-50 text-slate-700";
+            let activeBadgeClass = "bg-slate-900 text-white";
+
+            if (isSelected) {
+              if (net.id === "testnet") {
+                activeBgClass = "bg-emerald-50/70";
+                activeIconClass = "bg-emerald-100 text-emerald-800";
+                activeBadgeClass = "bg-emerald-600 text-white";
+              } else if (net.id === "standalone") {
+                activeBgClass = "bg-blue-50/70";
+                activeIconClass = "bg-blue-100 text-blue-800";
+                activeBadgeClass = "bg-blue-600 text-white";
+              } else if (net.id === "public") {
+                activeBgClass = "bg-rose-50/70";
+                activeIconClass = "bg-rose-100 text-rose-800";
+                activeBadgeClass = "bg-rose-600 text-white";
+              }
+            }
+
             return (
               <div
                 key={net.id}
                 onClick={() => switchNetwork(net.id as NetworkType)}
-                className={`border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[350px] cursor-pointer group transition-all duration-300 ${
-                  isSelected
-                    ? "border-slate-900 ring-1 ring-slate-900/10 bg-slate-50/5"
-                    : "border-border"
-                }`}
+                className={`p-6 rounded-[24px] flex flex-col justify-between min-h-[260px] cursor-pointer group transition-all duration-300 shadow-sm ${activeBgClass}`}
               >
                 <div>
                   <div className="flex justify-between items-start">
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${
-                      isSelected ? "bg-slate-900 text-white" : "bg-slate-50 text-slate-750 group-hover:text-slate-900"
-                    }`}>
+                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${activeIconClass}`}>
                       <Icon className="w-5 h-5" />
                     </div>
                     {isSelected && (
-                      <span className="text-[10px] font-bold tracking-widest uppercase bg-slate-900 text-white px-2.5 py-0.5 rounded-full">
+                      <span className={`text-[10px] font-bold tracking-widest uppercase px-2.5 py-0.5 rounded-full ${activeBadgeClass}`}>
                         Active
                       </span>
                     )}
