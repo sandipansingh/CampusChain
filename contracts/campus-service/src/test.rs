@@ -136,3 +136,37 @@ fn test_event_ticketing_workflow() {
     let ticket_after = service_client.get_ticket(&ticket_id);
     assert_eq!(ticket_after.redeemed, true);
 }
+
+#[test]
+fn test_buy_camp_tokens() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let buyer = Address::generate(&env);
+
+    let token_id = env.register_contract(None, CampusToken);
+    let token_client = CampusTokenClient::new(&env, &token_id);
+    let name = String::from_str(&env, "Campus Token");
+    let symbol = String::from_str(&env, "CAMP");
+    token_client.initialize(&admin, &name, &symbol, &7);
+
+    let service_id = env.register_contract(None, CampusService);
+    let service_client = CampusServiceClient::new(&env, &service_id);
+    service_client.initialize(&admin, &token_id);
+
+    assert_eq!(token_client.balance(&buyer), 0i128);
+
+    // Buy 5 XLM worth of CAMP (1 XLM = 100 CAMP => 500 CAMP)
+    let xlm_stroops = 5i128 * 10i128.pow(7); // 5 XLM in stroops
+    let expected_camp = xlm_stroops * 100; // 500 CAMP in stroops
+
+    service_client.buy_camp_tokens(&buyer, &xlm_stroops);
+
+    assert_eq!(token_client.balance(&buyer), expected_camp);
+
+    // Verify below minimum fails
+    let too_small = 1i128; // way below 1 XLM minimum
+    let result = service_client.try_buy_camp_tokens(&buyer, &too_small);
+    assert!(result.is_err());
+}

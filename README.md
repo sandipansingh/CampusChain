@@ -8,17 +8,17 @@ CampusChain is a unified, decentralized campus economy platform that replaces di
 
 | Contract | Address |
 |---|---|
-| **CampusToken** | `CA5OK6BWFRN67257RITZMLAY2YJ6T6FTU2ZM3UY76QYIE6DXB5QUAPMV` |
-| **CampusService** | `CA5BDN2A2FM5AR3FEOBPPUCEAJCNKPKRRQFSLZ66SP7LGDKVJEKRPYTK` |
+| **CampusToken** | `CAKWHIJWM2PNGA2XPHGU3CWXHOASOYBFBOHWXLXBAXD777SPE4TIIVHN` |
+| **CampusService** | `CCP2Z6E7DSOUJRFZOPII6UYVVLLW65F2EIULLLVRAYF4LHDIEM2ZLIZH` |
 
 ### Recent Transactions
 
 | Action | Tx Hash |
 |---|---|
-| CampusToken deploy | [0bf506c9111fe357723c8464d395985981d4d043026959ced2a2ac543a29c335](https://stellar.expert/explorer/testnet/tx/0bf506c9111fe357723c8464d395985981d4d043026959ced2a2ac543a29c335) |
-| CampusToken init | [0bebcbc914413d73964e7b29e78d79c8081557b14903b2605ee65a713b4fadb0](https://stellar.expert/explorer/testnet/tx/0bebcbc914413d73964e7b29e78d79c8081557b14903b2605ee65a713b4fadb0) |
-| CampusService deploy | [e96b73c167de52d2d80e64f9d680e679729ab4726a663e2b93c99a377ec8cd5c](https://stellar.expert/explorer/testnet/tx/e96b73c167de52d2d80e64f9d680e679729ab4726a663e2b93c99a377ec8cd5c) |
-| CampusService init | [32644dc1c49608e6299016024a025abc70c5cdaec7ff75e445a2a8b6e0910b75](https://stellar.expert/explorer/testnet/tx/32644dc1c49608e6299016024a025abc70c5cdaec7ff75e445a2a8b6e0910b75) |
+| CampusToken deploy | [e289aef1aadd839debcab8af2b891a8e222e368cae06d0a13e1f50971333c11b](https://stellar.expert/explorer/testnet/tx/e289aef1aadd839debcab8af2b891a8e222e368cae06d0a13e1f50971333c11b) |
+| CampusToken init | [dc8ad2ac26f355fb06bcf3d56a061bd0ccfdab82d002522ac19637f8abcff740](https://stellar.expert/explorer/testnet/tx/dc8ad2ac26f355fb06bcf3d56a061bd0ccfdab82d002522ac19637f8abcff740) |
+| CampusService deploy | [1de75ab7059da06d193153943c0a61267bd56bb7c4727aaa7ab6a19373d78faf](https://stellar.expert/explorer/testnet/tx/1de75ab7059da06d193153943c0a61267bd56bb7c4727aaa7ab6a19373d78faf) |
+| CampusService init | [ef48290b30413eadd78af8993c7f17227efdf8ad8c20e6a9ba3406263ab2baac](https://stellar.expert/explorer/testnet/tx/ef48290b30413eadd78af8993c7f17227efdf8ad8c20e6a9ba3406263ab2baac) |
 
 ---
 
@@ -100,6 +100,22 @@ sequenceDiagram
     TC-->>User: 100 CAMP minted
 ```
 
+**Buy CAMP with XLM**
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Any Account
+    participant SC as CampusService
+    participant TC as CampusToken
+
+    User->>SC: buy_camp_tokens(recipient, xlm_amount_stroops)
+    SC->>SC: xlm_amount >= 1 XLM minimum
+    SC->>SC: camp_amount = xlm_amount * 100
+    SC->>TC: mint_purchase(recipient, camp_amount)
+    TC->>TC: Check amount > 0
+    TC-->>User: CAMP tokens minted at rate 1 XLM = 100 CAMP
+```
+
 ---
 
 ## 2. Smart Contracts
@@ -108,6 +124,7 @@ sequenceDiagram
 - **Fungible token** (7 decimals, symbol: CAMP)
 - **RBAC**: `set_role(address, role)` — self-registration (0=Guest, 1=Student, 2=Merchant, 3=Club Organizer, 4=University Admin)
 - **Faucet**: `faucet(address, amount)` — one-time claim of 100 CAMP per address
+- **Purchase Mint**: `mint_purchase(address, amount)` — called by CampusService to mint CAMP when users buy with XLM
 - **Standard token ops**: `transfer`, `approve`, `transfer_from`, `mint`, `burn`, `balance`
 
 ### CampusService (`contracts/campus-service`)
@@ -115,7 +132,8 @@ sequenceDiagram
 - **Membership**: `request_join`, `approve_member`, `deny_member`, `invite_member`, `accept_invite`, `leave_university`, `get_membership`, `list_pending_requests`
 - **Escrow**: `create_escrow`, `get_escrow`, `release_escrow`, `refund_escrow`
 - **Event Ticketing**: `create_event`, `get_event`, `buy_ticket`, `get_ticket`, `redeem_ticket`
-- **Token Claim**: `claim_faucet` — delegates to `CampusToken.faucet`
+- **Token Claim**: `claim_faucet`, `has_claimed_faucet`
+- **Buy CAMP**: `buy_camp_tokens(recipient, xlm_amount)` — purchase rate 1 XLM = 100 CAMP (minimum 1 XLM)
 
 ---
 
@@ -161,8 +179,8 @@ Copy `frontend/.env.local` with:
 ```
 NEXT_PUBLIC_STELLAR_RPC_URL="https://soroban-testnet.stellar.org"
 NEXT_PUBLIC_STELLAR_PASSPHRASE="Test SDF Network ; September 2015"
-NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID="CA5OK6BWFRN67257RITZMLAY2YJ6T6FTU2ZM3UY76QYIE6DXB5QUAPMV"
-NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID="CA5BDN2A2FM5AR3FEOBPPUCEAJCNKPKRRQFSLZ66SP7LGDKVJEKRPYTK"
+NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID="CAKWHIJWM2PNGA2XPHGU3CWXHOASOYBFBOHWXLXBAXD777SPE4TIIVHN"
+NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID="CCP2Z6E7DSOUJRFZOPII6UYVVLLW65F2EIULLLVRAYF4LHDIEM2ZLIZH"
 ```
 
 ---

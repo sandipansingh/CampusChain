@@ -9,6 +9,7 @@ import {
   useRefundEscrowMutation,
   useClaimFaucetMutation,
   useHasClaimedFaucet,
+  useBuyCampTokensMutation,
 } from "@/hooks/useCampusService";
 import { pollTransactionStatus } from "@/services/contracts";
 import { useTransactionStore } from "@/state/useTransactionStore";
@@ -37,6 +38,11 @@ export default function WalletPage() {
   const releaseEscrowMut = useReleaseEscrowMutation();
   const refundEscrowMut = useRefundEscrowMutation();
   const claimFaucetMut = useClaimFaucetMutation();
+  const buyCampMut = useBuyCampTokensMutation();
+
+  // Buy CAMP form state
+  const [xlmAmount, setXlmAmount] = useState("");
+  const PURCHASE_RATE = 100; // 1 XLM = 100 CAMP
 
   const addTransaction = useTransactionStore((state) => state.addTransaction);
   const updateTransaction = useTransactionStore((state) => state.updateTransaction);
@@ -52,6 +58,24 @@ export default function WalletPage() {
       refetchBalance();
     } catch (err) {
       addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "CLAIM FAUCET", timestamp: Date.now(), errorMessage: String(err) });
+    }
+  };
+
+  const handleBuyCamp = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address || !xlmAmount) return;
+    try {
+      // Convert XLM to stroops (1 XLM = 10^7 stroops)
+      const xlmStroops = String(BigInt(Math.round(parseFloat(xlmAmount) * 10_000_000)));
+      const hash = await buyCampMut.mutateAsync({ recipient: address, xlmAmount: xlmStroops });
+      addTransaction({ hash, status: "pending", method: "BUY CAMP", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
+      updateTransaction(hash, { status: "processing" });
+      await pollTransactionStatus(hash);
+      updateTransaction(hash, { status: "confirmed" });
+      refetchBalance();
+      setXlmAmount("");
+    } catch (err) {
+      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "BUY CAMP", timestamp: Date.now(), errorMessage: String(err) });
     }
   };
 
@@ -123,11 +147,6 @@ export default function WalletPage() {
       });
       logger.error(`${actionName} failed`, err);
     }
-  };
-
-  const fundTestnetAccount = () => {
-    if (!address) return;
-    window.open(`https://friendbot.stellar.org/?addr=${address}`, "_blank");
   };
 
   return (
@@ -203,20 +222,42 @@ export default function WalletPage() {
             </div>
           </div>
 
-          {/* Card: Testnet Faucet (Gas helper) */}
+          {/* Card: Buy CAMP with XLM */}
           <div className="bg-white rounded-[24px] p-6 flex flex-col gap-4">
             <h3 className="text-sm font-bold text-slate-900 uppercase">
-              Sandbox Gas Helper
+              Buy CAMP Tokens
             </h3>
-            <p className="text-xs text-slate-800 font-semibold leading-relaxed">
-              Running on Stellar Testnet requires XLM to cover transaction gas fees. Use the Friendbot faucet to fund your address.
-            </p>
-            <button
-              onClick={fundTestnetAccount}
-              className="w-full h-11 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
-            >
-              Request Testnet XLM
-            </button>
+            <div className="flex items-center justify-between bg-amber-50 rounded-xl px-3 py-2 text-xs font-bold text-amber-700">
+              <span>Exchange Rate</span>
+              <span className="font-mono">1 XLM = {PURCHASE_RATE} CAMP</span>
+            </div>
+            <form onSubmit={handleBuyCamp} className="flex flex-col gap-3">
+              <div className="relative">
+                <input
+                  type="number"
+                  step="0.1"
+                  min="1"
+                  required
+                  placeholder="XLM amount (min 1 XLM)"
+                  value={xlmAmount}
+                  onChange={(e) => setXlmAmount(e.target.value)}
+                  className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all"
+                />
+                {xlmAmount && parseFloat(xlmAmount) > 0 && (
+                  <span className="absolute right-3 top-1/2 -translate-y-1/2 text-[10px] font-bold text-emerald-600 font-mono">
+                    = {parseFloat(xlmAmount) * PURCHASE_RATE} CAMP
+                  </span>
+                )}
+              </div>
+              <button
+                type="submit"
+                disabled={buyCampMut.isPending || !xlmAmount}
+                className="w-full h-11 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {buyCampMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                Buy CAMP with XLM
+              </button>
+            </form>
           </div>
         </div>
 

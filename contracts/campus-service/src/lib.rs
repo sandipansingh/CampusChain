@@ -27,6 +27,7 @@ pub enum Error {
     NotAMember = 14,
     AlreadyClaimed = 15,
     ContractError = 16,
+    InvalidAmount = 17,
 }
 
 #[contracttype]
@@ -108,6 +109,8 @@ pub struct Invite {
 }
 
 const FAUCET_AMOUNT: i128 = 100_000_0000; // 100 CAMP (7 decimals)
+const PURCHASE_RATE: i128 = 100; // 1 XLM = 100 CAMP (i.e. multiply XLM stroops by 100 to get CAMP stroops)
+const PURCHASE_MIN_XLM: i128 = 1_000_0000; // 1 XLM minimum purchase
 
 const LEDGER_THRESHOLD_INSTANCE: u32 = 1000;
 const LEDGER_EXTEND_TO_INSTANCE: u32 = 10000;
@@ -882,6 +885,31 @@ impl CampusService {
         env.events().publish(
             (Symbol::new(&env, "faucet_claimed"), recipient),
             FAUCET_AMOUNT,
+        );
+
+        Ok(())
+    }
+
+    pub fn buy_camp_tokens(env: Env, recipient: Address, xlm_amount: i128) -> Result<(), Error> {
+        recipient.require_auth();
+
+        if xlm_amount < PURCHASE_MIN_XLM {
+            return Err(Error::InvalidAmount);
+        }
+
+        // 1 XLM = 100 CAMP
+        let camp_amount = xlm_amount
+            .checked_mul(PURCHASE_RATE)
+            .ok_or(Error::InvalidAmount)?;
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        token_client.mint_purchase(&recipient, &camp_amount);
+
+        env.events().publish(
+            (Symbol::new(&env, "purchase_camp"), recipient),
+            (xlm_amount, camp_amount),
         );
 
         Ok(())

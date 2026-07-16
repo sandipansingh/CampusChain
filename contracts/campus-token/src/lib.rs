@@ -61,6 +61,22 @@ fn extend_instance(env: &Env) {
         .extend_ttl(LEDGER_THRESHOLD_INSTANCE, LEDGER_EXTEND_TO_INSTANCE);
 }
 
+fn do_mint(env: &Env, to: &Address, amount: i128) {
+    let to_key = DataKey::Balance(to.clone());
+    extend_persistent(env, &to_key);
+
+    let balance = env.storage().persistent().get(&to_key).unwrap_or(0i128);
+    env.storage().persistent().set(&to_key, &(balance + amount));
+
+    let total_supply_key = DataKey::TotalSupply;
+    let total_supply: i128 = env.storage().instance().get(&total_supply_key).unwrap_or(0i128);
+    env.storage()
+        .instance()
+        .set(&total_supply_key, &(total_supply + amount));
+
+    extend_instance(env);
+}
+
 fn extend_persistent(env: &Env, key: &DataKey) {
     if env.storage().persistent().has(key) {
         env.storage()
@@ -307,22 +323,26 @@ impl CampusToken {
             return Err(Error::InvalidAmount);
         }
 
-        let to_key = DataKey::Balance(to.clone());
-        extend_persistent(&env, &to_key);
-
-        let balance = env.storage().persistent().get(&to_key).unwrap_or(0i128);
-        env.storage().persistent().set(&to_key, &(balance + amount));
-
-        let total_supply_key = DataKey::TotalSupply;
-        let total_supply: i128 = env.storage().instance().get(&total_supply_key).unwrap_or(0i128);
-        env.storage()
-            .instance()
-            .set(&total_supply_key, &(total_supply + amount));
-
-        extend_instance(&env);
+        do_mint(&env, &to, amount);
 
         env.events().publish(
             (Symbol::new(&env, "mint"), admin, to),
+            amount,
+        );
+
+        Ok(())
+    }
+
+    pub fn mint_purchase(env: Env, to: Address, amount: i128) -> Result<(), Error> {
+        // Called by CampusService — no admin auth needed for purchase flow
+        if amount <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+
+        do_mint(&env, &to, amount);
+
+        env.events().publish(
+            (Symbol::new(&env, "mint_purchase"), to),
             amount,
         );
 

@@ -1,4 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { nativeToScVal } from "@stellar/stellar-sdk";
 import {
   readContract,
   invokeContractMethod,
@@ -596,5 +597,22 @@ export function useHasClaimedFaucet(address?: string) {
       ),
     enabled: !!address,
     refetchInterval: 30000,
+  });
+}
+
+export function useBuyCampTokensMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ recipient, xlmAmount }: { recipient: string; xlmAmount: string }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        "buy_camp_tokens",
+        [addressToScVal(recipient), nativeToScVal(xlmAmount, { type: "i128" } as never)],
+        recipient
+      );
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
+    },
   });
 }
