@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWalletStore } from "@/state/useWalletStore";
 import { useCampusUserRole, useSetRoleMutation } from "@/hooks/useCampusToken";
@@ -45,7 +45,14 @@ export default function ProfilePage() {
   const addTransaction = useTransactionStore((state) => state.addTransaction);
   const updateTransaction = useTransactionStore((state) => state.updateTransaction);
 
-  const [selectedRole, setSelectedRole] = useState<number>(1);
+  const [selectedRole, setSelectedRole] = useState<number>(0);
+
+  // Sync selectedRole to the actual on-chain role once it loads
+  useEffect(() => {
+    if (role !== undefined && role !== null) {
+      setSelectedRole(Number(role));
+    }
+  }, [role]);
   const [copied, setCopied] = useState(false);
 
   const { data: universities = [] } = useUniversities();

@@ -3,11 +3,13 @@
 import { useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useActivityStats } from "@/hooks/useOnChainStats";
 import Header from "@/components/Header";
 import { useWalletStore } from "@/state/useWalletStore";
 
 export default function LandingPage() {
   const { address, isConnecting, connectWallet } = useWalletStore();
+  const { data: stats } = useActivityStats();
   const router = useRouter();
 
   // If wallet is already connected, auto-redirect to dashboard
@@ -90,20 +92,37 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Fast Infinite Stats Marquee */}
+      {/* Stats Marquee */}
       <section className="w-full bg-accent text-accent-foreground py-6 overflow-hidden border-b-2 border-border flex items-center">
         <div className="animate-marquee-ltr animate-marquee-fast flex gap-12 whitespace-nowrap text-2xl md:text-4xl font-bold tracking-tighter uppercase">
-          <span>★ 12,000+ ACTIVE STUDENTS</span>
-          <span>★ 85 PARTICIPATING MERCHANTS</span>
-          <span>★ 320K+ SETTLED TRANSACTIONS</span>
-          <span>★ 100% STELLAR POWERED</span>
-          <span>★ ZERO MANUAL CHECKS</span>
-          {/* Duplicate for infinite loop */}
-          <span>★ 12,000+ ACTIVE STUDENTS</span>
-          <span>★ 85 PARTICIPATING MERCHANTS</span>
-          <span>★ 320K+ SETTLED TRANSACTIONS</span>
-          <span>★ 100% STELLAR POWERED</span>
-          <span>★ ZERO MANUAL CHECKS</span>
+          {stats ? (
+            <>
+              <span>★ {stats.totalEvents} ON-CHAIN EVENTS</span>
+              <span>★ {stats.transferEvents} TOKEN TRANSFERS</span>
+              <span>★ {stats.escrowEvents} ESCROWS SETTLED</span>
+              <span>★ SOROBAN TESTNET</span>
+              <span>★ STARLAR POWERED</span>
+              {/* Duplicate for infinite loop */}
+              <span>★ {stats.totalEvents} ON-CHAIN EVENTS</span>
+              <span>★ {stats.transferEvents} TOKEN TRANSFERS</span>
+              <span>★ {stats.escrowEvents} ESCROWS SETTLED</span>
+              <span>★ SOROBAN TESTNET</span>
+              <span>★ STARLAR POWERED</span>
+            </>
+          ) : (
+            <>
+              <span>★ SOROBAN TESTNET</span>
+              <span>★ ON-CHAIN UNIVERSITY REGISTRY</span>
+              <span>★ RBAC ROLE PERMISSIONS</span>
+              <span>★ SMART CONTRACT ESCROWS</span>
+              <span>★ TOKENIZED EVENT TICKETS</span>
+              <span>★ SOROBAN TESTNET</span>
+              <span>★ ON-CHAIN UNIVERSITY REGISTRY</span>
+              <span>★ RBAC ROLE PERMISSIONS</span>
+              <span>★ SMART CONTRACT ESCROWS</span>
+              <span>★ TOKENIZED EVENT TICKETS</span>
+            </>
+          )}
         </div>
       </section>
 

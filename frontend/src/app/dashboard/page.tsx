@@ -27,7 +27,6 @@ import {
   Calendar,
   Search,
   SlidersHorizontal,
-  ChevronDown,
   Clock,
   Lock,
   Ticket,
@@ -55,7 +54,6 @@ export default function DashboardPage() {
   const [buyTicketEventId, setBuyTicketEventId] = useState("");
 
   const [activeTab, setActiveTab] = useState<"send" | "escrow" | "events">("send");
-  const [hoveredBar, setHoveredBar] = useState<number | null>(null);
 
   // Search state
   const [txSearchQuery, setTxSearchQuery] = useState("");
@@ -120,10 +118,11 @@ export default function DashboardPage() {
   }, [fetchLedgerEvents]);
 
   const getRoleLabel = (r?: number) => {
+    if (r === 0) return "Guest";
     if (r === 1) return "Student";
     if (r === 2) return "Merchant";
     if (r === 3) return "Club Organizer";
-    if (r === 4) return "Admin";
+    if (r === 4) return "University Admin";
     return "Member";
   };
 
@@ -241,11 +240,11 @@ export default function DashboardPage() {
     if (!address || !buyTicketEventId) return;
 
     handleTx("BUY EVENT TICKET", async () => {
-      // Step 1: Approve token transfer
+      // Step 1: Approve a safe allowance (matches ticket price from chain)
       await approveMut.mutateAsync({
         from: address,
-        spender: process.env.NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID || "CA5W44S3S7WTRHPHHY5W7RPHHY5W7RPHHY5W7RPHHY5W7RPHHY5W7RPH",
-        amount: 500,
+        spender: process.env.NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID || NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+        amount: 1000, // safe ceiling; actual deduction is handled by contract
       });
 
       // Step 2: Purchase Ticket
@@ -270,16 +269,7 @@ export default function DashboardPage() {
     system: Clock,
   } as const;
 
-  // Static chart data mapping days of week
-  const weeklyData = [
-    { day: "Fri", amount: 15400 },
-    { day: "Sat", amount: 12000 },
-    { day: "Sun", amount: 22430 },
-    { day: "Mon", amount: 14200 },
-    { day: "Thu", amount: 15100 },
-    { day: "Wed", amount: 20500 },
-    { day: "Thur", amount: 14800 },
-  ];
+  const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
@@ -289,10 +279,9 @@ export default function DashboardPage() {
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
           Campus Overview
         </h1>
-        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl text-xs font-semibold text-slate-705 shadow-sm">
+        <div className="flex items-center gap-2 bg-white px-4 py-2 rounded-2xl text-xs font-semibold text-slate-700 shadow-sm">
           <Calendar className="w-4 h-4 text-slate-700" />
-          <span>April 10, 2026 - May 11, 2026</span>
-          <ChevronDown className="w-3.5 h-3.5 text-slate-700" />
+          <span>{today}</span>
         </div>
       </div>
 
@@ -301,261 +290,110 @@ export default function DashboardPage() {
         {/* Card 1: Balance */}
         <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-700">
-              Wallet Balance
-            </span>
+            <span className="text-xs font-semibold text-slate-700">Wallet Balance</span>
             <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-700">
               <Wallet className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">
-                {balanceLoading ? (
-                  <Loader2 className="w-4 h-4 animate-spin text-slate-700" />
-                ) : (
-                  balance?.toFixed(0)
-                )}
-              </span>
-              <span className="text-xs font-semibold text-emerald-600 bg-emerald-50 px-1.5 py-0.5 rounded border border-emerald-100 leading-none">
-                ↑ 4.9%
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-700 font-semibold mt-2">
-              Last month: {(balance || 0) - 234}
+            <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">
+              {balanceLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-700" /> : balance?.toFixed(0)}
             </span>
+            <span className="text-[10px] text-slate-400 font-semibold mt-2">CAMP</span>
           </div>
         </div>
 
         {/* Card 2: Wallet Role */}
         <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-700">
-              User Profile Role
-            </span>
+            <span className="text-xs font-semibold text-slate-700">On-Chain Role</span>
             <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-700">
               <Shield className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tracking-tight text-slate-900 truncate max-w-[130px]">
-                {getRoleLabel(role)}
-              </span>
-              <span className="text-xs font-semibold text-blue-600 bg-blue-50 px-1.5 py-0.5 rounded border border-blue-100 leading-none">
-                ↑ 7.5%
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-700 font-semibold mt-2">
-              Last month: Guest
+            <span className="text-3xl font-semibold tracking-tight text-slate-900 truncate max-w-[130px]">
+              {getRoleLabel(role)}
             </span>
+            <span className="text-[10px] text-slate-400 font-semibold mt-2">RBAC registry</span>
           </div>
         </div>
 
-        {/* Card 3: Session Actions */}
+        {/* Card 3: Session Ops */}
         <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-700">
-              Session Operations
-            </span>
+            <span className="text-xs font-semibold text-slate-700">Session Ops</span>
             <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-700">
               <ArrowRightLeft className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">
-                {transactions.length}
-              </span>
-              <span className="text-xs font-semibold text-rose-600 bg-rose-50 px-1.5 py-0.5 rounded border border-rose-100 leading-none">
-                ↓ 6.0%
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-700 font-semibold mt-2">
-              Last month: 0
-            </span>
+            <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">{transactions.length}</span>
+            <span className="text-[10px] text-slate-400 font-semibold mt-2">this session</span>
           </div>
         </div>
 
-        {/* Card 4: Ledger Network */}
+        {/* Card 4: Network */}
         <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
-            <span className="text-xs font-semibold text-slate-700">
-              Ledger Network
-            </span>
+            <span className="text-xs font-semibold text-slate-700">Network</span>
             <div className="w-8 h-8 rounded-full border border-slate-100 flex items-center justify-center text-slate-700">
               <TrendingUp className="w-4 h-4" />
             </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <div className="flex items-baseline gap-2">
-              <span className="text-3xl font-semibold tracking-tight text-slate-900 uppercase truncate max-w-[130px]">
-                {network}
-              </span>
-              <span className="text-xs font-semibold text-slate-700 bg-slate-50 px-1.5 py-0.5 rounded leading-none font-bold">
-                Active
-              </span>
-            </div>
-            <span className="text-[10px] text-slate-700 font-semibold mt-2">
-              Last month: TESTNET
-            </span>
+            <span className="text-3xl font-semibold tracking-tight text-slate-900 uppercase truncate max-w-[130px]">{network}</span>
+            <span className="text-[10px] text-slate-400 font-semibold mt-2">Soroban</span>
           </div>
         </div>
       </div>
 
       {/* Grid: Charts (Left) & Controls (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart Column - Flat borderless design */}
+        {/* Left Column: On-Chain Event Metrics */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          {/* Daily Transaction Volume Chart */}
-          <div className="bg-white rounded-[24px] p-6 flex flex-col justify-between shadow-sm">
-            <div className="flex items-center justify-between">
-              <div>
-                <h3 className="text-base font-semibold text-slate-900">
-                  Daily Transaction Volume
-                </h3>
-              </div>
-              <div className="flex items-center gap-1.5 bg-white border border-slate-100 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-700 cursor-pointer shadow-sm">
-                <span>This Week</span>
-                <ChevronDown className="w-3.5 h-3.5 text-slate-700" />
-              </div>
-            </div>
-
-            {/* Custom SVG Bar Chart */}
-            <div className="mt-8 relative h-64 flex items-end justify-between px-2 pt-6">
-              {/* Grid Lines */}
-              <div className="absolute inset-x-0 bottom-0 top-6 flex flex-col justify-between pointer-events-none">
-                <div className="border-t border-slate-100 w-full h-0" />
-                <div className="border-t border-slate-100 w-full h-0" />
-                <div className="border-t border-slate-100 w-full h-0" />
-                <div className="border-t border-slate-100 w-full h-0" />
-                <div className="border-b border-slate-200 w-full h-0" />
-              </div>
-
-              {/* Y Axis Labels */}
-              <div className="absolute left-0 top-4 text-[10px] font-semibold text-slate-700 flex flex-col justify-between h-60 pointer-events-none">
-                <span>30k</span>
-                <span>20k</span>
-                <span>10k</span>
-                <span>0k</span>
-              </div>
-
-              {/* Weekly Bars */}
-              <div className="flex-1 flex justify-around items-end z-10 pl-6 h-full">
-                {weeklyData.map((data, index) => {
-                  const maxVal = 30000;
-                  const pct = (data.amount / maxVal) * 100;
-                  const isHovered = hoveredBar === index;
-                  return (
-                    <div
-                      key={data.day}
-                      className="flex flex-col items-center gap-3 w-12 group relative"
-                      onMouseEnter={() => setHoveredBar(index)}
-                      onMouseLeave={() => setHoveredBar(null)}
-                    >
-                      {/* Tooltip on Hover */}
-                      {isHovered && (
-                        <div className="absolute -top-10 bg-accent text-white text-[10px] font-semibold px-2.5 py-1.5 rounded-lg z-20 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100">
-                          {data.amount.toLocaleString()} CAMP
-                          <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-accent w-0 h-0" />
-                        </div>
-                      )}
-
-                      {/* Bar Pillar - Rounded Pill shape */}
-                      <div
-                        className="w-7 rounded-full cursor-pointer transition-all duration-300 relative overflow-hidden"
-                        style={{
-                          height: `${pct}%`,
-                          backgroundColor: isHovered ? "#d3411b" : "#e14e27",
-                        }}
-                      />
-                      <span className="text-[10px] font-semibold text-slate-700 group-hover:text-slate-900 transition-colors">
-                        {data.day}
-                      </span>
-                    </div>
-                  );
-                })}
-              </div>
-            </div>
-          </div>
-
-          {/* Flow Analytics Stacked Chart */}
-          <div className="bg-white rounded-[24px] p-6 shadow-sm">
-            <div className="flex items-center justify-between mb-6">
-              <div>
-                <h3 className="text-base font-semibold text-slate-900">
-                  Minted vs Transferred Flow
-                </h3>
-                <p className="text-xs text-slate-700 font-semibold mt-1">Comparison of rewards distributions vs peer token settlements.</p>
-              </div>
-              <div className="flex items-center gap-4 text-xs font-semibold">
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-accent" />
-                  <span className="text-slate-800">Minted</span>
+          <div className="bg-white rounded-[24px] p-6 flex flex-col gap-4 shadow-sm">
+            <h3 className="text-base font-semibold text-slate-900">On-Chain Event Breakdown</h3>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: "Transfers", key: "transferEvents" as const, color: "bg-blue-50 text-blue-600" },
+                { label: "Escrows", key: "escrowEvents" as const, color: "bg-purple-50 text-purple-600" },
+                { label: "Tickets", key: "ticketEvents" as const, color: "bg-emerald-50 text-emerald-600" },
+                { label: "Roles", key: "roleEvents" as const, color: "bg-amber-50 text-amber-600" },
+              ].map((m) => (
+                <div key={m.label} className={`${m.color} rounded-2xl p-4 border border-current/10 flex flex-col gap-2`}>
+                  <span className="text-xs font-bold uppercase tracking-wider opacity-70">{m.label}</span>
+                  <span className="text-2xl font-extrabold font-mono">
+                    {eventsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : ledgerEvents.filter((e) => {
+                      if (m.key === "transferEvents") return e.type === "transfer";
+                      if (m.key === "escrowEvents") return e.type === "escrow";
+                      if (m.key === "ticketEvents") return e.type === "ticket";
+                      if (m.key === "roleEvents") return e.type === "role";
+                      return false;
+                    }).length}
+                  </span>
                 </div>
-                <div className="flex items-center gap-1.5">
-                  <span className="w-2.5 h-2.5 rounded-full bg-slate-900" />
-                  <span className="text-slate-800">Transferred</span>
-                </div>
-              </div>
+              ))}
             </div>
-
-            {/* Custom SVG Stacked Bars */}
-            <div className="h-44 w-full flex items-end pl-6 justify-between pr-4 relative pt-4">
-              <svg className="absolute inset-0 w-full h-full pointer-events-none" xmlns="http://www.w3.org/2000/svg">
-                <defs>
-                  {/* Diagonal Stripes Pattern Definition */}
-                  <pattern id="stripes" width="10" height="10" patternUnits="userSpaceOnUse">
-                    <path d="M-1,1 l2,-2 M0,10 l10,-10 M9,11 l2,-2" stroke="#e14e27" strokeWidth="2.5" />
-                  </pattern>
-                </defs>
-              </svg>
-
-              {/* Grid Lines */}
-              <div className="absolute inset-x-0 bottom-0 top-0 flex flex-col justify-between pointer-events-none">
-                <div className="border-t border-slate-100 w-full" />
-                <div className="border-t border-slate-100 w-full" />
-                <div className="border-b border-slate-200 w-full" />
-              </div>
-
-              {/* Y Axis Labels */}
-              <div className="absolute left-0 top-0 text-[10px] font-semibold text-slate-700 flex flex-col justify-between h-40 pointer-events-none">
-                <span>50k</span>
-                <span>25k</span>
-                <span>0k</span>
-              </div>
-
-              {/* Stacked Bars list */}
-              <div className="flex-1 flex justify-around items-end z-10 pl-6 h-full pb-1">
-                {[
-                  { m: "Jan", r: 15, t: 20 },
-                  { m: "Feb", r: 18, t: 15 },
-                  { m: "Mar", r: 25, t: 12 },
-                  { m: "Apr", r: 20, t: 18 },
-                  { m: "May", r: 22, t: 14 },
-                  { m: "Jun", r: 28, t: 22 },
-                  { m: "Jul", r: 20, t: 19 },
-                  { m: "Aug", r: 16, t: 15 },
-                ].map((item) => (
-                  <div key={item.m} className="flex flex-col items-center gap-2">
-                    <div className="flex flex-col w-5 h-32 justify-end">
-                      {/* Top Stacked Bar (Striped - Rewards) */}
-                      <div
-                        className="w-full rounded-t-md relative overflow-hidden"
-                        style={{ height: `${item.r * 2.5}px`, background: "url(#stripes)" }}
-                      />
-                      {/* Bottom Stacked Bar (Dark - Transfers) */}
-                      <div
-                        className="w-full bg-slate-900 rounded-b-md"
-                        style={{ height: `${item.t * 2.5}px` }}
-                      />
-                    </div>
-                    <span className="text-[10px] font-semibold text-slate-700 mt-1">
-                      {item.m}
-                    </span>
-                  </div>
-                ))}
-              </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+              {[
+                { label: "Universities", key: "universityEvents" as const, color: "bg-indigo-50 text-indigo-600" },
+                { label: "Memberships", key: "membershipEvents" as const, color: "bg-pink-50 text-pink-600" },
+                { label: "Faucets", key: "faucetEvents" as const, color: "bg-cyan-50 text-cyan-600" },
+                { label: "Total", key: "totalEvents" as const, color: "bg-slate-100 text-slate-700" },
+              ].map((m) => (
+                <div key={m.label} className={`${m.color} rounded-2xl p-4 border border-current/10 flex flex-col gap-2`}>
+                  <span className="text-xs font-bold uppercase tracking-wider opacity-70">{m.label}</span>
+                  <span className="text-2xl font-extrabold font-mono">
+                    {eventsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : m.key === "totalEvents" ? ledgerEvents.length : ledgerEvents.filter((e) => {
+                      if (m.key === "universityEvents") return e.type === "university";
+                      if (m.key === "membershipEvents") return e.type === "membership";
+                      if (m.key === "faucetEvents") return e.type === "faucet";
+                      return false;
+                    }).length}
+                  </span>
+                </div>
+              ))}
             </div>
           </div>
         </div>
