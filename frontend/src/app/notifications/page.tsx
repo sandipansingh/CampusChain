@@ -1,20 +1,21 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import { useWalletStore } from "@/state/useWalletStore";
+import { useTransactionStore } from "@/state/useTransactionStore";
+import { getRpcServer, NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID } from "@/services/contracts";
+import { scValToNative } from "@stellar/stellar-sdk";
+import { logger } from "@/services/logger";
 import {
   Bell,
-  ArrowRightLeft,
-  Lock,
-  Ticket,
-  ShieldAlert,
   Clock,
-  CheckCheck,
-  X
+  Trash2,
+  Loader2
 } from "lucide-react";
 
 interface NotificationItem {
   id: string;
-  type: "TRANSFER" | "ESCROW" | "TICKET" | "SYSTEM";
+  type: "TRANSFER" | "ESCROW" | "TICKET" | "ROLE" | "SYSTEM";
   title: string;
   description: string;
   timestamp: string;
@@ -23,70 +24,147 @@ interface NotificationItem {
 }
 
 export default function NotificationsPage() {
-  const [notifications, setNotifications] = useState<NotificationItem[]>([
-    {
-      id: "n1",
-      type: "TRANSFER",
-      title: "Incoming Transfer",
-      description: "Received 50.00 CAMP reward tokens from University Merit Faucet.",
-      timestamp: "5 mins ago",
-      read: false,
-      status: "success",
-    },
-    {
-      id: "n2",
-      type: "SYSTEM",
-      title: "Wallet Role Confirmed",
-      description: "Your Stellar keypair has been verified and registered on-chain.",
-      timestamp: "10 mins ago",
-      read: false,
-      status: "success",
-    },
-    {
-      id: "n3",
-      type: "ESCROW",
-      title: "Escrow Agreement Created",
-      description: "Escrow #244 created successfully with Seller GCM5...7AFN for 120.00 CAMP.",
-      timestamp: "1 hour ago",
-      read: true,
-      status: "info",
-    },
-    {
-      id: "n4",
-      type: "TICKET",
-      title: "Event Pass Acquired",
-      description: "Ticket pass #88 purchased for 'Summer Accreditation Festival'. Verified on-chain.",
-      timestamp: "2 hours ago",
-      read: true,
-      status: "success",
-    },
-  ]);
+  const address = useWalletStore((state) => state.address);
+  const sessionTransactions = useTransactionStore((state) => state.transactions);
+  const clearTransactions = useTransactionStore((state) => state.clearTransactions);
+  const [notifications, setNotifications] = useState<NotificationItem[]>([]);
+  const [loading, setLoading] = useState(true);
 
-  const markAllAsRead = () => {
-    setNotifications((prev) => prev.map((n) => ({ ...n, read: true })));
-  };
+  useEffect(() => {
+    async function fetchLedgerNotifications() {
+      if (!address) {
+        setNotifications([]);
+        setLoading(false);
+        return;
+      }
 
-  const deleteNotification = (id: string) => {
-    setNotifications((prev) => prev.filter((n) => n.id !== id));
-  };
+      try {
+        const server = getRpcServer();
+        const latestLedger = await server.getLatestLedger();
+        const startLedger = Math.max(1, latestLedger.sequence - 1000);
 
-  const getIcon = (type: string) => {
-    if (type === "TRANSFER") return <ArrowRightLeft className="w-4 h-4" />;
-    if (type === "ESCROW") return <Lock className="w-4 h-4" />;
-    if (type === "TICKET") return <Ticket className="w-4 h-4" />;
-    return <ShieldAlert className="w-4 h-4" />;
-  };
+        // Fetch events from both contracts
+        const [serviceEventsRes, tokenEventsRes] = await Promise.all([
+          server.getEvents({
+            startLedger,
+            filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] }],
+            limit: 15,
+          }),
+          server.getEvents({
+            startLedger,
+            filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] }],
+            limit: 15,
+          }),
+        ]);
 
-  const getStyle = (status: string, read: boolean) => {
-    if (!read) {
-      if (status === "success") return "bg-emerald-50 text-emerald-600 border-emerald-100";
-      if (status === "warning") return "bg-amber-50 text-amber-600 border-amber-100";
-      return "bg-blue-50 text-blue-600 border-blue-100";
+        const allEvents = [...serviceEventsRes.events, ...tokenEventsRes.events]
+          .sort((a, b) => b.ledger - a.ledger);
+
+        const realNotifications: NotificationItem[] = [];
+
+        // Helper to check if address exists in scval native representation
+        const matchAddress = (val: unknown): boolean => {
+          if (typeof val === "string") return val === address;
+          if (Array.isArray(val)) return val.some(v => matchAddress(v));
+          if (val && typeof val === "object") {
+            return Object.values(val as Record<string, unknown>).some(v => matchAddress(v));
+          }
+          return false;
+        };
+
+        allEvents.forEach((evt, idx) => {
+          try {
+            const nativeTopics = evt.topic.map((t) => scValToNative(t));
+            const nativeValue = evt.value ? scValToNative(evt.value) : null;
+
+            const involvesUser = nativeTopics.some((t) => matchAddress(t)) || matchAddress(nativeValue);
+
+            if (involvesUser) {
+              const eventSymbol = String(nativeTopics[0] || "").toLowerCase();
+              let type: "TRANSFER" | "ESCROW" | "TICKET" | "ROLE" | "SYSTEM" = "SYSTEM";
+              let title = "Ledger Event";
+              let description = `On-chain event triggered on ledger sequence ${evt.ledger}.`;
+
+              if (eventSymbol.includes("transfer")) {
+                type = "TRANSFER";
+                title = "Token Transfer";
+                description = `Token transfer detected in ledger sequence ${evt.ledger}.`;
+              } else if (eventSymbol.includes("escrow") || eventSymbol.includes("create_escrow") || eventSymbol.includes("release") || eventSymbol.includes("refund")) {
+                type = "ESCROW";
+                title = "Escrow Transition";
+                description = `Escrow agreement modified in ledger sequence ${evt.ledger}.`;
+              } else if (eventSymbol.includes("ticket") || eventSymbol.includes("buy_ticket") || eventSymbol.includes("redeem")) {
+                type = "TICKET";
+                title = "Event Ticket Pass";
+                description = `Ticket pass updated in ledger sequence ${evt.ledger}.`;
+              } else if (eventSymbol.includes("role") || eventSymbol.includes("role_updated")) {
+                type = "ROLE";
+                title = "Role Permission";
+                description = `Profile role permissions updated on-chain.`;
+              }
+
+              realNotifications.push({
+                id: `ledger_${idx}_${evt.ledger}`,
+                type,
+                title,
+                description,
+                timestamp: "JUST NOW",
+                read: false,
+                status: "info",
+              });
+            }
+          } catch {
+            // Ignore parse errors
+          }
+        });
+
+        // Add session transactions as notifications
+        sessionTransactions.forEach((tx, idx) => {
+          let type: "TRANSFER" | "ESCROW" | "TICKET" | "ROLE" | "SYSTEM" = "SYSTEM";
+          if (tx.method.includes("TRANSFER")) type = "TRANSFER";
+          else if (tx.method.includes("ESCROW")) type = "ESCROW";
+          else if (tx.method.includes("TICKET") || tx.method.includes("EVENT")) type = "TICKET";
+
+          realNotifications.unshift({
+            id: `session_${tx.hash}_${idx}`,
+            type,
+            title: `Session ${tx.method}`,
+            description: tx.status === "confirmed" 
+              ? "Transaction executed successfully on-chain." 
+              : tx.status === "failed" 
+              ? `Transaction execution failed: ${tx.errorMessage || "Unknown error"}` 
+              : `Transaction currently ${tx.status}...`,
+            timestamp: new Date(tx.timestamp).toLocaleTimeString(),
+            read: false,
+            status: tx.status === "failed" ? "warning" : "success",
+          });
+        });
+
+        // Dedup notifications by id
+        const seenIds = new Set<string>();
+        const uniqueNotifications = realNotifications.filter((n) => {
+          if (seenIds.has(n.id)) return false;
+          seenIds.add(n.id);
+          return true;
+        });
+
+        setNotifications(uniqueNotifications);
+      } catch (err) {
+        logger.error("Failed to fetch on-chain notifications", err);
+      } finally {
+        setLoading(false);
+      }
     }
-    return "bg-slate-50 text-slate-400 border-slate-200";
-  };
 
-  const unreadCount = notifications.filter((n) => !n.read).length;
+    fetchLedgerNotifications();
+    const interval = setInterval(fetchLedgerNotifications, 10000);
+    return () => clearInterval(interval);
+  }, [address, sessionTransactions]);
+
+  const clearAllNotifications = () => {
+    clearTransactions();
+    setNotifications([]);
+  };
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
@@ -97,62 +175,67 @@ export default function NotificationsPage() {
             Notifications
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Stay updated with secure smart contract updates, incoming transfers, and door validation confirmations.
+            Real-time on-chain notifications and transactions registered to your address.
           </p>
         </div>
-        {unreadCount > 0 && (
+        {notifications.length > 0 && (
           <button
-            onClick={markAllAsRead}
-            className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-50 hover:text-slate-800 flex items-center gap-2 active:scale-95 transition-all shadow-sm"
+            onClick={clearAllNotifications}
+            className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-50 flex items-center gap-2 active:scale-95 transition-all"
           >
-            <CheckCheck className="w-4 h-4 text-accent" />
-            Mark all as read
+            <Trash2 className="w-4 h-4" />
+            Clear Log
           </button>
         )}
       </div>
 
-      {/* Notifications List */}
-      <div className="bg-white border border-border rounded-2xl shadow-sm p-6">
+      {/* Notifications Card - Flat design (no shadow, no hover line, no accent bar) */}
+      <div className="bg-white border border-border rounded-2xl p-6">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Inbox ({notifications.length})
+            Ledger & Session Feed ({notifications.length})
           </span>
-          {unreadCount > 0 && (
-            <span className="text-[10px] font-bold bg-accent text-white px-2.5 py-0.5 rounded-full shadow-sm">
-              {unreadCount} Unread
-            </span>
-          )}
         </div>
 
-        {notifications.length === 0 ? (
-          <div className="border border-dashed border-slate-200 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-3">
-            <Bell className="w-8 h-8 text-slate-300 animate-bounce" />
-            <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">
-              Your inbox is empty
+        {loading ? (
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              Querying Ledger Telemetry...
             </span>
+          </div>
+        ) : notifications.length === 0 ? (
+          <div className="border border-dashed border-slate-200 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-3">
+            <Bell className="w-8 h-8 text-slate-300" />
+            <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">
+              No on-chain activity detected yet
+            </span>
+            <p className="text-[10px] text-slate-400 font-medium">
+              Transactions and events concerning your address will appear here once executed.
+            </p>
           </div>
         ) : (
           <div className="flex flex-col divide-y divide-slate-100">
             {notifications.map((item) => (
               <div
                 key={item.id}
-                className={`py-5 first:pt-0 last:pb-0 flex items-start justify-between gap-4 group transition-colors ${
-                  !item.read ? "bg-white" : "opacity-75"
-                }`}
+                className="py-5 first:pt-0 last:pb-0 flex items-start justify-between gap-4"
               >
                 <div className="flex items-start gap-4">
-                  {/* Status Indicator Icon */}
-                  <div className={`w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${getStyle(item.status, item.read)}`}>
-                    {getIcon(item.type)}
-                  </div>
-                  
                   <div className="flex flex-col">
                     <div className="flex items-center gap-2">
-                      <span className={`text-xs font-extrabold uppercase ${!item.read ? "text-slate-900" : "text-slate-500"}`}>
+                      <span className="text-xs font-extrabold uppercase text-slate-900">
                         {item.title}
                       </span>
-                      {!item.read && (
-                        <span className="w-1.5 h-1.5 rounded-full bg-accent" />
+                      {item.status === "warning" && (
+                        <span className="text-[9px] font-bold text-red-600 bg-red-50 border border-red-100 px-1.5 py-0.5 rounded">
+                          Failed
+                        </span>
+                      )}
+                      {item.status === "success" && (
+                        <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-1.5 py-0.5 rounded">
+                          Confirmed
+                        </span>
                       )}
                     </div>
                     <p className="text-xs text-slate-500 font-medium leading-relaxed mt-1">
@@ -164,13 +247,6 @@ export default function NotificationsPage() {
                     </div>
                   </div>
                 </div>
-
-                <button
-                  onClick={() => deleteNotification(item.id)}
-                  className="w-7 h-7 rounded bg-slate-50 hover:bg-red-50 hover:text-red-500 flex items-center justify-center text-slate-400 active:scale-95 transition-all opacity-0 group-hover:opacity-100 shrink-0"
-                >
-                  <X className="w-3.5 h-3.5" />
-                </button>
               </div>
             ))}
           </div>

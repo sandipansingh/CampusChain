@@ -122,7 +122,7 @@ export default function WalletPage() {
         </div>
         <button
           onClick={() => { refetchBalance(); if (activeEscrowId !== null) refetchEscrow(); }}
-          className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-50 hover:text-slate-800 flex items-center gap-2 active:scale-95 transition-all shadow-sm"
+          className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-slate-50 flex items-center gap-2 active:scale-95 transition-all"
         >
           <RefreshCw className="w-4 h-4" />
           Refresh State
@@ -135,8 +135,8 @@ export default function WalletPage() {
         {/* Left Side: Wallet Card & Ledger details */}
         <div className="lg:col-span-1 flex flex-col gap-6">
           
-          {/* Card: Wallet Balance */}
-          <div className="bg-slate-900 text-white rounded-2xl shadow-xl p-6 relative overflow-hidden flex flex-col justify-between min-h-[220px]">
+          {/* Card: Wallet Balance - Flat, no shadow */}
+          <div className="bg-slate-900 text-white rounded-2xl p-6 relative overflow-hidden flex flex-col justify-between min-h-[220px]">
             {/* Top wave/watermark decoration */}
             <div className="absolute right-0 top-0 w-32 h-32 bg-accent/20 rounded-full blur-3xl pointer-events-none" />
             <div className="absolute left-1/2 bottom-0 -translate-x-1/2 w-44 h-12 bg-gradient-to-t from-accent/15 to-transparent rounded-full blur-xl pointer-events-none" />
@@ -165,8 +165,8 @@ export default function WalletPage() {
             </div>
           </div>
 
-          {/* Card: Testnet Faucet (Gas helper) */}
-          <div className="bg-white border border-border rounded-2xl shadow-sm p-6 flex flex-col gap-4">
+          {/* Card: Testnet Faucet (Gas helper) - Flat, no shadow */}
+          <div className="bg-white border border-border rounded-2xl p-6 flex flex-col gap-4">
             <h3 className="text-sm font-extrabold text-slate-900 uppercase">
               Sandbox Gas Helper
             </h3>
@@ -175,7 +175,7 @@ export default function WalletPage() {
             </p>
             <button
               onClick={fundTestnetAccount}
-              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm"
+              className="w-full h-11 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
             >
               <ArrowUpRight className="w-4 h-4 text-accent" />
               Request Testnet XLM
@@ -183,8 +183,8 @@ export default function WalletPage() {
           </div>
         </div>
 
-        {/* Right Side: On-Chain Escrow Console */}
-        <div className="lg:col-span-2 bg-white border border-border rounded-2xl shadow-sm p-6 flex flex-col gap-6">
+        {/* Right Side: On-Chain Escrow Console - Flat, no shadow */}
+        <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-6 flex flex-col gap-6">
           <div className="border-b border-slate-100 pb-4">
             <h3 className="text-base font-extrabold text-slate-900 uppercase">
               Escrow Management Console
@@ -209,7 +209,7 @@ export default function WalletPage() {
             </div>
             <button
               type="submit"
-              className="h-11 px-6 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center gap-2 active:scale-95 transition-all shadow-md shadow-accent/15"
+              className="h-11 px-6 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center gap-2 active:scale-95 transition-all"
             >
               Lookup
             </button>
@@ -287,7 +287,7 @@ export default function WalletPage() {
                   <button
                     disabled={address !== escrow.buyer || releaseEscrowMut.isPending}
                     onClick={() => handleEscrowAction("release")}
-                    className="flex-1 h-12 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-accent/15 disabled:opacity-40 disabled:pointer-events-none"
+                    className="flex-1 h-12 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
                   >
                     {releaseEscrowMut.isPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />

@@ -234,22 +234,22 @@ export default function DashboardPage() {
             Analyze campus metrics, transfer rewards, and log secure smart contract escrows.
           </p>
         </div>
-        <div className="flex items-center gap-3 bg-white border border-border px-4 py-2.5 rounded-xl shadow-sm text-xs font-bold text-slate-700">
+        <div className="flex items-center gap-3 bg-white border border-border px-4 py-2.5 rounded-xl text-xs font-bold text-slate-700">
           <Clock className="w-4 h-4 text-accent" />
           <span>July 16, 2026</span>
           <ChevronDown className="w-3.5 h-3.5 text-slate-400" />
         </div>
       </div>
 
-      {/* Grid of Stats Cards (Finexy Style) */}
+      {/* Grid of Stats Cards (Finexy Style) - Flat, no shadow, no accentbar, no hover border line */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Balance */}
-        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[160px] group hover:border-accent/40 hover:shadow-md transition-all duration-300">
+        <div className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Total Balance
             </span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent">
               <Wallet className="w-5 h-5" />
             </div>
           </div>
@@ -271,12 +271,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 2: Wallet Role */}
-        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[160px] group hover:border-accent/40 hover:shadow-md transition-all duration-300">
+        <div className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Profile Type
             </span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent">
               <Shield className="w-5 h-5" />
             </div>
           </div>
@@ -294,12 +294,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 3: Session Actions */}
-        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[160px] group hover:border-accent/40 hover:shadow-md transition-all duration-300">
+        <div className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Session Transactions
             </span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent">
               <ArrowRightLeft className="w-5 h-5" />
             </div>
           </div>
@@ -317,12 +317,12 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 4: Ledger Network */}
-        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[160px] group hover:border-accent/40 hover:shadow-md transition-all duration-300">
+        <div className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[160px]">
           <div className="flex justify-between items-start">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Ledger Network
             </span>
-            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
+            <div className="w-10 h-10 rounded-xl bg-orange-50 flex items-center justify-center text-accent">
               <TrendingUp className="w-5 h-5" />
             </div>
           </div>
@@ -344,8 +344,8 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         {/* Chart Column (Finexy inspired charts) */}
         <div className="lg:col-span-2 flex flex-col gap-6">
-          {/* Revenue Analytics (Weekly Volume Chart) */}
-          <div className="bg-white border border-border rounded-2xl shadow-sm p-6 flex flex-col justify-between">
+          {/* Revenue Analytics (Weekly Volume Chart) - Flat design */}
+          <div className="bg-white border border-border rounded-2xl p-6 flex flex-col justify-between">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-bold text-slate-900 uppercase">
@@ -392,7 +392,7 @@ export default function DashboardPage() {
                     >
                       {/* Tooltip on Hover */}
                       {isHovered && (
-                        <div className="absolute -top-10 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded shadow-md z-20 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100">
+                        <div className="absolute -top-10 bg-slate-900 text-white text-[10px] font-bold px-2 py-1 rounded z-20 whitespace-nowrap animate-in fade-in zoom-in-95 duration-100">
                           {data.amount.toLocaleString()} CAMP
                         </div>
                       )}
@@ -416,8 +416,8 @@ export default function DashboardPage() {
             </div>
           </div>
 
-          {/* Profit & Loss Stacked Chart with Diagonal Stripes */}
-          <div className="bg-white border border-border rounded-2xl shadow-sm p-6">
+          {/* Profit & Loss Stacked Chart with Diagonal Stripes - Flat design */}
+          <div className="bg-white border border-border rounded-2xl p-6">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-base font-bold text-slate-900 uppercase">
@@ -497,8 +497,8 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        {/* Interactive Action Controls (Right Panel) */}
-        <div className="bg-white border border-border rounded-2xl shadow-sm p-6 flex flex-col gap-6">
+        {/* Interactive Action Controls (Right Panel) - Flat design */}
+        <div className="bg-white border border-border rounded-2xl p-6 flex flex-col gap-6">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
             <h3 className="text-base font-extrabold text-slate-900 uppercase">
               Action Center
@@ -512,7 +512,7 @@ export default function DashboardPage() {
               onClick={() => setActiveTab("send")}
               className={`flex-1 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition-all duration-200 ${
                 activeTab === "send"
-                  ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+                  ? "bg-white text-slate-900 border border-slate-200"
                   : "text-slate-400 hover:text-slate-700"
               }`}
             >
@@ -522,7 +522,7 @@ export default function DashboardPage() {
               onClick={() => setActiveTab("escrow")}
               className={`flex-1 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition-all duration-200 ${
                 activeTab === "escrow"
-                  ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+                  ? "bg-white text-slate-900 border border-slate-200"
                   : "text-slate-400 hover:text-slate-700"
               }`}
             >
@@ -532,7 +532,7 @@ export default function DashboardPage() {
               onClick={() => setActiveTab("events")}
               className={`flex-1 py-2 text-xs font-bold rounded-lg uppercase tracking-wider transition-all duration-200 ${
                 activeTab === "events"
-                  ? "bg-white text-slate-900 shadow-sm border border-slate-200"
+                  ? "bg-white text-slate-900 border border-slate-200"
                   : "text-slate-400 hover:text-slate-700"
               }`}
             >
@@ -585,7 +585,7 @@ export default function DashboardPage() {
                 <button
                   type="submit"
                   disabled={transferMut.isPending}
-                  className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none shadow-md shadow-accent/15"
+                  className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {transferMut.isPending ? (
                     <>
@@ -642,7 +642,7 @@ export default function DashboardPage() {
                 <button
                   type="submit"
                   disabled={createEscrowMut.isPending || approveMut.isPending}
-                  className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none shadow-md shadow-accent/15"
+                  className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                 >
                   {createEscrowMut.isPending || approveMut.isPending ? (
                     <>
@@ -703,7 +703,7 @@ export default function DashboardPage() {
                     <button
                       type="submit"
                       disabled={createEventMut.isPending}
-                      className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none shadow-md shadow-accent/15"
+                      className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                     >
                       {createEventMut.isPending ? (
                         <>
@@ -741,7 +741,7 @@ export default function DashboardPage() {
                     <button
                       type="submit"
                       disabled={buyTicketMut.isPending || approveMut.isPending}
-                      className="w-full h-12 mt-8 bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none shadow-md shadow-accent/15"
+                      className="w-full h-12 mt-8 bg-accent hover:opacity-95 text-white font-bold uppercase text-xs tracking-wider rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                     >
                       {buyTicketMut.isPending || approveMut.isPending ? (
                         <>
@@ -760,8 +760,8 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Recent Activity Table (Finexy Style) */}
-      <div className="bg-white border border-border rounded-2xl shadow-sm p-6 flex flex-col gap-6">
+      {/* Recent Activity Table (Finexy Style) - Flat design */}
+      <div className="bg-white border border-border rounded-2xl p-6 flex flex-col gap-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-extrabold text-slate-900 uppercase">
@@ -858,7 +858,7 @@ export default function DashboardPage() {
                           className="inline-flex items-center gap-1 text-accent hover:underline uppercase tracking-wider text-[10px] font-black"
                         >
                           Explorer
-                          <ExternalLink className="w-3 h-3" />
+                          <ExternalLink className="w-3.5 h-3.5" />
                         </a>
                       ) : tx.errorMessage ? (
                         <span className="text-red-500 font-mono text-[10px] break-all block max-w-[200px] text-right ml-auto">

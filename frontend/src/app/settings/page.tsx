@@ -68,8 +68,8 @@ export default function SettingsPage() {
                 onClick={() => switchNetwork(net.id as NetworkType)}
                 className={`border bg-white p-6 rounded-2xl flex flex-col justify-between min-h-[350px] cursor-pointer group transition-all duration-300 ${
                   isSelected
-                    ? "border-accent ring-2 ring-accent/15 shadow-md shadow-accent/5"
-                    : "border-border shadow-sm hover:border-slate-400 hover:shadow"
+                    ? "border-accent ring-1 ring-accent/15 bg-orange-50/5"
+                    : "border-border hover:border-slate-400"
                 }`}
               >
                 <div>
@@ -80,7 +80,7 @@ export default function SettingsPage() {
                       <Icon className="w-5 h-5" />
                     </div>
                     {isSelected && (
-                      <span className="text-[10px] font-bold tracking-widest uppercase bg-accent text-white px-2.5 py-0.5 rounded-full shadow-sm">
+                      <span className="text-[10px] font-bold tracking-widest uppercase bg-accent text-white px-2.5 py-0.5 rounded-full">
                         Active
                       </span>
                     )}

@@ -5,6 +5,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useWalletStore } from "@/state/useWalletStore";
 import { useCampusUserRole, useCampusBalance } from "@/hooks/useCampusToken";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import {
   LayoutDashboard,
   Activity,
@@ -78,25 +79,6 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     },
   ];
 
-  // Generate a deterministic gradient avatar based on wallet address
-  const getAvatarGradient = (addr: string | null) => {
-    if (!addr) return "from-slate-400 to-slate-600";
-    let hash = 0;
-    for (let i = 0; i < addr.length; i++) {
-      hash = addr.charCodeAt(i) + ((hash << 5) - hash);
-    }
-    const colors = [
-      "from-orange-500 to-rose-500",
-      "from-emerald-500 to-teal-500",
-      "from-blue-500 to-indigo-500",
-      "from-purple-500 to-pink-500",
-      "from-amber-500 to-orange-500",
-      "from-cyan-500 to-blue-500",
-    ];
-    const index = Math.abs(hash) % colors.length;
-    return colors[index];
-  };
-
   const currentRouteName = () => {
     const matched = menuItems
       .flatMap((g) => g.items)
@@ -108,23 +90,23 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans select-none antialiased">
       {/* Top Banner Warning for Sandbox Connection if disconnected */}
       {!address && (
-        <div className="fixed inset-0 z-55 flex items-center justify-center bg-background/80 backdrop-blur-md p-6">
-          <div className="bg-white border border-border rounded-2xl shadow-xl p-8 max-w-md w-full text-center flex flex-col items-center gap-6">
+        <div className="fixed inset-0 z-55 flex items-center justify-center bg-background/80 backdrop-blur-sm p-6">
+          <div className="bg-white border border-border rounded-2xl p-8 max-w-md w-full text-center flex flex-col items-center gap-6">
             <div className="w-16 h-16 rounded-full bg-orange-50 flex items-center justify-center text-accent">
               <Shield className="w-8 h-8" />
             </div>
             <div className="flex flex-col gap-2">
               <h2 className="text-2xl font-bold tracking-tight text-slate-900 uppercase">
-                AUTHENTICATION REQUIRED
+                Authentication Required
               </h2>
-              <p className="text-slate-500 text-sm">
+              <p className="text-slate-500 text-sm leading-relaxed">
                 Connect your Stellar / Freighter wallet to activate your campus profile, manage escrows, and view transaction history.
               </p>
             </div>
             <button
               onClick={connectWallet}
               disabled={isConnecting}
-              className="w-full h-14 bg-accent text-accent-foreground font-bold tracking-tighter rounded-xl uppercase flex items-center justify-center gap-2 hover:opacity-95 active:scale-95 transition-all duration-200 disabled:opacity-50"
+              className="w-full h-14 bg-accent text-accent-foreground font-bold tracking-tighter rounded-xl uppercase flex items-center justify-center gap-2 hover:opacity-95 active:scale-95 transition-all duration-200"
             >
               {isConnecting ? (
                 <>
@@ -151,7 +133,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         <aside className="w-64 bg-white border-r border-border hidden lg:flex flex-col shrink-0 sticky top-0 h-screen z-20">
           {/* Logo Brand Header */}
           <div className="h-20 border-b border-border flex items-center px-8 gap-3">
-            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center text-white font-black text-xl shadow-md shadow-accent/20">
+            <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center text-white font-black text-xl">
               CC
             </div>
             <Link href="/" className="flex flex-col">
@@ -181,7 +163,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                         href={item.href}
                         className={`flex items-center justify-between px-4 py-3 rounded-xl font-semibold text-sm transition-all duration-200 group ${
                           isActive
-                            ? "bg-accent text-white shadow-md shadow-accent/15"
+                            ? "bg-accent text-white"
                             : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
                         }`}
                       >
@@ -213,11 +195,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
           {/* Bottom Sidebar Profile / Wallet Summary */}
           <div className="p-6 border-t border-border bg-slate-50/50 flex flex-col gap-4">
             <div className="flex items-center gap-3">
-              <div
-                className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${getAvatarGradient(
-                  address
-                )} shadow-md`}
-              />
+              <ProfileAvatar address={address} size={40} />
               <div className="flex flex-col overflow-hidden">
                 <span className="font-bold text-sm text-slate-800 truncate">
                   {address ? `${address.slice(0, 6)}...${address.slice(-6)}` : "Guest"}
@@ -230,7 +208,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
             <button
               onClick={disconnectWallet}
-              className="flex items-center justify-center gap-2 w-full py-2.5 bg-white border border-border text-slate-600 text-xs font-bold uppercase tracking-tight rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 active:scale-95 transition-all duration-200"
+              className="flex items-center justify-center gap-2 w-full py-2.5 bg-white border border-border text-slate-600 text-xs font-bold uppercase tracking-tight rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all duration-200"
             >
               <LogOut className="w-3.5 h-3.5" />
               Disconnect
@@ -247,7 +225,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               onClick={() => setMobileMenuOpen(false)}
             />
             {/* Drawer */}
-            <aside className="relative w-72 bg-white flex flex-col h-full z-50 p-6 shadow-xl animate-in slide-in-from-left duration-200">
+            <aside className="relative w-72 bg-white flex flex-col h-full z-50 p-6 border-r border-border animate-in slide-in-from-left duration-200">
               <div className="flex items-center justify-between mb-8">
                 <div className="flex items-center gap-3">
                   <div className="w-10 h-10 rounded-xl bg-accent flex items-center justify-center text-white font-black text-xl">
@@ -264,7 +242,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 </div>
                 <button
                   onClick={() => setMobileMenuOpen(false)}
-                  className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 active:scale-95 transition-all"
+                  className="w-8 h-8 rounded-lg bg-slate-100 flex items-center justify-center text-slate-500 hover:bg-slate-200 transition-all"
                 >
                   <X className="w-4 h-4" />
                 </button>
@@ -314,11 +292,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
               <div className="pt-6 border-t border-border mt-auto flex flex-col gap-4">
                 <div className="flex items-center gap-3">
-                  <div
-                    className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${getAvatarGradient(
-                      address
-                    )}`}
-                  />
+                  <ProfileAvatar address={address} size={40} />
                   <div className="flex flex-col overflow-hidden">
                     <span className="font-bold text-sm text-slate-800 truncate">
                       {address ? `${address.slice(0, 6)}...${address.slice(-6)}` : "Guest"}
@@ -333,7 +307,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                     disconnectWallet();
                     setMobileMenuOpen(false);
                   }}
-                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-50 border border-border text-slate-600 text-xs font-bold uppercase tracking-tight rounded-xl hover:bg-red-50 hover:text-red-600 active:scale-95 transition-all duration-200"
+                  className="flex items-center justify-center gap-2 w-full py-2.5 bg-slate-50 border border-border text-slate-600 text-xs font-bold uppercase tracking-tight rounded-xl hover:bg-red-50 hover:text-red-600 transition-all duration-200"
                 >
                   <LogOut className="w-3.5 h-3.5" />
                   Disconnect
@@ -346,12 +320,12 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Right Dashboard Area (Header + Main Content) */}
         <div className="flex-1 flex flex-col min-w-0 max-h-screen overflow-y-auto bg-background">
           {/* Top Header */}
-          <header className="h-20 bg-white border-b border-border flex items-center justify-between px-6 md:px-8 shrink-0 sticky top-0 z-10 shadow-sm shadow-slate-100/50">
+          <header className="h-20 bg-white border-b border-border flex items-center justify-between px-6 md:px-8 shrink-0 sticky top-0 z-10">
             {/* Header Left: Burger / Search & Breadcrumbs */}
             <div className="flex items-center gap-4">
               <button
                 onClick={() => setMobileMenuOpen(true)}
-                className="w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-slate-500 lg:hidden hover:bg-slate-100 active:scale-95 transition-all"
+                className="w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-slate-500 lg:hidden hover:bg-slate-100 transition-all"
               >
                 <Menu className="w-5 h-5" />
               </button>
@@ -374,7 +348,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
                 placeholder="Search transactions, escrows..."
                 className="bg-transparent text-xs font-semibold text-slate-700 outline-none w-full placeholder-slate-400"
               />
-              <span className="text-[10px] font-mono text-slate-400 bg-white border border-slate-200 rounded px-1.5 py-0.5 ml-2 shadow-sm shrink-0">
+              <span className="text-[10px] font-mono text-slate-400 bg-white border border-slate-200 rounded px-1.5 py-0.5 ml-2 shrink-0">
                 ⌘K
               </span>
             </div>
@@ -403,13 +377,13 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
               {/* Action Circle Buttons */}
               <div className="flex items-center gap-2">
                 <Link href="/notifications">
-                  <button className="relative w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 active:scale-95 transition-all">
+                  <button className="relative w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all">
                     <Bell className="w-4.5 h-4.5" />
                     <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-accent" />
                   </button>
                 </Link>
                 <Link href="/help">
-                  <button className="w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 active:scale-95 transition-all">
+                  <button className="w-10 h-10 rounded-xl bg-slate-50 border border-border flex items-center justify-center text-slate-500 hover:bg-slate-100 hover:text-slate-800 transition-all">
                     <HelpCircle className="w-4.5 h-4.5" />
                   </button>
                 </Link>
@@ -417,11 +391,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
               {/* User Avatar Circle */}
               <Link href="/profile" className="flex items-center gap-3 border-l border-border pl-4">
-                <div
-                  className={`w-10 h-10 rounded-xl bg-gradient-to-tr ${getAvatarGradient(
-                    address
-                  )} shadow-md shrink-0`}
-                />
+                <ProfileAvatar address={address} size={40} />
                 <div className="hidden sm:flex flex-col overflow-hidden w-28">
                   <span className="font-extrabold text-xs text-slate-900 truncate">
                     {address ? `${address.slice(0, 6)}...${address.slice(-6)}` : "Guest"}

@@ -6,6 +6,7 @@ import { useCampusUserRole, useSetRoleMutation } from "@/hooks/useCampusToken";
 import { useTransactionStore } from "@/state/useTransactionStore";
 import { pollTransactionStatus } from "@/services/contracts";
 import { logger } from "@/services/logger";
+import ProfileAvatar from "@/components/ProfileAvatar";
 import {
   User,
   Shield,
@@ -138,14 +139,12 @@ export default function ProfilePage() {
       {/* Grid Layout */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
         
-        {/* Left Side: Profile Summary Card */}
+        {/* Left Side: Profile Summary Card - Flat design */}
         <div className="lg:col-span-1 flex flex-col gap-6">
-          <div className="bg-white border border-border rounded-2xl shadow-sm p-6 flex flex-col items-center text-center gap-6">
+          <div className="bg-white border border-border rounded-2xl p-6 flex flex-col items-center text-center gap-6">
             {/* Avatar block */}
             <div className="relative">
-              <div className="w-24 h-24 rounded-2xl bg-gradient-to-tr from-accent to-rose-500 shadow-lg flex items-center justify-center text-white text-3xl font-black">
-                {address ? address.slice(2, 4).toUpperCase() : "G"}
-              </div>
+              <ProfileAvatar address={address} size={96} />
               <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-slate-900 border-2 border-white flex items-center justify-center text-white">
                 <Shield className="w-4 h-4 text-accent" />
               </div>
@@ -167,7 +166,7 @@ export default function ProfilePage() {
             {address && (
               <button
                 onClick={handleCopy}
-                className="h-10 px-4 w-full bg-slate-50 hover:bg-slate-100 border border-border text-xs font-bold text-slate-600 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
+                className="h-10 px-4 w-full bg-slate-50 border border-border text-xs font-bold text-slate-600 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all"
               >
                 {copied ? (
                   <>
@@ -185,8 +184,8 @@ export default function ProfilePage() {
           </div>
         </div>
 
-        {/* Right Side: Role Assignment Form */}
-        <div className="lg:col-span-2 bg-white border border-border rounded-2xl shadow-sm p-6 flex flex-col gap-6">
+        {/* Right Side: Role Assignment Form - Flat design */}
+        <div className="lg:col-span-2 bg-white border border-border rounded-2xl p-6 flex flex-col gap-6">
           <div className="border-b border-slate-100 pb-4">
             <h3 className="text-base font-extrabold text-slate-900 uppercase">
               On-Chain Identity Registrar
@@ -233,7 +232,7 @@ export default function ProfilePage() {
             <button
               type="submit"
               disabled={setRoleMut.isPending}
-              className="h-12 w-full bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-md shadow-accent/15 disabled:opacity-50 disabled:pointer-events-none mt-4"
+              className="h-12 w-full bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none mt-4"
             >
               {setRoleMut.isPending ? (
                 <>

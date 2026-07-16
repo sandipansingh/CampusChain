@@ -61,58 +61,58 @@ export default function AnalyticsPage() {
         </div>
       </div>
 
-      {/* Global Ledger Stats Block */}
+      {/* Global Ledger Stats Block - Flat, no shadows */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/40 transition-all duration-300">
+        <div className="bg-white border border-border p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Token Name
             </span>
-            <Coins className="w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
+            <Coins className="w-5 h-5 text-slate-400" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4">
+          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4 block">
             {isLoading ? "..." : meta?.name}
           </span>
         </div>
 
-        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/40 transition-all duration-300">
+        <div className="bg-white border border-border p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Symbol
             </span>
-            <Sparkles className="w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
+            <Sparkles className="w-5 h-5 text-slate-400" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4">
+          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4 block">
             {isLoading ? "..." : meta?.symbol}
           </span>
         </div>
 
-        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/40 transition-all duration-300">
+        <div className="bg-white border border-border p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Circulating Supply
             </span>
-            <Layers className="w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
+            <Layers className="w-5 h-5 text-slate-400" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4 font-mono">
+          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4 block font-mono">
             {isLoading ? "..." : `${meta?.totalSupply?.toLocaleString()} ${meta?.symbol}`}
           </span>
         </div>
 
-        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/40 transition-all duration-300">
+        <div className="bg-white border border-border p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Decimals
             </span>
-            <Database className="w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
+            <Database className="w-5 h-5 text-slate-400" />
           </div>
-          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4 font-mono">
+          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4 block font-mono">
             {isLoading ? "..." : meta?.decimals}
           </span>
         </div>
       </div>
 
-      {/* Metric Cards Grid */}
+      {/* Metric Cards Grid - Flat, no shadows */}
       <div className="flex flex-col gap-6">
         <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
           Performance Metrics
@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
             return (
               <div
                 key={metric.label}
-                className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[260px] group hover:border-accent/40 hover:shadow-md transition-all duration-300"
+                className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[260px]"
               >
                 <div className="flex justify-between items-start">
                   <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${metric.color}`}>
