@@ -19,72 +19,70 @@ export default function Header() {
   };
 
   const navItems = [
-    { name: "DASHBOARD", href: "/dashboard" },
-    { name: "ACTIVITY", href: "/activity" },
-    { name: "TRANSACTIONS", href: "/transactions" },
-    { name: "SETTINGS", href: "/settings" },
-    { name: "ANALYTICS", href: "/analytics" },
+    { name: "Dashboard", href: "/dashboard" },
+    { name: "Activity", href: "/activity" },
+    { name: "Transactions", href: "/transactions" },
+    { name: "Settings", href: "/settings" },
+    { name: "Analytics", href: "/analytics" },
   ];
 
   return (
-    <header className="w-full border-b-2 border-border bg-background sticky top-0 z-50">
-      <div className="max-w-[95vw] mx-auto flex flex-col md:flex-row items-center justify-between py-6 gap-6">
-        {/* Logo */}
-        <Link href="/" className="group">
-          <div className="text-3xl font-bold tracking-tighter text-foreground group-hover:text-accent transition-colors duration-300">
-            CAMPUSCHAIN
-          </div>
-        </Link>
-
-        {/* Navigation links */}
-        <nav className="flex flex-wrap items-center justify-center gap-4 md:gap-8">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`text-sm md:text-base font-bold uppercase tracking-wider px-3 py-1.5 border-2 transition-all duration-300 ${
-                  isActive
-                    ? "border-accent bg-accent text-accent-foreground"
-                    : "border-transparent text-muted-foreground hover:text-foreground hover:border-border"
-                }`}
-              >
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-
-        {/* Connect Button or Wallet Badge */}
-        <div className="flex items-center gap-4">
-          {address ? (
-            <div className="flex items-center gap-2">
-              <div className="hidden lg:flex flex-col items-end">
-                <span className="text-[10px] tracking-widest text-muted-foreground uppercase">
-                  {getRoleLabel(role)}
-                </span>
-                <span className="text-xs font-mono text-foreground font-bold">
-                  {address.slice(0, 6)}...{address.slice(-6)}
-                </span>
-              </div>
-              <button
-                onClick={disconnectWallet}
-                className="h-12 px-6 border-2 border-border bg-transparent text-foreground uppercase tracking-tighter font-bold transition-all duration-200 hover:bg-foreground hover:text-background"
-              >
-                DISCONNECT
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={connectWallet}
-              disabled={isConnecting}
-              className="h-12 px-6 bg-accent text-accent-foreground uppercase tracking-tighter font-bold transition-all duration-300 hover:scale-105 active:scale-95 disabled:opacity-50 disabled:pointer-events-none"
-            >
-              {isConnecting ? "CONNECTING..." : "CONNECT WALLET"}
-            </button>
-          )}
+    <header className="max-w-[95vw] w-full mx-auto mt-6 rounded-[24px] border border-border bg-white/95 backdrop-blur-md sticky top-6 z-50 px-6 py-4 flex flex-col md:flex-row items-center justify-between gap-4 shadow-sm">
+      {/* Logo */}
+      <Link href="/" className="group">
+        <div className="text-xl font-bold tracking-tight text-slate-900 group-hover:text-accent transition-colors duration-300">
+          CAMPUSCHAIN
         </div>
+      </Link>
+
+      {/* Navigation links */}
+      <nav className="flex flex-wrap items-center justify-center gap-2 md:gap-4">
+        {navItems.map((item) => {
+          const isActive = pathname === item.href;
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`text-xs font-semibold px-4 py-2 rounded-xl transition-all duration-300 ${
+                isActive
+                  ? "bg-accent text-white"
+                  : "text-slate-500 hover:text-slate-900 hover:bg-slate-50"
+              }`}
+            >
+              {item.name}
+            </Link>
+          );
+        })}
+      </nav>
+
+      {/* Connect Button or Wallet Badge */}
+      <div className="flex items-center gap-4">
+        {address ? (
+          <div className="flex items-center gap-3">
+            <div className="hidden lg:flex flex-col items-end">
+              <span className="text-[9px] tracking-wider text-slate-400 font-bold uppercase">
+                {getRoleLabel(role)}
+              </span>
+              <span className="text-xs font-mono text-slate-800 font-semibold">
+                {address.slice(0, 6)}...{address.slice(-6)}
+              </span>
+            </div>
+            <button
+              onClick={disconnectWallet}
+              className="h-10 px-4 border border-border text-slate-600 font-semibold text-xs rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all duration-200"
+            >
+              Disconnect
+            </button>
+          </div>
+        ) : (
+          <button
+            onClick={connectWallet}
+            disabled={isConnecting}
+            className="h-10 px-5 bg-accent text-white font-semibold text-xs rounded-xl hover:opacity-95 active:scale-95 transition-all duration-300 disabled:opacity-50 disabled:pointer-events-none"
+          >
+            {isConnecting ? "CONNECTING..." : "CONNECT WALLET"}
+          </button>
+        )}
       </div>
     </header>
   );

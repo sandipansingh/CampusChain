@@ -24,9 +24,9 @@ describe("Header Component", () => {
   it("should render logo and main navigation links", () => {
     render(<Header />);
     expect(screen.getByText("CAMPUSCHAIN")).toBeInTheDocument();
-    expect(screen.getByText("DASHBOARD")).toBeInTheDocument();
-    expect(screen.getByText("ACTIVITY")).toBeInTheDocument();
-    expect(screen.getByText("TRANSACTIONS")).toBeInTheDocument();
+    expect(screen.getByText("Dashboard")).toBeInTheDocument();
+    expect(screen.getByText("Activity")).toBeInTheDocument();
+    expect(screen.getByText("Transactions")).toBeInTheDocument();
   });
 
   it("should show Connect Wallet button when disconnected", () => {
@@ -41,7 +41,7 @@ describe("Header Component", () => {
     });
 
     render(<Header />);
-    expect(screen.getByText("DISCONNECT")).toBeInTheDocument();
+    expect(screen.getByText("Disconnect")).toBeInTheDocument();
     expect(screen.getByText("GBB2GD...XYZ123")).toBeInTheDocument();
   });
 });
