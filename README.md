@@ -6,27 +6,23 @@ CampusChain is a unified, decentralized campus economy platform that replaces di
 
 ## 🚀 Live Demo & Deployments
 
-<!-- PLACEHOLDER_START -->
 > [!NOTE]
 > The links below are placeholders for deployment and will be finalized upon network activation.
 
-* **Live Demo Portal**: `https://campuschain-demo.vercel.app` (Placeholder)
-* **Demo Video Tour**: `https://youtube.com/watch?v=campuschain-demo` (Placeholder - 1-2 min walkthrough)
+* **Live Demo Portal**: `https://campuschain-demo.vercel.app`
+* **Demo Video Tour**: `https://youtube.com/watch?v=campuschain-demo`
 * **CampusToken Contract Address**: `CBDN7REWPLUZX3CFPF4KUIIDSOJ4HN73VOQF7UPYFPKR6SH2USM6CWAN`
 * **CampusService Contract Address**: `CBSWJFE4HPAROL2LMLEABBS25O6VMC4VVMKEZRUKPMYGQ75E5IIRB6M4`
 * **CampusToken Deploy Tx Hash**: [0e3bb8bba5ce033e95ee6f9c5559d3cd37eb8a1da77a70865f4fe742c8602d90](https://stellar.expert/explorer/testnet/tx/0e3bb8bba5ce033e95ee6f9c5559d3cd37eb8a1da77a70865f4fe742c8602d90)
 * **CampusService Init Tx Hash**: [30d914f78d4247a5498641bf7b41c35198edea05924662b59ab9e89e28a9b18d](https://stellar.expert/explorer/testnet/tx/30d914f78d4247a5498641bf7b41c35198edea05924662b59ab9e89e28a9b18d)
-<!-- PLACEHOLDER_END -->
 
 ### Screenshots
-<!-- PLACEHOLDER_SCREENSHOTS_START -->
 * **Mobile Responsive UI Layout**:
   ![Mobile Responsive Layout](https://placehold.co/600x400/09090b/fafafa?text=MOBILE+RESPONSIVE+LAYOUT)
 * **CI/CD Test Runner Execution**:
   ![CI/CD pipeline running](https://placehold.co/600x400/09090b/fafafa?text=CI/CD+PIPELINE+RUNNING)
 * **Vitest + Cargo Test Outputs**:
   ![Test outputs showing 3+ passing tests](https://placehold.co/600x400/09090b/fafafa?text=VITEST+AND+CARGO+PASSING+TESTS)
-<!-- PLACEHOLDER_SCREENSHOTS_END -->
 
 ---
 
