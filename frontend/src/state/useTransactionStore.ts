@@ -1,4 +1,5 @@
 import { create } from "zustand";
+import { persist } from "zustand/middleware";
 
 export interface Transaction {
   hash: string;
@@ -17,17 +18,25 @@ interface TransactionState {
   clearTransactions: () => void;
 }
 
-export const useTransactionStore = create<TransactionState>((set) => ({
-  transactions: [],
-  addTransaction: (tx) =>
-    set((state) => ({
-      transactions: [tx, ...state.transactions],
-    })),
-  updateTransaction: (hash, updates) =>
-    set((state) => ({
-      transactions: state.transactions.map((tx) =>
-        tx.hash === hash ? { ...tx, ...updates } : tx
-      ),
-    })),
-  clearTransactions: () => set({ transactions: [] }),
-}));
+export const useTransactionStore = create<TransactionState>()(
+  persist(
+    (set) => ({
+      transactions: [],
+      addTransaction: (tx) =>
+        set((state) => ({
+          transactions: [tx, ...state.transactions],
+        })),
+      updateTransaction: (hash, updates) =>
+        set((state) => ({
+          transactions: state.transactions.map((tx) =>
+            tx.hash === hash ? { ...tx, ...updates } : tx
+          ),
+        })),
+      clearTransactions: () => set({ transactions: [] }),
+    }),
+    {
+      name: "campuschain-transactions",
+      partialize: (state) => ({ transactions: state.transactions }),
+    }
+  )
+);

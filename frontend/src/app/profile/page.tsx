@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import { useWalletStore } from "@/state/useWalletStore";
 import { useCampusUserRole, useSetRoleMutation } from "@/hooks/useCampusToken";
 import { useTransactionStore } from "@/state/useTransactionStore";
@@ -43,6 +44,7 @@ export default function ProfilePage() {
   const { address } = useWalletStore();
   const { data: role } = useCampusUserRole(address);
   const setRoleMut = useSetRoleMutation();
+  const queryClient = useQueryClient();
 
   const addTransaction = useTransactionStore((state) => state.addTransaction);
   const updateTransaction = useTransactionStore((state) => state.updateTransaction);
@@ -151,6 +153,7 @@ export default function ProfilePage() {
 
       await pollTransactionStatus(hash);
       updateTransaction(hash, { status: "confirmed" });
+      queryClient.invalidateQueries({ queryKey: ["campus-role", address] });
       logger.trackTransaction({
         hash,
         method: actionName,
