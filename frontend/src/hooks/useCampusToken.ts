@@ -125,3 +125,30 @@ export function useApproveMutation() {
     },
   });
 }
+
+export function useSetRoleMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      user,
+      role,
+      caller,
+    }: {
+      user: string;
+      role: number;
+      caller: string;
+    }) => {
+      const hash = await invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+        "set_role",
+        [addressToScVal(user), u32ToScVal(role)],
+        caller
+      );
+      return hash;
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-role", variables.user] });
+    },
+  });
+}
+

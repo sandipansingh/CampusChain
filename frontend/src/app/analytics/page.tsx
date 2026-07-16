@@ -1,8 +1,17 @@
 "use client";
 
 import React from "react";
-import Header from "@/components/Header";
 import { useCampusTokenMetadata } from "@/hooks/useCampusToken";
+import {
+  Coins,
+  Award,
+  Layers,
+  Database,
+  Ticket,
+  Lock,
+  ArrowRightLeft,
+  Sparkles
+} from "lucide-react";
 
 export default function AnalyticsPage() {
   const { data: meta, isLoading } = useCampusTokenMetadata();
@@ -10,113 +19,135 @@ export default function AnalyticsPage() {
   const metrics = [
     {
       num: "840K",
-      label: "TOTAL TRANSACTIONS",
+      label: "Total Transactions",
       desc: "Cumulative transaction count processed across all campus nodes since system genesis.",
+      icon: ArrowRightLeft,
+      color: "bg-blue-50 text-blue-600 border-blue-100",
     },
     {
       num: "2,450",
-      label: "ESCROWS SETTLED",
+      label: "Escrows Settled",
       desc: "Marketplace purchases successfully validated and released via smart contract escrows.",
+      icon: Lock,
+      color: "bg-purple-50 text-purple-600 border-purple-100",
     },
     {
       num: "125K",
-      label: "REWARDS MINTED",
+      label: "Rewards Minted",
       desc: "Academic merit reward points minted and distributed to students for extracurricular merit.",
+      icon: Award,
+      color: "bg-emerald-50 text-emerald-600 border-emerald-100",
     },
     {
       num: "14.2K",
-      label: "TICKET PASSES SOLD",
+      label: "Ticket Passes Sold",
       desc: "Tokenized club event tickets purchased, validated, and verified on-chain.",
+      icon: Ticket,
+      color: "bg-rose-50 text-rose-600 border-rose-100",
     },
   ];
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <Header />
-
-      {/* Hero Header */}
-      <section className="w-full border-b-2 border-border py-20 bg-background relative overflow-hidden">
-        <div className="max-w-[95vw] mx-auto z-10 relative">
-          <span className="text-accent text-sm font-bold tracking-widest uppercase mb-4 block">
-            {"// METRIC TELEMETRY"}
-          </span>
-          <h1 className="text-5xl md:text-8xl font-bold tracking-tighter uppercase leading-none">
-            ANALYTICS & STATS
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
+      {/* Title */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 uppercase">
+            Analytics & Stats
           </h1>
-          <p className="text-muted-foreground text-lg md:text-xl font-medium mt-4 max-w-xl">
-            Real-time token distribution stats, cumulative transaction count, and active escrow volumes.
+          <p className="text-slate-500 text-sm mt-1">
+            Real-time token distribution statistics, circulating supply, and performance metrics.
           </p>
         </div>
-      </section>
+      </div>
 
       {/* Global Ledger Stats Block */}
-      <section className="w-full border-b-2 border-border py-16 bg-muted/20">
-        <div className="max-w-[95vw] mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <div className="border-2 border-border bg-background p-8 flex flex-col justify-between min-h-[180px]">
-            <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              {"// TOKEN NAME"}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/40 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+              Token Name
             </span>
-            <span className="text-3xl md:text-4xl font-bold tracking-tighter uppercase mt-4">
-              {isLoading ? "..." : meta?.name}
-            </span>
+            <Coins className="w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
           </div>
-
-          <div className="border-2 border-border bg-background p-8 flex flex-col justify-between min-h-[180px]">
-            <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              {"// SYMBOL"}
-            </span>
-            <span className="text-3xl md:text-4xl font-bold tracking-tighter uppercase mt-4">
-              {isLoading ? "..." : meta?.symbol}
-            </span>
-          </div>
-
-          <div className="border-2 border-border bg-background p-8 flex flex-col justify-between min-h-[180px]">
-            <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              {"// TOTAL CIRCULATING SUPPLY"}
-            </span>
-            <span className="text-3xl md:text-4xl font-bold tracking-tighter uppercase mt-4">
-              {isLoading ? "..." : `${meta?.totalSupply?.toLocaleString()} ${meta?.symbol}`}
-            </span>
-          </div>
-
-          <div className="border-2 border-border bg-background p-8 flex flex-col justify-between min-h-[180px]">
-            <span className="text-xs font-bold tracking-wider text-muted-foreground uppercase">
-              {"// DECIMALS"}
-            </span>
-            <span className="text-3xl md:text-4xl font-bold tracking-tighter uppercase mt-4">
-              {isLoading ? "..." : meta?.decimals}
-            </span>
-          </div>
+          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4">
+            {isLoading ? "..." : meta?.name}
+          </span>
         </div>
-      </section>
+
+        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/40 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+              Symbol
+            </span>
+            <Sparkles className="w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
+          </div>
+          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4">
+            {isLoading ? "..." : meta?.symbol}
+          </span>
+        </div>
+
+        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/40 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+              Circulating Supply
+            </span>
+            <Layers className="w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
+          </div>
+          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4 font-mono">
+            {isLoading ? "..." : `${meta?.totalSupply?.toLocaleString()} ${meta?.symbol}`}
+          </span>
+        </div>
+
+        <div className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[140px] group hover:border-accent/40 transition-all duration-300">
+          <div className="flex items-center justify-between">
+            <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+              Decimals
+            </span>
+            <Database className="w-5 h-5 text-slate-400 group-hover:text-accent transition-colors" />
+          </div>
+          <span className="text-2xl font-bold tracking-tight text-slate-900 uppercase mt-4 font-mono">
+            {isLoading ? "..." : meta?.decimals}
+          </span>
+        </div>
+      </div>
 
       {/* Metric Cards Grid */}
-      <main className="max-w-[95vw] w-full mx-auto py-16 flex-1 flex flex-col gap-12">
-        <h3 className="text-xl font-bold tracking-wider text-muted-foreground uppercase">
-          {"// PERFORMANCE METRICS"}
+      <div className="flex flex-col gap-6">
+        <h3 className="text-xs font-bold tracking-wider text-slate-400 uppercase">
+          Performance Metrics
         </h3>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          {metrics.map((metric) => (
-            <div
-              key={metric.label}
-              className="border-2 border-border bg-background p-8 flex flex-col justify-between min-h-[350px] hover:border-accent transition-colors duration-300"
-            >
-              <div>
-                <span className="text-[5rem] md:text-[6rem] font-bold tracking-tighter text-accent leading-none">
-                  {metric.num}
-                </span>
-                <h4 className="text-xl font-bold tracking-tight uppercase mt-6 leading-none">
-                  {metric.label}
-                </h4>
+          {metrics.map((metric) => {
+            const Icon = metric.icon;
+            return (
+              <div
+                key={metric.label}
+                className="bg-white border border-border p-6 rounded-2xl shadow-sm flex flex-col justify-between min-h-[260px] group hover:border-accent/40 hover:shadow-md transition-all duration-300"
+              >
+                <div className="flex justify-between items-start">
+                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${metric.color}`}>
+                    <Icon className="w-5 h-5" />
+                  </div>
+                  <span className="text-3xl font-extrabold tracking-tight text-accent leading-none font-mono">
+                    {metric.num}
+                  </span>
+                </div>
+                
+                <div className="mt-8 flex flex-col gap-2">
+                  <h4 className="text-sm font-bold tracking-tight text-slate-800 uppercase leading-none">
+                    {metric.label}
+                  </h4>
+                  <p className="text-xs text-slate-500 font-medium leading-relaxed">
+                    {metric.desc}
+                  </p>
+                </div>
               </div>
-              <p className="text-muted-foreground font-medium text-base mt-6">
-                {metric.desc}
-              </p>
-            </div>
-          ))}
+            );
+          })}
         </div>
-      </main>
+      </div>
     </div>
   );
 }

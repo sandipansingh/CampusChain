@@ -1,9 +1,16 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import Header from "@/components/Header";
 import { getRpcServer, NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID } from "@/services/contracts";
 import { scValToNative } from "@stellar/stellar-sdk";
+import {
+  ArrowRightLeft,
+  Lock,
+  Ticket,
+  UserCheck,
+  Clock,
+  Loader2
+} from "lucide-react";
 
 interface FeedEvent {
   id: string;
@@ -13,7 +20,6 @@ interface FeedEvent {
   timestamp: string;
 }
 
-// Statically declared outside component to avoid dependency churn in React Hooks
 const BASE_MOCK_EVENTS: FeedEvent[] = [
   {
     id: "ev1",
@@ -71,11 +77,13 @@ export default function ActivityFeedPage() {
 
         const contractEvents: FeedEvent[] = res.events.map((evt, idx) => {
           const rawTopic = evt.topic[0];
-          let type: "TICKET" | "ESCROW" = "ESCROW";
+          let type: "TICKET" | "ESCROW" | "TRANSFER" | "ROLE" = "ESCROW";
           try {
             const nativeTopic = scValToNative(rawTopic);
-            if (typeof nativeTopic === "string" && nativeTopic.includes("ticket")) {
-              type = "TICKET";
+            if (typeof nativeTopic === "string") {
+              if (nativeTopic.includes("ticket")) type = "TICKET";
+              else if (nativeTopic.includes("transfer")) type = "TRANSFER";
+              else if (nativeTopic.includes("role")) type = "ROLE";
             }
           } catch {
             // Ignore parse errors
@@ -103,71 +111,85 @@ export default function ActivityFeedPage() {
     return () => clearInterval(interval);
   }, []);
 
-  return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <Header />
+  const getEventIcon = (type: string) => {
+    if (type === "TRANSFER") return <ArrowRightLeft className="w-5 h-5" />;
+    if (type === "ESCROW") return <Lock className="w-5 h-5" />;
+    if (type === "TICKET") return <Ticket className="w-5 h-5" />;
+    return <UserCheck className="w-5 h-5" />;
+  };
 
-      {/* Hero Header */}
-      <section className="w-full border-b-2 border-border py-20 bg-background relative overflow-hidden">
-        <div className="max-w-[95vw] mx-auto z-10 relative">
-          <span className="text-accent text-sm font-bold tracking-widest uppercase mb-4 block">
-            {"// TELEMETRY STREAM"}
-          </span>
-          <h1 className="text-5xl md:text-8xl font-bold tracking-tighter uppercase leading-none">
-            LIVE ECO SYSTEM FEED
+  const getEventStyles = (type: string) => {
+    if (type === "TRANSFER") return "bg-blue-50 text-blue-600 border-blue-100";
+    if (type === "ESCROW") return "bg-purple-50 text-purple-600 border-purple-100";
+    if (type === "TICKET") return "bg-emerald-50 text-emerald-600 border-emerald-100";
+    return "bg-amber-50 text-amber-600 border-amber-100";
+  };
+
+  return (
+    <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
+      {/* Title */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-extrabold tracking-tight text-slate-900 uppercase">
+            Activity Feed
           </h1>
-          <p className="text-muted-foreground text-lg md:text-xl font-medium mt-4 max-w-xl">
-            Real-time ledger audit trail showing transactions, token transfers, ticket acquisitions, and active escrows.
+          <p className="text-slate-500 text-sm mt-1">
+            Real-time ledger audit trail showing transactions, token transfers, and active escrows.
           </p>
         </div>
-      </section>
+      </div>
 
-      {/* Events Stream Panel */}
-      <main className="max-w-[95vw] w-full mx-auto py-16 flex-1">
+      {/* Main Feed List */}
+      <div className="bg-white border border-border rounded-2xl shadow-sm p-6">
+        <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
+          <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
+            Ledger Telemetry stream
+          </span>
+          <div className="flex items-center gap-2 text-xs font-bold text-accent">
+            <span className="w-2 h-2 rounded-full bg-emerald-500 animate-ping" />
+            <span>Streaming Live</span>
+          </div>
+        </div>
+
         {loading ? (
-          <div className="text-center text-xl font-bold uppercase tracking-widest text-muted-foreground py-20">
-            CONNECTING TO LEDGER TELEMETRY STREAM...
+          <div className="flex flex-col items-center justify-center py-20 gap-4">
+            <Loader2 className="w-8 h-8 animate-spin text-accent" />
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              Connecting to Ledger Stream...
+            </span>
           </div>
         ) : (
-          <div className="hairline-grid grid-cols-1">
+          <div className="flex flex-col divide-y divide-slate-100">
             {events.map((evt) => (
               <div
                 key={evt.id}
-                className="bg-background p-8 flex flex-col md:flex-row md:items-center justify-between gap-6 border-b border-border hover:bg-muted/30 transition-colors duration-200"
+                className="py-6 first:pt-0 last:pb-0 flex flex-col md:flex-row md:items-center justify-between gap-6 hover:bg-slate-50/30 transition-colors duration-200"
               >
-                <div className="flex items-start md:items-center gap-6">
-                  {/* Event Type Badge */}
-                  <span
-                    className={`text-xs font-bold tracking-widest uppercase px-3 py-1 border ${
-                      evt.type === "TRANSFER"
-                        ? "border-blue-500 bg-blue-500/10 text-blue-400"
-                        : evt.type === "ESCROW"
-                        ? "border-purple-500 bg-purple-500/10 text-purple-400"
-                        : evt.type === "TICKET"
-                        ? "border-green-500 bg-green-500/10 text-green-400"
-                        : "border-accent bg-accent/10 text-accent"
-                    }`}
-                  >
-                    {evt.type}
-                  </span>
-                  <div className="flex flex-col">
-                    <span className="text-lg md:text-xl font-bold tracking-tight text-foreground uppercase">
+                <div className="flex items-start gap-4">
+                  {/* Event Type Circle Badge */}
+                  <div className={`w-10 h-10 rounded-xl border flex items-center justify-center shrink-0 ${getEventStyles(evt.type)}`}>
+                    {getEventIcon(evt.type)}
+                  </div>
+                  
+                  <div className="flex flex-col min-w-0">
+                    <span className="text-sm font-bold text-slate-800 break-words uppercase">
                       {evt.message}
                     </span>
-                    <span className="text-xs font-mono text-muted-foreground mt-1">
-                      TX HASH: {evt.txHash}
+                    <span className="text-[10px] font-mono text-slate-400 mt-1 uppercase">
+                      Tx Hash: {evt.txHash}
                     </span>
                   </div>
                 </div>
 
-                <span className="text-sm font-bold text-muted-foreground tracking-wider uppercase md:text-right">
-                  {evt.timestamp}
-                </span>
+                <div className="flex items-center gap-2 shrink-0 md:text-right md:justify-end text-xs font-bold text-slate-400">
+                  <Clock className="w-3.5 h-3.5" />
+                  <span>{evt.timestamp}</span>
+                </div>
               </div>
             ))}
           </div>
         )}
-      </main>
+      </div>
     </div>
   );
 }

@@ -23,7 +23,7 @@ describe("Header Component", () => {
 
   it("should render logo and main navigation links", () => {
     render(<Header />);
-    expect(screen.getByText("CAMPUSCHAIN//")).toBeInTheDocument();
+    expect(screen.getByText("CAMPUSCHAIN")).toBeInTheDocument();
     expect(screen.getByText("DASHBOARD")).toBeInTheDocument();
     expect(screen.getByText("ACTIVITY")).toBeInTheDocument();
     expect(screen.getByText("TRANSACTIONS")).toBeInTheDocument();

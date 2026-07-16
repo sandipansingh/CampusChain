@@ -21,9 +21,7 @@ import {
   TrendingUp,
   ChevronRight,
   Shield,
-  Loader2,
-  Calendar,
-  Lock
+  Loader2
 } from "lucide-react";
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
