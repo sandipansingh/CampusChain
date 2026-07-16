@@ -1,14 +1,4 @@
-# CAMPUSCHAIN – UNIFIED CAMPUS ECONOMY
-
-[![Tech Stack](https://skillicons.dev/icons?i=nextjs,ts,tailwind,react,rust,postgres,redis,nodejs,git,github&perline=10)](https://skillicons.dev)
-
-![Stellar](https://img.shields.io/badge/Stellar-7D00FF?style=for-the-badge&logo=stellar&logoColor=white)
-![Soroban](https://img.shields.io/badge/Soroban-000000?style=for-the-badge)
-![Zustand](https://img.shields.io/badge/Zustand-593D88?style=for-the-badge)
-![React Query](https://img.shields.io/badge/React_Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white)
-![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000000?style=for-the-badge)
-![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
-![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
+# <p align="center">CAMPUSCHAIN – UNIFIED CAMPUS ECONOMY</p>
 
 CampusChain is a unified, decentralized campus economy platform that replaces disconnected cash and manual-verification payment portals with a single secure, Stellar-powered payment, escrow, and ticketing portal.
 
@@ -41,8 +31,9 @@ CampusChain is a unified, decentralized campus economy platform that replaces di
 
 ## 1. System Architecture
 
-The following diagram illustrates the interaction between the Next.js frontend app, the state layer (Zustand, React Query), and the Stellar/Soroban ledger layer.
+The following diagrams illustrate the CampusChain platform architecture and transaction sequence. For complete details, see [System Architecture & Diagrams](./docs/architecture.md).
 
+### Component Architecture
 ```mermaid
 graph TD
     %% Styling Definitions
@@ -86,9 +77,43 @@ graph TD
     class Token,Service contract;
 ```
 
+### Ticket Purchase Sequence (C2C Calls & Events)
+```mermaid
+sequenceDiagram
+    autonumber
+    actor User as Student/User
+    participant UI as Next.js Client (SWK)
+    participant RPC as Soroban RPC
+    participant SC as CampusService Contract
+    participant TC as CampusToken Contract
+
+    User->>UI: Select Buy Ticket (Event ID)
+    UI->>RPC: Send Approve Tx (Spender: CampusService, Amount)
+    RPC-->>UI: Transaction Confirmed
+    UI->>RPC: Send Buy Ticket Tx (Event ID, Buyer)
+    RPC->>SC: Invoke buy_ticket(event_id, buyer)
+    SC->>SC: Query event price & checks
+    SC->>TC: C2C Call: transfer_from(buyer, host, price)
+    TC-->>SC: Success
+    SC->>SC: Mint ticket & save
+    SC-->>RPC: Emits TicketBought Event
+    RPC-->>UI: Event Confirmed
+    UI-->>User: Show Confirmed Ticket Pass
+```
+
 ---
 
 ## 2. Tech Stack
+
+[![Tech Stack](https://skillicons.dev/icons?i=nextjs,ts,tailwind,react,rust,postgres,redis,nodejs,git,github&perline=10)](https://skillicons.dev)
+
+![Stellar](https://img.shields.io/badge/Stellar-7D00FF?style=for-the-badge&logo=stellar&logoColor=white)
+![Soroban](https://img.shields.io/badge/Soroban-000000?style=for-the-badge)
+![Zustand](https://img.shields.io/badge/Zustand-593D88?style=for-the-badge)
+![React Query](https://img.shields.io/badge/React_Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white)
+![shadcn/ui](https://img.shields.io/badge/shadcn%2Fui-000000?style=for-the-badge)
+![Vitest](https://img.shields.io/badge/Vitest-6E9F18?style=for-the-badge&logo=vitest&logoColor=white)
+![GitHub Actions](https://img.shields.io/badge/GitHub_Actions-2088FF?style=for-the-badge&logo=githubactions&logoColor=white)
 
 - **Smart Contracts**: Rust & Soroban SDK
 - **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS v4, Zustand, TanStack React Query v5
@@ -121,8 +146,8 @@ npm run dev
 ## 4. Documentation Index
 
 Detailed engineering guides are located in the `/docs` directory:
-- [System Architecture & Diagrams](file:///home/sandipansingh/Projects/CampusChain/docs/architecture.md)
-- [Smart Contract Specifications](file:///home/sandipansingh/Projects/CampusChain/docs/CONTRACTS.md)
-- [Security Practices & Threat Modeling](file:///home/sandipansingh/Projects/CampusChain/docs/SECURITY.md)
-- [Deployment & Upgrade Guide](file:///home/sandipansingh/Projects/CampusChain/docs/DEPLOYMENT.md)
-- [Frontend API & Hooks Schema](file:///home/sandipansingh/Projects/CampusChain/docs/API.md)
+- [System Architecture & Diagrams](./docs/architecture.md)
+- [Smart Contract Specifications](./docs/CONTRACTS.md)
+- [Security Practices & Threat Modeling](./docs/SECURITY.md)
+- [Deployment & Upgrade Guide](./docs/DEPLOYMENT.md)
+- [Frontend API & Hooks Schema](./docs/API.md)
