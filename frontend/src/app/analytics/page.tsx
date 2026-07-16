@@ -63,7 +63,7 @@ export default function AnalyticsPage() {
 
       {/* Global Ledger Stats Block - Flat, no shadows */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div className="bg-white border border-border p-6 rounded-2xl">
+        <div className="bg-white p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Token Name
@@ -75,7 +75,7 @@ export default function AnalyticsPage() {
           </span>
         </div>
 
-        <div className="bg-white border border-border p-6 rounded-2xl">
+        <div className="bg-white p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Symbol
@@ -87,7 +87,7 @@ export default function AnalyticsPage() {
           </span>
         </div>
 
-        <div className="bg-white border border-border p-6 rounded-2xl">
+        <div className="bg-white p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Circulating Supply
@@ -99,7 +99,7 @@ export default function AnalyticsPage() {
           </span>
         </div>
 
-        <div className="bg-white border border-border p-6 rounded-2xl">
+        <div className="bg-white p-6 rounded-2xl">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold tracking-wider text-slate-400 uppercase">
               Decimals
@@ -124,7 +124,7 @@ export default function AnalyticsPage() {
             return (
               <div
                 key={metric.label}
-                className="bg-white border border-border p-6 rounded-2xl flex flex-col justify-between min-h-[260px]"
+                className="bg-white p-6 rounded-2xl flex flex-col justify-between min-h-[260px]"
               >
                 <div className="flex justify-between items-start">
                   <div className={`w-10 h-10 rounded-xl border flex items-center justify-center ${metric.color}`}>

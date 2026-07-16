@@ -42,7 +42,7 @@ export default function TransactionsPage() {
         {transactions.length > 0 && (
           <button
             onClick={clearTransactions}
-            className="h-11 px-4 bg-white border border-border text-xs font-bold text-slate-600 rounded-xl hover:bg-red-50 hover:text-red-600 hover:border-red-100 flex items-center gap-2 active:scale-95 transition-all"
+            className="h-11 px-4 bg-white text-xs font-bold text-slate-600 rounded-xl hover:bg-red-50 hover:text-red-600 flex items-center gap-2 active:scale-95 transition-all"
           >
             <Trash2 className="w-4 h-4" />
             Clear Log
@@ -51,14 +51,14 @@ export default function TransactionsPage() {
       </div>
 
       {/* Main transactions container */}
-      <div className="bg-white border border-border rounded-2xl p-6">
+      <div className="bg-white rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
             Session History ({filteredTransactions.length})
           </span>
           <div className="flex items-center gap-3">
             {/* Search Input */}
-            <div className="relative flex items-center bg-slate-50 border border-border rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold focus-within:border-slate-300 transition-all">
+            <div className="relative flex items-center bg-slate-50 rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold focus-within:border-slate-300 transition-all">
               <Search className="w-3.5 h-3.5 text-slate-400 mr-2 shrink-0" />
               <input
                 type="text"
@@ -69,7 +69,7 @@ export default function TransactionsPage() {
               />
             </div>
             {/* Filter Selector */}
-            <div className="flex items-center gap-1.5 bg-slate-50 border border-border px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600">
+            <div className="flex items-center gap-1.5 bg-slate-50 px-3 py-1.5 rounded-xl text-xs font-bold text-slate-600">
               <SlidersHorizontal className="w-3.5 h-3.5 text-slate-400" />
               <select
                 value={statusFilter}

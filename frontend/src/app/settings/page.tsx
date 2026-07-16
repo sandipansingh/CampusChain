@@ -5,7 +5,8 @@ import { useWalletStore, NetworkType } from "@/state/useWalletStore";
 import {
   Globe,
   Monitor,
-  Server
+  Server,
+  Lock
 } from "lucide-react";
 
 export default function SettingsPage() {
@@ -19,14 +20,16 @@ export default function SettingsPage() {
       rpc: "https://soroban-testnet.stellar.org",
       desc: "Primary sandbox network powered by Stellar Development Foundation validators. Ideal for prototyping and token validation.",
       icon: Globe,
+      locked: false,
     },
     {
       id: "standalone",
       name: "Local Standalone",
       passphrase: "Standalone Network ; Latitude 0.0",
       rpc: "http://localhost:8000/soroban/rpc",
-      desc: "Fully isolated local docker container sandbox environment. Zero external latency, ideal for unit testing and local deployment.",
+      desc: "Fully isolated local docker container sandbox environment. Locked in live staging node distribution.",
       icon: Monitor,
+      locked: true,
     },
     {
       id: "public",
@@ -35,6 +38,7 @@ export default function SettingsPage() {
       rpc: "https://soroban-rpc.stellar.org",
       desc: "Production environment orchestrating actual economic value. Restricted for approved university systems.",
       icon: Server,
+      locked: true,
     },
   ];
 
@@ -69,37 +73,41 @@ export default function SettingsPage() {
             let activeBadgeClass = "bg-slate-900 text-white";
 
             if (isSelected) {
-              if (net.id === "testnet") {
-                activeBgClass = "bg-emerald-50/70";
-                activeIconClass = "bg-emerald-100 text-emerald-800";
-                activeBadgeClass = "bg-emerald-600 text-white";
-              } else if (net.id === "standalone") {
-                activeBgClass = "bg-blue-50/70";
-                activeIconClass = "bg-blue-100 text-blue-800";
-                activeBadgeClass = "bg-blue-600 text-white";
-              } else if (net.id === "public") {
-                activeBgClass = "bg-rose-50/70";
-                activeIconClass = "bg-rose-100 text-rose-800";
-                activeBadgeClass = "bg-rose-600 text-white";
-              }
+              activeBgClass = "bg-emerald-50/70";
+              activeIconClass = "bg-emerald-100 text-emerald-800";
+              activeBadgeClass = "bg-emerald-600 text-white";
+            } else if (net.locked) {
+              activeBgClass = "bg-white opacity-50 cursor-not-allowed";
+              activeIconClass = "bg-slate-50 text-slate-405";
             }
 
             return (
               <div
                 key={net.id}
-                onClick={() => switchNetwork(net.id as NetworkType)}
-                className={`p-6 rounded-[24px] flex flex-col justify-between min-h-[260px] cursor-pointer group transition-all duration-300 shadow-sm ${activeBgClass}`}
+                onClick={() => {
+                  if (!net.locked) {
+                    switchNetwork(net.id as NetworkType);
+                  }
+                }}
+                className={`p-6 rounded-[24px] flex flex-col justify-between min-h-[260px] group transition-all duration-300 shadow-sm ${
+                  net.locked ? "cursor-not-allowed" : "cursor-pointer"
+                } ${activeBgClass}`}
               >
                 <div>
                   <div className="flex justify-between items-start">
                     <div className={`w-10 h-10 rounded-xl flex items-center justify-center transition-colors ${activeIconClass}`}>
                       <Icon className="w-5 h-5" />
                     </div>
-                    {isSelected && (
+                    {isSelected ? (
                       <span className={`text-[10px] font-bold tracking-widest uppercase px-2.5 py-0.5 rounded-full ${activeBadgeClass}`}>
                         Active
                       </span>
-                    )}
+                    ) : net.locked ? (
+                      <span className="text-[10px] font-bold tracking-widest uppercase bg-slate-100 text-slate-400 px-2.5 py-0.5 rounded-full flex items-center gap-1">
+                        <Lock className="w-3 h-3" />
+                        Locked
+                      </span>
+                    ) : null}
                   </div>
 
                   <h4 className="text-lg font-bold uppercase text-slate-900 mt-6 leading-none">

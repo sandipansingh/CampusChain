@@ -244,7 +244,7 @@ export default function DashboardPage() {
       {/* Grid of Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
         {/* Card 1: Balance */}
-        <div className="border border-border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
+        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-700">
               Wallet Balance
@@ -273,7 +273,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 2: Wallet Role */}
-        <div className="border border-border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
+        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-700">
               User Profile Role
@@ -298,7 +298,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 3: Session Actions */}
-        <div className="border border-border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
+        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-700">
               Session Operations
@@ -323,7 +323,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Card 4: Ledger Network */}
-        <div className="border border-border bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
+        <div className="bg-white p-6 rounded-[24px] flex flex-col justify-between min-h-[140px] shadow-sm">
           <div className="flex justify-between items-start">
             <span className="text-xs font-semibold text-slate-700">
               Ledger Network
@@ -353,7 +353,7 @@ export default function DashboardPage() {
         {/* Chart Column - Flat borderless design */}
         <div className="lg:col-span-2 flex flex-col gap-6">
           {/* Daily Transaction Volume Chart */}
-          <div className="border border-border bg-white rounded-[24px] p-6 flex flex-col justify-between shadow-sm">
+          <div className="bg-white rounded-[24px] p-6 flex flex-col justify-between shadow-sm">
             <div className="flex items-center justify-between">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
@@ -425,7 +425,7 @@ export default function DashboardPage() {
           </div>
 
           {/* Flow Analytics Stacked Chart */}
-          <div className="border border-border bg-white rounded-[24px] p-6 shadow-sm">
+          <div className="bg-white rounded-[24px] p-6 shadow-sm">
             <div className="flex items-center justify-between mb-6">
               <div>
                 <h3 className="text-base font-semibold text-slate-900">
@@ -506,7 +506,7 @@ export default function DashboardPage() {
         </div>
 
         {/* Interactive Action Controls (Right Panel) */}
-        <div className="border border-border bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
+        <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
             <h3 className="text-base font-semibold text-slate-900">
               Action Center
@@ -742,7 +742,7 @@ export default function DashboardPage() {
       </div>
 
       {/* Recent Activity Table */}
-      <div className="border border-border bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
+      <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-semibold text-slate-900">

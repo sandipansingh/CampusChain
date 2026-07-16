@@ -63,7 +63,7 @@ export default function HelpPage() {
           return (
             <div
               key={index}
-              className="border border-border bg-white p-6 rounded-[24px] flex flex-col gap-4"
+              className="bg-white p-6 rounded-[24px] flex flex-col gap-4"
             >
               <div className="w-9 h-9 rounded-xl bg-slate-50 flex items-center justify-center text-slate-700">
                 <Icon className="w-5 h-5" />

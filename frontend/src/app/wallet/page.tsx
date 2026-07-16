@@ -140,7 +140,7 @@ export default function WalletPage() {
         <div className="lg:col-span-1 flex flex-col gap-6">
           
           {/* Card: Wallet Balance */}
-          <div className="border border-border bg-white text-slate-900 rounded-[24px] p-6 flex flex-col justify-between min-h-[220px]">
+          <div className="bg-white text-slate-900 rounded-[24px] p-6 flex flex-col justify-between min-h-[220px]">
             <div className="flex justify-between items-start">
               <span className="text-[10px] font-bold uppercase tracking-widest text-slate-700">
                 Stellar Account Card
@@ -175,7 +175,7 @@ export default function WalletPage() {
           </div>
 
           {/* Card: Testnet Faucet (Gas helper) */}
-          <div className="border border-border bg-white rounded-[24px] p-6 flex flex-col gap-4">
+          <div className="bg-white rounded-[24px] p-6 flex flex-col gap-4">
             <h3 className="text-sm font-bold text-slate-900 uppercase">
               Sandbox Gas Helper
             </h3>
@@ -192,7 +192,7 @@ export default function WalletPage() {
         </div>
 
         {/* Right Side: On-Chain Escrow Console */}
-        <div className="lg:col-span-2 border border-border bg-white rounded-[24px] p-6 flex flex-col gap-6">
+        <div className="lg:col-span-2 bg-white rounded-[24px] p-6 flex flex-col gap-6">
           <div className="border-b border-slate-100 pb-4">
             <h3 className="text-base font-bold text-slate-900 uppercase">
               Escrow Management Console

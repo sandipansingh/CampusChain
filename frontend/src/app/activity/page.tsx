@@ -140,7 +140,7 @@ export default function ActivityFeedPage() {
       </div>
 
       {/* Main Feed List */}
-      <div className="bg-white border border-border rounded-2xl p-6">
+      <div className="bg-white rounded-2xl p-6">
         <div className="flex items-center justify-between border-b border-slate-100 pb-4 mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
             Ledger Telemetry stream
