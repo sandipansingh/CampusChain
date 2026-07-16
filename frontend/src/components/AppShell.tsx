@@ -376,8 +376,42 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         </header>
 
         {/* Main Workspace Area with transition - Scrollable container */}
-        <main className="flex-1 overflow-y-auto pr-1 animate-in fade-in duration-300">
-          {children}
+        <main className="flex-1 overflow-y-auto pr-1 animate-in fade-in duration-300 flex flex-col justify-between">
+          <div className="flex-1 pb-10">
+            {children}
+          </div>
+          {/* App Dashboard Footer */}
+          <footer className="border-t border-slate-100 py-6 mt-12 bg-white rounded-t-[24px] px-6 flex flex-col sm:flex-row items-center justify-between gap-4">
+            <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider">
+              © 2026 CampusChain Labs. Built on Stellar/Soroban.
+            </span>
+            <div className="flex gap-6">
+              <a
+                href="https://github.com/sandipansingh/CampusChain/blob/main/docs/architecture.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-semibold text-slate-400 hover:text-accent uppercase tracking-wider"
+              >
+                Architecture
+              </a>
+              <a
+                href="https://github.com/sandipansingh/CampusChain/blob/main/docs/SECURITY.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-semibold text-slate-400 hover:text-accent uppercase tracking-wider"
+              >
+                Security
+              </a>
+              <a
+                href="https://github.com/sandipansingh/CampusChain/blob/main/docs/DEPLOYMENT.md"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[10px] font-semibold text-slate-400 hover:text-accent uppercase tracking-wider"
+              >
+                Deployment
+              </a>
+            </div>
+          </footer>
         </main>
       </div>
     </div>
