@@ -10,6 +10,7 @@ import {
   u64ToScVal,
   stringToScVal,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+  NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS,
 } from "@/services/contracts";
 import { useWalletStore } from "@/state/useWalletStore";
 
@@ -616,7 +617,7 @@ export function useBuyCampTokensMutation() {
         [addressToScVal(recipient), nativeToScVal(xlmAmount, { type: "i128" } as never)],
         recipient,
         xlmDecimal,
-        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID
+        NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS
       );
     },
     onSuccess: (_, variables) => {
