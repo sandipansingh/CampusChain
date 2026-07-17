@@ -7,6 +7,8 @@ import {
   Transaction,
   xdr,
   Account,
+  Operation,
+  Asset,
 } from "@stellar/stellar-sdk";
 import { signTx } from "@/services/wallet";
 import { logger } from "@/services/logger";
@@ -99,6 +101,52 @@ export async function invokeContractMethod(
   return submission.hash;
 }
 
+export async function invokeContractMethodWithXlmPayment(
+  contractId: string,
+  methodName: string,
+  args: xdr.ScVal[],
+  userAddress: string,
+  xlmAmount: string,
+  xlmDestination: string
+): Promise<string> {
+  const server = getRpcServer();
+  const sourceAccount = await server.getAccount(userAddress);
+
+  const contract = new Contract(contractId);
+  const contractOp = contract.call(methodName, ...args);
+
+  // Native XLM payment from user to destination
+  const paymentOp = Operation.payment({
+    destination: xlmDestination,
+    asset: Asset.native(),
+    amount: xlmAmount,
+  });
+
+  let tx = new TransactionBuilder(sourceAccount, {
+    fee: "2000",
+    networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
+  })
+    .addOperation(paymentOp)
+    .addOperation(contractOp)
+    .setTimeout(60)
+    .build();
+
+  tx = await server.prepareTransaction(tx);
+
+  const signedXdr = await signTx(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
+
+  const submission = await server.sendTransaction(
+    new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
+  );
+
+  if (submission.status === "ERROR") {
+    const errorXdr = submission.errorResult ? submission.errorResult.toXDR("base64") : "Unknown XDR";
+    throw new Error(`Transaction submission error: ${errorXdr}`);
+  }
+
+  return submission.hash;
+}
+
 export async function pollTransactionStatus(
   hash: string
 ): Promise<rpc.Api.GetTransactionResponse> {
@@ -137,4 +185,8 @@ export function stringToScVal(value: string): xdr.ScVal {
 
 export function u32ToScVal(value: number): xdr.ScVal {
   return nativeToScVal(value, { type: "u32" });
+}
+
+export function u64ToScVal(value: number): xdr.ScVal {
+  return nativeToScVal(value, { type: "u64" });
 }

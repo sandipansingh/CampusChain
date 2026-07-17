@@ -1,6 +1,6 @@
 #![no_std]
 use soroban_sdk::{
-    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, String, Symbol,
+    contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, String, Symbol, Vec,
 };
 
 #[contracterror]
@@ -15,6 +15,8 @@ pub enum Error {
     InvalidAmount = 6,
     InvalidRole = 7,
     AlreadyClaimed = 8,
+    RoleRequestNotFound = 9,
+    PendingRoleRequest = 10,
 }
 
 #[contracttype]
@@ -29,6 +31,8 @@ pub enum DataKey {
     Allowance(Address, Address),
     Role(Address),
     FaucetClaimed(Address),
+    RoleRequestCounter,
+    RoleRequest(u64),
 }
 
 #[contracttype]
@@ -36,6 +40,15 @@ pub enum DataKey {
 pub struct AllowanceData {
     pub amount: i128,
     pub expiration_ledger: u32,
+}
+
+#[contracttype]
+#[derive(Clone, Debug, Eq, PartialEq)]
+pub struct RoleRequestData {
+    pub id: u64,
+    pub applicant: Address,
+    pub requested_role: u32,
+    pub status: u32, // 0: pending, 1: approved, 2: denied
 }
 
 const LEDGER_THRESHOLD_INSTANCE: u32 = 1000;
@@ -69,7 +82,11 @@ fn do_mint(env: &Env, to: &Address, amount: i128) {
     env.storage().persistent().set(&to_key, &(balance + amount));
 
     let total_supply_key = DataKey::TotalSupply;
-    let total_supply: i128 = env.storage().instance().get(&total_supply_key).unwrap_or(0i128);
+    let total_supply: i128 = env
+        .storage()
+        .instance()
+        .get(&total_supply_key)
+        .unwrap_or(0i128);
     env.storage()
         .instance()
         .set(&total_supply_key, &(total_supply + amount));
@@ -79,9 +96,11 @@ fn do_mint(env: &Env, to: &Address, amount: i128) {
 
 fn extend_persistent(env: &Env, key: &DataKey) {
     if env.storage().persistent().has(key) {
-        env.storage()
-            .persistent()
-            .extend_ttl(key, LEDGER_THRESHOLD_PERSISTENT, LEDGER_EXTEND_TO_PERSISTENT);
+        env.storage().persistent().extend_ttl(
+            key,
+            LEDGER_THRESHOLD_PERSISTENT,
+            LEDGER_EXTEND_TO_PERSISTENT,
+        );
     }
 }
 
@@ -105,7 +124,9 @@ impl CampusToken {
         env.storage().instance().set(&DataKey::TotalSupply, &0i128);
         env.storage().instance().set(&DataKey::TokenName, &name);
         env.storage().instance().set(&DataKey::TokenSymbol, &symbol);
-        env.storage().instance().set(&DataKey::TokenDecimals, &decimals);
+        env.storage()
+            .instance()
+            .set(&DataKey::TokenDecimals, &decimals);
 
         extend_instance(&env);
 
@@ -185,15 +206,17 @@ impl CampusToken {
 
         let to_balance = env.storage().persistent().get(&to_key).unwrap_or(0i128);
 
-        env.storage().persistent().set(&from_key, &(from_balance - amount));
-        env.storage().persistent().set(&to_key, &(to_balance + amount));
+        env.storage()
+            .persistent()
+            .set(&from_key, &(from_balance - amount));
+        env.storage()
+            .persistent()
+            .set(&to_key, &(to_balance + amount));
 
         extend_instance(&env);
 
-        env.events().publish(
-            (Symbol::new(&env, "transfer"), from, to),
-            amount,
-        );
+        env.events()
+            .publish((Symbol::new(&env, "transfer"), from, to), amount);
 
         Ok(())
     }
@@ -296,21 +319,25 @@ impl CampusToken {
 
         let to_balance = env.storage().persistent().get(&to_key).unwrap_or(0i128);
 
-        env.storage().persistent().set(&from_key, &(from_balance - amount));
-        env.storage().persistent().set(&to_key, &(to_balance + amount));
+        env.storage()
+            .persistent()
+            .set(&from_key, &(from_balance - amount));
+        env.storage()
+            .persistent()
+            .set(&to_key, &(to_balance + amount));
 
         let new_allowance = AllowanceData {
             amount: allowance_data.amount - amount,
             expiration_ledger: allowance_data.expiration_ledger,
         };
-        env.storage().persistent().set(&allowance_key, &new_allowance);
+        env.storage()
+            .persistent()
+            .set(&allowance_key, &new_allowance);
 
         extend_instance(&env);
 
-        env.events().publish(
-            (Symbol::new(&env, "transfer"), from, to),
-            amount,
-        );
+        env.events()
+            .publish((Symbol::new(&env, "transfer"), from, to), amount);
 
         Ok(())
     }
@@ -325,10 +352,8 @@ impl CampusToken {
 
         do_mint(&env, &to, amount);
 
-        env.events().publish(
-            (Symbol::new(&env, "mint"), admin, to),
-            amount,
-        );
+        env.events()
+            .publish((Symbol::new(&env, "mint"), admin, to), amount);
 
         Ok(())
     }
@@ -341,10 +366,8 @@ impl CampusToken {
 
         do_mint(&env, &to, amount);
 
-        env.events().publish(
-            (Symbol::new(&env, "mint_purchase"), to),
-            amount,
-        );
+        env.events()
+            .publish((Symbol::new(&env, "mint_purchase"), to), amount);
 
         Ok(())
     }
@@ -364,29 +387,51 @@ impl CampusToken {
             return Err(Error::InsufficientBalance);
         }
 
-        env.storage().persistent().set(&from_key, &(balance - amount));
+        env.storage()
+            .persistent()
+            .set(&from_key, &(balance - amount));
 
         let total_supply_key = DataKey::TotalSupply;
-        let total_supply: i128 = env.storage().instance().get(&total_supply_key).unwrap_or(0i128);
+        let total_supply: i128 = env
+            .storage()
+            .instance()
+            .get(&total_supply_key)
+            .unwrap_or(0i128);
         env.storage()
             .instance()
             .set(&total_supply_key, &(total_supply - amount));
 
         extend_instance(&env);
 
-        env.events().publish(
-            (Symbol::new(&env, "burn"), from),
-            amount,
-        );
+        env.events()
+            .publish((Symbol::new(&env, "burn"), from), amount);
 
         Ok(())
     }
 
-    pub fn set_role(env: Env, address: Address, role: u32) -> Result<(), Error> {
-        address.require_auth();
-
+    pub fn set_role(env: Env, admin: Address, address: Address, role: u32) -> Result<(), Error> {
         if role > 4 {
             return Err(Error::InvalidRole);
+        }
+
+        if role <= 1 {
+            // Student (1) and Guest (0): self-assignable by user OR set by super-admin
+            if admin == address {
+                address.require_auth();
+            } else {
+                let stored_admin = get_admin(&env)?;
+                stored_admin.require_auth();
+                if admin != stored_admin {
+                    return Err(Error::Unauthorized);
+                }
+            }
+        } else {
+            // Merchant (2), Club (3), Admin (4) require super-admin auth
+            let stored_admin = get_admin(&env)?;
+            stored_admin.require_auth();
+            if admin != stored_admin {
+                return Err(Error::Unauthorized);
+            }
         }
 
         let key = DataKey::Role(address.clone());
@@ -395,12 +440,196 @@ impl CampusToken {
 
         extend_instance(&env);
 
+        env.events()
+            .publish((Symbol::new(&env, "role_updated"), address), role);
+
+        Ok(())
+    }
+
+    pub fn request_role_change(
+        env: Env,
+        applicant: Address,
+        requested_role: u32,
+    ) -> Result<u64, Error> {
+        applicant.require_auth();
+
+        let current_role_key = DataKey::Role(applicant.clone());
+        extend_persistent(&env, &current_role_key);
+        let current_role: u32 = env
+            .storage()
+            .persistent()
+            .get(&current_role_key)
+            .unwrap_or(0);
+
+        if requested_role < 2 || requested_role > 3 {
+            return Err(Error::InvalidRole);
+        }
+        if current_role != 0 && current_role != 1 {
+            return Err(Error::InvalidRole);
+        }
+
+        // Check no existing pending request
+        extend_instance(&env);
+        let counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::RoleRequestCounter)
+            .unwrap_or(0);
+        for id in 1..=counter {
+            let key = DataKey::RoleRequest(id);
+            if let Some(req) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, RoleRequestData>(&key)
+            {
+                if req.applicant == applicant && req.status == 0 {
+                    return Err(Error::PendingRoleRequest);
+                }
+            }
+        }
+
+        let mut req_counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::RoleRequestCounter)
+            .unwrap_or(0);
+        req_counter += 1;
+        env.storage()
+            .instance()
+            .set(&DataKey::RoleRequestCounter, &req_counter);
+
+        let request = RoleRequestData {
+            id: req_counter,
+            applicant: applicant.clone(),
+            requested_role,
+            status: 0,
+        };
+
+        let req_key = DataKey::RoleRequest(req_counter);
+        env.storage().persistent().set(&req_key, &request);
+        extend_persistent(&env, &req_key);
+        extend_instance(&env);
+
         env.events().publish(
-            (Symbol::new(&env, "role_updated"), address),
-            role,
+            (
+                Symbol::new(&env, "role_change_requested"),
+                req_counter,
+                applicant,
+            ),
+            requested_role,
+        );
+
+        Ok(req_counter)
+    }
+
+    pub fn approve_role_change(env: Env, request_id: u64, admin: Address) -> Result<(), Error> {
+        let stored_admin = get_admin(&env)?;
+        stored_admin.require_auth();
+        if admin != stored_admin {
+            return Err(Error::Unauthorized);
+        }
+
+        let req_key = DataKey::RoleRequest(request_id);
+        extend_persistent(&env, &req_key);
+        let mut request: RoleRequestData = env
+            .storage()
+            .persistent()
+            .get(&req_key)
+            .ok_or(Error::RoleRequestNotFound)?;
+
+        if request.status != 0 {
+            return Err(Error::RoleRequestNotFound);
+        }
+
+        request.status = 1;
+        env.storage().persistent().set(&req_key, &request);
+
+        // Apply the role
+        let role_key = DataKey::Role(request.applicant.clone());
+        extend_persistent(&env, &role_key);
+        env.storage()
+            .persistent()
+            .set(&role_key, &request.requested_role);
+        extend_instance(&env);
+
+        env.events().publish(
+            (Symbol::new(&env, "role_updated"), request.applicant.clone()),
+            request.requested_role,
+        );
+        env.events().publish(
+            (
+                Symbol::new(&env, "role_change_approved"),
+                request_id,
+                request.applicant,
+            ),
+            request.requested_role,
         );
 
         Ok(())
+    }
+
+    pub fn deny_role_change(env: Env, request_id: u64, admin: Address) -> Result<(), Error> {
+        let stored_admin = get_admin(&env)?;
+        stored_admin.require_auth();
+        if admin != stored_admin {
+            return Err(Error::Unauthorized);
+        }
+
+        let req_key = DataKey::RoleRequest(request_id);
+        extend_persistent(&env, &req_key);
+        let mut request: RoleRequestData = env
+            .storage()
+            .persistent()
+            .get(&req_key)
+            .ok_or(Error::RoleRequestNotFound)?;
+
+        if request.status != 0 {
+            return Err(Error::RoleRequestNotFound);
+        }
+
+        request.status = 2;
+        env.storage().persistent().set(&req_key, &request);
+        extend_instance(&env);
+
+        env.events().publish(
+            (Symbol::new(&env, "role_change_denied"), request_id),
+            (request.applicant, request.requested_role),
+        );
+
+        Ok(())
+    }
+
+    pub fn get_role_request(env: Env, id: u64) -> Result<RoleRequestData, Error> {
+        let key = DataKey::RoleRequest(id);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::RoleRequestNotFound)
+    }
+
+    pub fn list_pending_role_requests(env: Env) -> Result<Vec<RoleRequestData>, Error> {
+        extend_instance(&env);
+        let counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::RoleRequestCounter)
+            .unwrap_or(0);
+
+        let mut requests = Vec::new(&env);
+        for id in 1..=counter {
+            let key = DataKey::RoleRequest(id);
+            if let Some(req) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, RoleRequestData>(&key)
+            {
+                if req.status == 0 {
+                    requests.push_back(req);
+                }
+            }
+        }
+        Ok(requests)
     }
 
     pub fn get_role(env: Env, address: Address) -> Result<u32, Error> {
@@ -414,7 +643,10 @@ impl CampusToken {
 
     pub fn has_claimed_faucet(env: Env, address: Address) -> bool {
         let claimed_key = DataKey::FaucetClaimed(address);
-        env.storage().persistent().get::<DataKey, bool>(&claimed_key).unwrap_or(false)
+        env.storage()
+            .persistent()
+            .get::<DataKey, bool>(&claimed_key)
+            .unwrap_or(false)
     }
 
     pub fn faucet(env: Env, to: Address, amount: i128) -> Result<(), Error> {
@@ -429,7 +661,12 @@ impl CampusToken {
 
         let claimed_key = DataKey::FaucetClaimed(to.clone());
         extend_persistent(&env, &claimed_key);
-        if env.storage().persistent().get::<DataKey, bool>(&claimed_key).unwrap_or(false) {
+        if env
+            .storage()
+            .persistent()
+            .get::<DataKey, bool>(&claimed_key)
+            .unwrap_or(false)
+        {
             return Err(Error::AlreadyClaimed);
         }
 
@@ -440,17 +677,21 @@ impl CampusToken {
         env.storage().persistent().set(&to_key, &(balance + amount));
 
         let total_supply_key = DataKey::TotalSupply;
-        let total_supply: i128 = env.storage().instance().get(&total_supply_key).unwrap_or(0i128);
-        env.storage().instance().set(&total_supply_key, &(total_supply + amount));
+        let total_supply: i128 = env
+            .storage()
+            .instance()
+            .get(&total_supply_key)
+            .unwrap_or(0i128);
+        env.storage()
+            .instance()
+            .set(&total_supply_key, &(total_supply + amount));
 
         env.storage().persistent().set(&claimed_key, &true);
 
         extend_instance(&env);
 
-        env.events().publish(
-            (Symbol::new(&env, "faucet"), to),
-            amount,
-        );
+        env.events()
+            .publish((Symbol::new(&env, "faucet"), to), amount);
 
         Ok(())
     }
@@ -469,4 +710,3 @@ impl CampusToken {
 
 #[cfg(test)]
 mod test;
-

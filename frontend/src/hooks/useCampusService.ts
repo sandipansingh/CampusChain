@@ -3,9 +3,11 @@ import { nativeToScVal } from "@stellar/stellar-sdk";
 import {
   readContract,
   invokeContractMethod,
+  invokeContractMethodWithXlmPayment,
   addressToScVal,
   i128ToScVal,
   u32ToScVal,
+  u64ToScVal,
   stringToScVal,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
 } from "@/services/contracts";
@@ -44,7 +46,7 @@ export function useEscrowAgreement(escrowId: number | null) {
         const res = (await readContract(
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
           "get_escrow",
-          [u32ToScVal(escrowId)],
+          [u64ToScVal(escrowId)],
           address
         )) as { id: bigint; buyer: string; seller: string; amount: bigint; status: number } | null;
 
@@ -75,7 +77,7 @@ export function useEventDetails(eventId: number | null) {
         const res = (await readContract(
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
           "get_event",
-          [u32ToScVal(eventId)],
+          [u64ToScVal(eventId)],
           address
         )) as { id: bigint; host: string; price: bigint; capacity: number; tickets_sold: number } | null;
 
@@ -106,7 +108,7 @@ export function useTicketDetails(ticketId: number | null) {
         const res = (await readContract(
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
           "get_ticket",
-          [u32ToScVal(ticketId)],
+          [u64ToScVal(ticketId)],
           address
         )) as { id: bigint; event_id: bigint; owner: string; redeemed: boolean } | null;
 
@@ -166,7 +168,7 @@ export function useReleaseEscrowMutation() {
       const hash = await invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "release_escrow",
-        [u32ToScVal(escrowId), addressToScVal(caller)],
+        [u64ToScVal(escrowId), addressToScVal(caller)],
         caller
       );
       return hash;
@@ -191,7 +193,7 @@ export function useRefundEscrowMutation() {
       const hash = await invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "refund_escrow",
-        [u32ToScVal(escrowId), addressToScVal(caller)],
+        [u64ToScVal(escrowId), addressToScVal(caller)],
         caller
       );
       return hash;
@@ -239,7 +241,7 @@ export function useBuyTicketMutation() {
       const hash = await invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "buy_ticket",
-        [u32ToScVal(eventId), addressToScVal(buyer)],
+        [u64ToScVal(eventId), addressToScVal(buyer)],
         buyer
       );
       return hash;
@@ -264,7 +266,7 @@ export function useRedeemTicketMutation() {
       const hash = await invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "redeem_ticket",
-        [u32ToScVal(ticketId), addressToScVal(host)],
+        [u64ToScVal(ticketId), addressToScVal(host)],
         host
       );
       return hash;
@@ -338,7 +340,7 @@ export function useUniversity(id: number | null) {
         const res = await readContract(
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
           "get_university",
-          [u32ToScVal(id)],
+          [u64ToScVal(id)],
           address
         );
         const u = res as University;
@@ -389,7 +391,7 @@ export function usePendingRequests(universityId: number | null) {
         const res = await readContract(
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
           "list_pending_requests",
-          [u32ToScVal(universityId)],
+          [u64ToScVal(universityId)],
           address
         );
         return (res as JoinRequest[]).map((r) => ({
@@ -446,7 +448,7 @@ export function useRequestJoinMutation() {
       return invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "request_join",
-        [u32ToScVal(universityId), addressToScVal(applicant)],
+        [u64ToScVal(universityId), addressToScVal(applicant)],
         applicant
       );
     },
@@ -469,7 +471,7 @@ export function useApproveMemberMutation() {
       return invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "approve_member",
-        [u32ToScVal(requestId), addressToScVal(admin)],
+        [u64ToScVal(requestId), addressToScVal(admin)],
         admin
       );
     },
@@ -493,7 +495,7 @@ export function useDenyMemberMutation() {
       return invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "deny_member",
-        [u32ToScVal(requestId), addressToScVal(admin)],
+        [u64ToScVal(requestId), addressToScVal(admin)],
         admin
       );
     },
@@ -518,7 +520,7 @@ export function useInviteMemberMutation() {
       return invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "invite_member",
-        [u32ToScVal(universityId), addressToScVal(invitee), addressToScVal(admin)],
+        [u64ToScVal(universityId), addressToScVal(invitee), addressToScVal(admin)],
         admin
       );
     },
@@ -541,7 +543,7 @@ export function useAcceptInviteMutation() {
       return invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "accept_invite",
-        [u32ToScVal(inviteId), addressToScVal(invitee)],
+        [u64ToScVal(inviteId), addressToScVal(invitee)],
         invitee
       );
     },
@@ -604,11 +606,17 @@ export function useBuyCampTokensMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ recipient, xlmAmount }: { recipient: string; xlmAmount: string }) => {
-      return invokeContractMethod(
+      // 1 XLM = 100 CAMP, so xlmAmount is the XLM to pay in stroops already
+      // Convert stroops to XLM decimal for the native payment
+      const xlmDecimal = (Number(xlmAmount) / 10_000_000).toFixed(7);
+      // Send XLM to the service contract address (atomic with mint)
+      return invokeContractMethodWithXlmPayment(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "buy_camp_tokens",
         [addressToScVal(recipient), nativeToScVal(xlmAmount, { type: "i128" } as never)],
-        recipient
+        recipient,
+        xlmDecimal,
+        NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID
       );
     },
     onSuccess: (_, variables) => {

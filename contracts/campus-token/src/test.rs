@@ -102,13 +102,82 @@ fn test_rbac_roles() {
     // Default role should be Guest (0)
     assert_eq!(client.get_role(&user), 0);
 
-    // Set user to Student (1)
-    client.set_role(&user, &1);
+    // Admin sets user to Student (1)
+    client.set_role(&admin, &user, &1);
     assert_eq!(client.get_role(&user), 1);
 
-    // Set user to Merchant (2)
-    client.set_role(&user, &2);
+    // User can self-assign Student (1)
+    client.set_role(&user, &user, &1);
+    assert_eq!(client.get_role(&user), 1);
+
+    // Admin sets user to Merchant (2)
+    client.set_role(&admin, &user, &2);
     assert_eq!(client.get_role(&user), 2);
+
+    // Non-admin cannot set role >= 2
+    let result = client.try_set_role(&user, &user, &3);
+    assert!(result.is_err());
+}
+
+#[test]
+fn test_role_change_request_flow() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let user = Address::generate(&env);
+
+    let token_id = env.register_contract(None, CampusToken);
+    let client = CampusTokenClient::new(&env, &token_id);
+
+    let name = String::from_str(&env, "Campus Token");
+    let symbol = String::from_str(&env, "CAMP");
+    client.initialize(&admin, &name, &symbol, &7);
+
+    // Guest (0) requests Merchant (2)
+    let req_id = client.request_role_change(&user, &2);
+    assert!(req_id > 0);
+
+    let req = client.get_role_request(&req_id);
+    assert_eq!(req.applicant, user);
+    assert_eq!(req.requested_role, 2);
+    assert_eq!(req.status, 0);
+
+    // Cannot request role < 2
+    assert!(client.try_request_role_change(&user, &1).is_err());
+
+    // Admin approves
+    client.approve_role_change(&req_id, &admin);
+    assert_eq!(client.get_role(&user), 2);
+
+    let req_after = client.get_role_request(&req_id);
+    assert_eq!(req_after.status, 1);
+}
+
+#[test]
+fn test_role_change_request_deny() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let user = Address::generate(&env);
+
+    let token_id = env.register_contract(None, CampusToken);
+    let client = CampusTokenClient::new(&env, &token_id);
+
+    let name = String::from_str(&env, "Campus Token");
+    let symbol = String::from_str(&env, "CAMP");
+    client.initialize(&admin, &name, &symbol, &7);
+
+    // User requests Club (3) — but they're Guest (0)
+    let req_id = client.request_role_change(&user, &3);
+
+    // Admin denies
+    client.deny_role_change(&req_id, &admin);
+    assert_eq!(client.get_role(&user), 0); // role unchanged
+
+    let req = client.get_role_request(&req_id);
+    assert_eq!(req.status, 2);
 }
 
 #[test]

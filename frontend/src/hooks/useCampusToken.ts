@@ -5,6 +5,7 @@ import {
   addressToScVal,
   i128ToScVal,
   u32ToScVal,
+  u64ToScVal,
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
 } from "@/services/contracts";
 import { useWalletStore } from "@/state/useWalletStore";
@@ -145,24 +146,120 @@ export function useSetRoleMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
+      admin,
       user,
       role,
-      caller,
     }: {
+      admin: string;
       user: string;
       role: number;
-      caller: string;
     }) => {
       return invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
         "set_role",
-        [addressToScVal(user), u32ToScVal(role)],
-        caller
+        [addressToScVal(admin), addressToScVal(user), u32ToScVal(role)],
+        admin
       );
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-role", variables.user] });
     },
+  });
+}
+
+export interface RoleRequest {
+  id: number;
+  applicant: string;
+  requested_role: number;
+  status: number; // 0: pending, 1: approved, 2: denied
+}
+
+export function useRequestRoleChangeMutation() {
+  return useMutation({
+    mutationFn: async ({
+      applicant,
+      requestedRole,
+    }: {
+      applicant: string;
+      requestedRole: number;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+        "request_role_change",
+        [addressToScVal(applicant), u32ToScVal(requestedRole)],
+        applicant
+      );
+    },
+  });
+}
+
+export function useApproveRoleChangeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      requestId,
+      admin,
+    }: {
+      requestId: number;
+      admin: string;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+        "approve_role_change",
+        [u64ToScVal(requestId), addressToScVal(admin)],
+        admin
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campus-role"] });
+      queryClient.invalidateQueries({ queryKey: ["role-requests"] });
+    },
+  });
+}
+
+export function useDenyRoleChangeMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      requestId,
+      admin,
+    }: {
+      requestId: number;
+      admin: string;
+    }) => {
+      return invokeContractMethod(
+        NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+        "deny_role_change",
+        [u64ToScVal(requestId), addressToScVal(admin)],
+        admin
+      );
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["campus-role"] });
+      queryClient.invalidateQueries({ queryKey: ["role-requests"] });
+    },
+  });
+}
+
+export function usePendingRoleRequests() {
+  return useQuery({
+    queryKey: ["role-requests"],
+    queryFn: async (): Promise<RoleRequest[]> => {
+      const address = useWalletStore.getState().address || undefined;
+      const res = await readContract(
+        NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+        "list_pending_role_requests",
+        [],
+        address
+      );
+      return (res as RoleRequest[]).map((r) => ({
+        id: Number(r.id),
+        applicant: String(r.applicant),
+        requested_role: Number(r.requested_role),
+        status: Number(r.status),
+      }));
+    },
+    refetchInterval: 15000,
   });
 }
 

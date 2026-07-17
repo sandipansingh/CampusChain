@@ -105,15 +105,18 @@ sequenceDiagram
 sequenceDiagram
     autonumber
     actor User as Any Account
+    participant PN as Native XLM Payment
     participant SC as CampusService
     participant TC as CampusToken
 
+    User->>PN: Transfer XLM to service contract (atomic in same tx)
     User->>SC: buy_camp_tokens(recipient, xlm_amount_stroops)
     SC->>SC: xlm_amount >= 1 XLM minimum
     SC->>SC: camp_amount = xlm_amount * 100
     SC->>TC: mint_purchase(recipient, camp_amount)
     TC->>TC: Check amount > 0
     TC-->>User: CAMP tokens minted at rate 1 XLM = 100 CAMP
+    Note over User,TC: Both operations atomic (XLM payment + CAMP mint) — if either fails, neither executes
 ```
 
 ---
@@ -122,7 +125,8 @@ sequenceDiagram
 
 ### CampusToken (`contracts/campus-token`)
 - **Fungible token** (7 decimals, symbol: CAMP)
-- **RBAC**: `set_role(address, role)` — self-registration (0=Guest, 1=Student, 2=Merchant, 3=Club Organizer, 4=University Admin)
+- **RBAC**: `set_role(admin, address, role)` — role 0-1 self-assignable, role 2+ requires contract admin approval
+- **Role Request Flow**: `request_role_change(applicant, role)`, `approve_role_change(request_id, admin)`, `deny_role_change(request_id, admin)` — Merchant (2) and Club Organizer (3) require admin approval
 - **Faucet**: `faucet(address, amount)` — one-time claim of 100 CAMP per address
 - **Purchase Mint**: `mint_purchase(address, amount)` — called by CampusService to mint CAMP when users buy with XLM
 - **Standard token ops**: `transfer`, `approve`, `transfer_from`, `mint`, `burn`, `balance`
@@ -133,7 +137,8 @@ sequenceDiagram
 - **Escrow**: `create_escrow`, `get_escrow`, `release_escrow`, `refund_escrow`
 - **Event Ticketing**: `create_event`, `get_event`, `buy_ticket`, `get_ticket`, `redeem_ticket`
 - **Token Claim**: `claim_faucet`, `has_claimed_faucet`
-- **Buy CAMP**: `buy_camp_tokens(recipient, xlm_amount)` — purchase rate 1 XLM = 100 CAMP (minimum 1 XLM)
+- **Buy CAMP**: `buy_camp_tokens(recipient, xlm_amount)` — purchase rate 1 XLM = 100 CAMP (minimum 1 XLM), XLM transferred atomically via native payment op in same tx
+- **Frontend fix**: All contract call parameters now use correct `u64` ScVal type (previously incorrectly sent as `u32`, causing join/invite failures)
 
 ---
 
@@ -149,7 +154,7 @@ sequenceDiagram
 - **Smart Contracts**: Rust & Soroban SDK v21
 - **Frontend**: Next.js 15 (App Router), TypeScript, Tailwind CSS v4, Zustand, TanStack React Query v5
 - **Wallet**: StellarWalletsKit (Freighter)
-- **Testing**: `cargo test` (7 contract tests), Vitest (frontend)
+- **Testing**: `cargo test` (11 contract tests: 7 token + 4 service), Vitest (frontend)
 - **CI/CD**: GitHub Actions
 
 ---

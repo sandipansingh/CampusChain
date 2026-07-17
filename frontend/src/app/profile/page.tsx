@@ -3,7 +3,14 @@
 import React, { useState, useEffect } from "react";
 import { useQueryClient } from "@tanstack/react-query";
 import { useWalletStore } from "@/state/useWalletStore";
-import { useCampusUserRole, useSetRoleMutation } from "@/hooks/useCampusToken";
+import {
+  useCampusUserRole,
+  useSetRoleMutation,
+  useRequestRoleChangeMutation,
+  useApproveRoleChangeMutation,
+  useDenyRoleChangeMutation,
+  usePendingRoleRequests,
+} from "@/hooks/useCampusToken";
 import { useTransactionStore } from "@/state/useTransactionStore";
 import { pollTransactionStatus } from "@/services/contracts";
 import { logger } from "@/services/logger";
@@ -40,6 +47,10 @@ export default function ProfilePage() {
   const { address } = useWalletStore();
   const { data: role } = useCampusUserRole(address);
   const setRoleMut = useSetRoleMutation();
+  const requestRoleMut = useRequestRoleChangeMutation();
+  const approveRoleMut = useApproveRoleChangeMutation();
+  const denyRoleMut = useDenyRoleChangeMutation();
+  const { data: pendingRoleReqs = [] } = usePendingRoleRequests();
   const queryClient = useQueryClient();
 
   const addTransaction = useTransactionStore((state) => state.addTransaction);
@@ -96,15 +107,27 @@ export default function ProfilePage() {
     e.preventDefault();
     if (!address) return;
     const startTime = Date.now();
-    const actionName = "UPDATE PROFILE ROLE";
+    const actionName = "REQUEST ROLE CHANGE";
     try {
-      const hash = await setRoleMut.mutateAsync({ user: address, role: selectedRole, caller: address });
-      addTransaction({ hash, status: "pending", method: actionName, timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-      queryClient.invalidateQueries({ queryKey: ["campus-role", address] });
-      logger.trackTransaction({ hash, method: actionName, status: "confirmed", durationMs: Date.now() - startTime });
+      if (selectedRole <= 1) {
+        // Guest (0) / Student (1): self-assignable, no admin needed
+        const hash = await setRoleMut.mutateAsync({ admin: address, user: address, role: selectedRole });
+        addTransaction({ hash, status: "pending", method: "UPDATE ROLE", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
+        updateTransaction(hash, { status: "processing" });
+        await pollTransactionStatus(hash);
+        updateTransaction(hash, { status: "confirmed" });
+        queryClient.invalidateQueries({ queryKey: ["campus-role", address] });
+        logger.trackTransaction({ hash, method: actionName, status: "confirmed", durationMs: Date.now() - startTime });
+      } else {
+        // Merchant (2) / Club (3) / Admin (4): requires admin approval via role request
+        const hash = await requestRoleMut.mutateAsync({ applicant: address, requestedRole: selectedRole });
+        addTransaction({ hash, status: "pending", method: actionName, timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
+        updateTransaction(hash, { status: "processing" });
+        await pollTransactionStatus(hash);
+        updateTransaction(hash, { status: "confirmed" });
+        queryClient.invalidateQueries({ queryKey: ["role-requests"] });
+        logger.trackTransaction({ hash, method: actionName, status: "confirmed", durationMs: Date.now() - startTime });
+      }
     } catch (err) {
       const errMsg = err instanceof Error ? err.message : "Role registration failed";
       addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: actionName, timestamp: Date.now(), errorMessage: errMsg });
@@ -194,6 +217,37 @@ export default function ProfilePage() {
     }
   };
 
+  const handleApproveRole = async (reqId: number) => {
+    if (!address) return;
+    try {
+      const hash = await approveRoleMut.mutateAsync({ requestId: reqId, admin: address });
+      addTransaction({ hash, status: "pending", method: "APPROVE ROLE", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
+      updateTransaction(hash, { status: "processing" });
+      await pollTransactionStatus(hash);
+      updateTransaction(hash, { status: "confirmed" });
+    } catch (err) {
+      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "APPROVE ROLE", timestamp: Date.now(), errorMessage: String(err) });
+    }
+  };
+
+  const handleDenyRole = async (reqId: number) => {
+    if (!address) return;
+    try {
+      const hash = await denyRoleMut.mutateAsync({ requestId: reqId, admin: address });
+      addTransaction({ hash, status: "pending", method: "DENY ROLE", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
+      updateTransaction(hash, { status: "processing" });
+      await pollTransactionStatus(hash);
+      updateTransaction(hash, { status: "confirmed" });
+    } catch (err) {
+      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "DENY ROLE", timestamp: Date.now(), errorMessage: String(err) });
+    }
+  };
+
+  const getRoleLabel = (r: number) => {
+    const labels: Record<number, string> = { 0: "Guest", 1: "Student", 2: "Merchant", 3: "Club Organizer", 4: "Admin" };
+    return labels[r] ?? "Unknown";
+  };
+
   const currentRole = getRoleInfo(role);
 
   return (
@@ -234,7 +288,7 @@ export default function ProfilePage() {
           </div>
           <form onSubmit={handleRegisterRole} className="flex flex-col gap-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[ { id: 1, name: "Student", icon: GraduationCap, desc: "Lock escrows, buy ticket passes, transfer tokens" }, { id: 2, name: "Merchant", icon: Store, desc: "Accept peer payments and settle locked escrows" }, { id: 3, name: "Club Organizer", icon: Calendar, desc: "Mint ticket passes and run door authentication" }, { id: 4, name: "University Admin", icon: Building, desc: "Register universities, distribute scholarship rewards" } ].map((r) => {
+              {[ { id: 1, name: "Student", icon: GraduationCap, desc: "Lock escrows, buy ticket passes, transfer tokens" }, { id: 2, name: "Merchant", icon: Store, desc: "Accept peer payments and settle locked escrows — requires admin approval" }, { id: 3, name: "Club Organizer", icon: Calendar, desc: "Mint ticket passes and run door authentication — requires admin approval" }, { id: 4, name: "University Admin", icon: Building, desc: "Register universities, distribute scholarship rewards" } ].map((r) => {
                 const Icon = r.icon;
                 const isSelected = selectedRole === r.id;
                 return (
@@ -245,9 +299,14 @@ export default function ProfilePage() {
                 );
               })}
             </div>
-            <button type="submit" disabled={setRoleMut.isPending} className="h-12 w-full bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none mt-2">
-              {setRoleMut.isPending ? <><Loader2 className="w-4 h-4 animate-spin" />Minting Role Transaction...</> : "Update On-Chain Role Permissions"}
+            <button type="submit" disabled={setRoleMut.isPending || requestRoleMut.isPending} className="h-12 w-full bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none mt-2">
+              {setRoleMut.isPending || requestRoleMut.isPending ? <><Loader2 className="w-4 h-4 animate-spin" />Processing...</> : selectedRole <= 1 ? "Update On-Chain Role" : `Request ${getRoleLabel(selectedRole)} Role`}
             </button>
+            {selectedRole >= 2 && (
+              <p className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded-xl p-2 text-center">
+                Merchant, Club Organizer, and Admin roles require approval from the contract super-admin.
+              </p>
+            )}
           </form>
         </div>
       </div>
@@ -364,6 +423,30 @@ export default function ProfilePage() {
           </div>
         )}
       </div>
+
+      {/* Role Approval Panel (Admin only) */}
+      {role === 4 && pendingRoleReqs.length > 0 && (
+        <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
+          <div className="border-b border-slate-100 pb-4">
+            <h3 className="text-base font-bold text-slate-900 uppercase flex items-center gap-2"><Shield className="w-5 h-5 text-slate-700" />Pending Role Change Requests</h3>
+            <p className="text-xs text-slate-700 font-semibold mt-1">Approve or deny role change requests from students.</p>
+          </div>
+          <div className="flex flex-col gap-2">
+            {pendingRoleReqs.map((req) => (
+              <div key={req.id} className="bg-slate-50 p-4 rounded-xl flex items-center justify-between gap-4">
+                <div className="flex flex-col gap-0.5 min-w-0">
+                  <span className="text-xs font-mono font-semibold text-slate-900 truncate">{req.applicant.slice(0, 12)}...{req.applicant.slice(-8)}</span>
+                  <span className="text-[10px] text-slate-700 font-semibold">wants: {getRoleLabel(req.requested_role)}</span>
+                </div>
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button onClick={() => handleApproveRole(req.id)} className="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600"><Check className="w-4 h-4" /></button>
+                  <button onClick={() => handleDenyRole(req.id)} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-600"><X className="w-4 h-4" /></button>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   );
 }

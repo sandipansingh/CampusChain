@@ -104,7 +104,7 @@ fn test_event_ticketing_workflow() {
     service_client.initialize(&admin, &token_id);
 
     // Set host role to Club (3)
-    token_client.set_role(&host, &3);
+    token_client.set_role(&admin, &host, &3);
 
     // Create Event
     let event_id = service_client.create_event(&host, &50i128, &100u32);

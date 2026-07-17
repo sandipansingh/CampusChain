@@ -2,10 +2,10 @@
 mod token_wasm {
     soroban_sdk::contractimport!(file = "wasm/campus_token.wasm");
 }
-use token_wasm::Client as CampusTokenClient;
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, String, Symbol, Vec,
 };
+use token_wasm::Client as CampusTokenClient;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -126,9 +126,11 @@ fn extend_instance(env: &Env) {
 
 fn extend_persistent(env: &Env, key: &DataKey) {
     if env.storage().persistent().has(key) {
-        env.storage()
-            .persistent()
-            .extend_ttl(key, LEDGER_THRESHOLD_PERSISTENT, LEDGER_EXTEND_TO_PERSISTENT);
+        env.storage().persistent().extend_ttl(
+            key,
+            LEDGER_THRESHOLD_PERSISTENT,
+            LEDGER_EXTEND_TO_PERSISTENT,
+        );
     }
 }
 
@@ -205,9 +207,15 @@ impl CampusService {
 
         // Increment counter
         extend_instance(&env);
-        let mut counter: u64 = env.storage().instance().get(&DataKey::EscrowCounter).unwrap_or(0);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::EscrowCounter)
+            .unwrap_or(0);
         counter += 1;
-        env.storage().instance().set(&DataKey::EscrowCounter, &counter);
+        env.storage()
+            .instance()
+            .set(&DataKey::EscrowCounter, &counter);
 
         let escrow = EscrowAgreement {
             id: counter,
@@ -272,7 +280,12 @@ impl CampusService {
         env.storage().persistent().set(&key, &escrow);
 
         env.events().publish(
-            (Symbol::new(&env, "escrow_released"), id, escrow.buyer, escrow.seller),
+            (
+                Symbol::new(&env, "escrow_released"),
+                id,
+                escrow.buyer,
+                escrow.seller,
+            ),
             escrow.amount,
         );
 
@@ -313,7 +326,12 @@ impl CampusService {
         env.storage().persistent().set(&key, &escrow);
 
         env.events().publish(
-            (Symbol::new(&env, "escrow_refunded"), id, escrow.buyer, escrow.seller),
+            (
+                Symbol::new(&env, "escrow_refunded"),
+                id,
+                escrow.buyer,
+                escrow.seller,
+            ),
             escrow.amount,
         );
 
@@ -322,12 +340,7 @@ impl CampusService {
 
     // --- TICKETING OPERATIONS ---
 
-    pub fn create_event(
-        env: Env,
-        host: Address,
-        price: i128,
-        capacity: u32,
-    ) -> Result<u64, Error> {
+    pub fn create_event(env: Env, host: Address, price: i128, capacity: u32) -> Result<u64, Error> {
         host.require_auth();
 
         if price < 0 {
@@ -344,9 +357,15 @@ impl CampusService {
         }
 
         extend_instance(&env);
-        let mut counter: u64 = env.storage().instance().get(&DataKey::EventCounter).unwrap_or(0);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::EventCounter)
+            .unwrap_or(0);
         counter += 1;
-        env.storage().instance().set(&DataKey::EventCounter, &counter);
+        env.storage()
+            .instance()
+            .set(&DataKey::EventCounter, &counter);
 
         let event = EventDetails {
             id: counter,
@@ -434,7 +453,12 @@ impl CampusService {
         env.storage().persistent().set(&event_key, &event);
 
         env.events().publish(
-            (Symbol::new(&env, "ticket_bought"), ticket_counter, event_id, buyer),
+            (
+                Symbol::new(&env, "ticket_bought"),
+                ticket_counter,
+                event_id,
+                buyer,
+            ),
             event.price,
         );
 
@@ -483,7 +507,12 @@ impl CampusService {
         env.storage().persistent().set(&ticket_key, &ticket);
 
         env.events().publish(
-            (Symbol::new(&env, "ticket_redeemed"), ticket_id, ticket.event_id, host),
+            (
+                Symbol::new(&env, "ticket_redeemed"),
+                ticket_id,
+                ticket.event_id,
+                host,
+            ),
             (),
         );
 
@@ -571,11 +600,7 @@ impl CampusService {
 
     // --- MEMBERSHIP OPERATIONS ---
 
-    pub fn request_join(
-        env: Env,
-        university_id: u64,
-        applicant: Address,
-    ) -> Result<u64, Error> {
+    pub fn request_join(env: Env, university_id: u64, applicant: Address) -> Result<u64, Error> {
         applicant.require_auth();
 
         // Verify university exists
@@ -614,18 +639,19 @@ impl CampusService {
         extend_persistent(&env, &key);
 
         env.events().publish(
-            (Symbol::new(&env, "join_requested"), counter, university_id, applicant),
+            (
+                Symbol::new(&env, "join_requested"),
+                counter,
+                university_id,
+                applicant,
+            ),
             (),
         );
 
         Ok(counter)
     }
 
-    pub fn approve_member(
-        env: Env,
-        request_id: u64,
-        admin: Address,
-    ) -> Result<(), Error> {
+    pub fn approve_member(env: Env, request_id: u64, admin: Address) -> Result<(), Error> {
         admin.require_auth();
 
         let req_key = DataKey::JoinRequest(request_id);
@@ -669,18 +695,18 @@ impl CampusService {
         env.storage().persistent().set(&uni_key, &uni);
 
         env.events().publish(
-            (Symbol::new(&env, "member_approved"), request_id, request.applicant),
+            (
+                Symbol::new(&env, "member_approved"),
+                request_id,
+                request.applicant,
+            ),
             request.university_id,
         );
 
         Ok(())
     }
 
-    pub fn deny_member(
-        env: Env,
-        request_id: u64,
-        admin: Address,
-    ) -> Result<(), Error> {
+    pub fn deny_member(env: Env, request_id: u64, admin: Address) -> Result<(), Error> {
         admin.require_auth();
 
         let req_key = DataKey::JoinRequest(request_id);
@@ -760,7 +786,12 @@ impl CampusService {
         extend_persistent(&env, &key);
 
         env.events().publish(
-            (Symbol::new(&env, "member_invited"), counter, university_id, invitee),
+            (
+                Symbol::new(&env, "member_invited"),
+                counter,
+                university_id,
+                invitee,
+            ),
             (),
         );
 
@@ -826,10 +857,8 @@ impl CampusService {
 
         env.storage().persistent().remove(&member_key);
 
-        env.events().publish(
-            (Symbol::new(&env, "member_left"), member),
-            (),
-        );
+        env.events()
+            .publish((Symbol::new(&env, "member_left"), member), ());
 
         Ok(())
     }
