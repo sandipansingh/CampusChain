@@ -1,5 +1,6 @@
 import {
   rpc,
+  Horizon,
   TransactionBuilder,
   Contract,
   nativeToScVal,
@@ -108,8 +109,8 @@ export async function sendNativePayment(
   xlmAmount: string,
   userAddress: string
 ): Promise<string> {
-  const server = getRpcServer();
-  const sourceAccount = await server.getAccount(userAddress);
+  const horizon = new Horizon.Server("https://horizon-testnet.stellar.org");
+  const sourceAccount = await horizon.loadAccount(userAddress);
 
   const paymentOp = Operation.payment({
     destination: xlmDestination,
@@ -117,7 +118,7 @@ export async function sendNativePayment(
     amount: xlmAmount,
   });
 
-  let tx = new TransactionBuilder(sourceAccount, {
+  const tx = new TransactionBuilder(sourceAccount, {
     fee: "1000",
     networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
   })
@@ -125,17 +126,14 @@ export async function sendNativePayment(
     .setTimeout(60)
     .build();
 
-  tx = await server.prepareTransaction(tx);
-
   const signedXdr = await signTx(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
 
-  const submission = await server.sendTransaction(
+  const submission = await horizon.submitTransaction(
     new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
   );
 
-  if (submission.status === "ERROR") {
-    const errorXdr = submission.errorResult ? submission.errorResult.toXDR("base64") : "Unknown XDR";
-    throw new Error(`Payment submission error: ${errorXdr}`);
+  if (!submission.successful) {
+    throw new Error(`Payment failed: ${JSON.stringify(submission)}`);
   }
 
   return submission.hash;

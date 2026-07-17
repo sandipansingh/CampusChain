@@ -609,7 +609,7 @@ export function useBuyCampTokensMutation() {
     mutationFn: async ({ recipient, xlmAmount }: { recipient: string; xlmAmount: string }) => {
       const xlmDecimal = (Number(xlmAmount) / 10_000_000).toFixed(7);
 
-      const paymentHash = await sendNativePayment(
+      await sendNativePayment(
         NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS,
         xlmDecimal,
         recipient
