@@ -103,21 +103,14 @@ export async function invokeContractMethod(
   return submission.hash;
 }
 
-export async function invokeContractMethodWithXlmPayment(
-  contractId: string,
-  methodName: string,
-  args: xdr.ScVal[],
-  userAddress: string,
+export async function sendNativePayment(
+  xlmDestination: string,
   xlmAmount: string,
-  xlmDestination: string
+  userAddress: string
 ): Promise<string> {
   const server = getRpcServer();
   const sourceAccount = await server.getAccount(userAddress);
 
-  const contract = new Contract(contractId);
-  const contractOp = contract.call(methodName, ...args);
-
-  // Native XLM payment from user to destination
   const paymentOp = Operation.payment({
     destination: xlmDestination,
     asset: Asset.native(),
@@ -125,11 +118,10 @@ export async function invokeContractMethodWithXlmPayment(
   });
 
   let tx = new TransactionBuilder(sourceAccount, {
-    fee: "2000",
+    fee: "1000",
     networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
   })
     .addOperation(paymentOp)
-    .addOperation(contractOp)
     .setTimeout(60)
     .build();
 
@@ -143,7 +135,7 @@ export async function invokeContractMethodWithXlmPayment(
 
   if (submission.status === "ERROR") {
     const errorXdr = submission.errorResult ? submission.errorResult.toXDR("base64") : "Unknown XDR";
-    throw new Error(`Transaction submission error: ${errorXdr}`);
+    throw new Error(`Payment submission error: ${errorXdr}`);
   }
 
   return submission.hash;

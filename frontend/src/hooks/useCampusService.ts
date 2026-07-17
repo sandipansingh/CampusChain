@@ -3,7 +3,7 @@ import { nativeToScVal } from "@stellar/stellar-sdk";
 import {
   readContract,
   invokeContractMethod,
-  invokeContractMethodWithXlmPayment,
+  sendNativePayment,
   addressToScVal,
   i128ToScVal,
   u32ToScVal,
@@ -607,18 +607,22 @@ export function useBuyCampTokensMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({ recipient, xlmAmount }: { recipient: string; xlmAmount: string }) => {
-      // 1 XLM = 100 CAMP, so xlmAmount is the XLM to pay in stroops already
-      // Convert stroops to XLM decimal for the native payment
       const xlmDecimal = (Number(xlmAmount) / 10_000_000).toFixed(7);
-      // Send XLM to the service contract address (atomic with mint)
-      return invokeContractMethodWithXlmPayment(
+
+      const paymentHash = await sendNativePayment(
+        NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS,
+        xlmDecimal,
+        recipient
+      );
+
+      const txHash = await invokeContractMethod(
         NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
         "buy_camp_tokens",
         [addressToScVal(recipient), nativeToScVal(xlmAmount, { type: "i128" } as never)],
-        recipient,
-        xlmDecimal,
-        NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS
+        recipient
       );
+
+      return txHash;
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
