@@ -418,12 +418,12 @@ export function WalletDashboard() {
 
       {/* Main Content Area */}
       <div className="flex-1 md:ml-64 flex flex-col h-full overflow-hidden">
-        {/* 2. Desktop Top Navbar */}
-        <header className="hidden md:flex justify-between items-center h-16 border-b border-border bg-card px-6 sticky top-0 z-30 shrink-0">
-          <h2 className="text-xl font-bold capitalize">{activeTab}</h2>
+        {/* 2. Top Navbar (Responsive) */}
+        <header className="flex justify-between items-center h-16 border-b border-border bg-card px-4 md:px-6 sticky top-0 z-30 shrink-0">
+          <h2 className="text-lg md:text-xl font-bold capitalize">{activeTab}</h2>
           
-          <div className="flex items-center gap-6">
-            <div className="w-40">
+          <div className="flex items-center gap-3 md:gap-6">
+            <div className="hidden sm:block w-40">
               <Dropdown<UIState>
                 options={[
                   { value: "success", label: "State: Success" },
@@ -448,7 +448,7 @@ export function WalletDashboard() {
               )}
             </button>
 
-            <div className="flex items-center gap-3">
+            <div className="flex items-center gap-2 md:gap-3">
               <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold select-none cursor-pointer">
                 JD
               </div>
