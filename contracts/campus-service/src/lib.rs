@@ -1180,8 +1180,6 @@ impl CampusService {
       }
 
       pub fn buy_listing(env: Env, id: u64, buyer: Address) -> Result<(), Error> {
-          buyer.require_auth();
-
           let key = DataKey::Listing(id);
           extend_persistent(&env, &key);
 
@@ -1237,8 +1235,6 @@ impl CampusService {
           amount: i128,
           min_gpa: u32,
       ) -> Result<u64, Error> {
-          admin.require_auth();
-
           let token_addr = get_token_contract(&env)?;
           let token_client = CampusTokenClient::new(&env, &token_addr);
 
@@ -1542,8 +1538,6 @@ impl CampusService {
       }
 
       pub fn redeem_reward(env: Env, student: Address, reward_id: u64) -> Result<u64, Error> {
-          student.require_auth();
-
           let rew_key = DataKey::UtilityReward(reward_id);
           extend_persistent(&env, &rew_key);
 
