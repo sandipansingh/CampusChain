@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { Dropdown } from "@/shared/ui/Dropdown";
-import { useCampusUserRole, useSetRoleMutation } from "@/features/wallet/hooks/useWallet";
+import { useCampusUserRole, useSetIdentityRoleMutation, useSetVerifiedMutation } from "@/features/wallet/hooks/useWallet";
 import {
   Bell,
   Coins,
@@ -31,13 +31,19 @@ export function AdminDashboard() {
   const [adminState, setAdminState] = useState<AdminState>("success");
   const [merchants, setMerchants] = useState<OnboardingMerchant[]>(initialMerchants);
   
-  // Issuance form states
+  // Role form states
   const [targetUser, setTargetUser] = useState("");
-  const [targetRole, setTargetRole] = useState("1"); // 1: Student, 2: Merchant, 3: Organizer, 4: Admin
+  const [targetRole, setTargetRole] = useState("1"); // 1: Student, 2: Merchant, 4: Admin
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
 
+  // Verification form states
+  const [verifyUser, setVerifyUser] = useState("");
+  const [verifyStatus, setVerifyStatus] = useState("true"); // "true" or "false"
+  const [verifyStatusMsg, setVerifyStatusMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+
   const { data: userRole, isLoading: isRoleLoading } = useCampusUserRole(address);
-  const setRoleMutation = useSetRoleMutation();
+  const setIdentityRoleMutation = useSetIdentityRoleMutation();
+  const setVerifiedMutation = useSetVerifiedMutation();
 
   const handleUpdateRoleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -49,7 +55,7 @@ export function AdminDashboard() {
 
     setStatusMsg({ type: "info", text: "Submitting role update transaction..." });
 
-    setRoleMutation.mutate(
+    setIdentityRoleMutation.mutate(
       {
         admin: address,
         user: targetUser,
@@ -63,6 +69,35 @@ export function AdminDashboard() {
         onError: (err: unknown) => {
           const msg = err instanceof Error ? err.message : String(err);
           setStatusMsg({ type: "error", text: `Transaction failed: ${msg}` });
+        },
+      }
+    );
+  };
+
+  const handleUpdateVerificationSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!address) return;
+    if (!verifyUser) {
+      setVerifyStatusMsg({ type: "error", text: "Please provide a valid Stellar address." });
+      return;
+    }
+
+    setVerifyStatusMsg({ type: "info", text: "Submitting verification update transaction..." });
+
+    setVerifiedMutation.mutate(
+      {
+        admin: address,
+        user: verifyUser,
+        verified: verifyStatus === "true",
+      },
+      {
+        onSuccess: (txHash) => {
+          setVerifyStatusMsg({ type: "success", text: `Verification status updated successfully! Hash: ${txHash.slice(0, 8)}...${txHash.slice(-8)}` });
+          setVerifyUser("");
+        },
+        onError: (err: unknown) => {
+          const msg = err instanceof Error ? err.message : String(err);
+          setVerifyStatusMsg({ type: "error", text: `Transaction failed: ${msg}` });
         },
       }
     );
@@ -163,7 +198,6 @@ export function AdminDashboard() {
                   options={[
                     { value: "1", label: "Student" },
                     { value: "2", label: "Merchant" },
-                    { value: "3", label: "Club Organizer" },
                     { value: "4", label: "Administrator" },
                   ]}
                   value={targetRole}
@@ -173,10 +207,70 @@ export function AdminDashboard() {
 
               <button
                 type="submit"
-                disabled={setRoleMutation.isPending}
+                disabled={setIdentityRoleMutation.isPending}
                 className="w-full h-11 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/95 transition-colors cursor-pointer disabled:opacity-50"
               >
-                {setRoleMutation.isPending ? "Assigning..." : "Publish Permissions"}
+                {setIdentityRoleMutation.isPending ? "Assigning..." : "Publish Permissions"}
+              </button>
+            </form>
+          </div>
+
+          <div className="bg-card border border-border p-6 rounded-2xl shadow-sm">
+            <div className="mb-4">
+              <h3 className="text-sm font-bold text-foreground">Verify Student Identity</h3>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                Set the verified flag on a student profile to approve scholarship applications.
+              </p>
+            </div>
+
+            {verifyStatusMsg && (
+              <div className={`p-4 rounded-xl text-xs font-semibold border mb-4 ${
+                verifyStatusMsg.type === "success"
+                  ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+                  : verifyStatusMsg.type === "error"
+                  ? "bg-destructive/10 text-destructive border-destructive/20"
+                  : "bg-blue-500/10 text-blue-600 border-blue-500/20 animate-pulse"
+              }`}>
+                {verifyStatusMsg.text}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdateVerificationSubmit} className="space-y-4">
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5" htmlFor="verify-user">
+                  Target Wallet Address
+                </label>
+                <input
+                  id="verify-user"
+                  type="text"
+                  value={verifyUser}
+                  onChange={(e) => setVerifyUser(e.target.value)}
+                  placeholder="G..."
+                  required
+                  className="w-full h-11 px-4 bg-card border border-border rounded-lg text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
+                />
+              </div>
+
+              <div>
+                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5 animate-none">
+                  Verification Status
+                </label>
+                <Dropdown<string>
+                  options={[
+                    { value: "true", label: "Verified (True)" },
+                    { value: "false", label: "Unverified (False)" },
+                  ]}
+                  value={verifyStatus}
+                  onChange={(val) => setVerifyStatus(val)}
+                />
+              </div>
+
+              <button
+                type="submit"
+                disabled={setVerifiedMutation.isPending}
+                className="w-full h-11 bg-primary text-primary-foreground font-bold rounded-lg hover:bg-primary/95 transition-colors cursor-pointer disabled:opacity-50"
+              >
+                {setVerifiedMutation.isPending ? "Updating..." : "Publish Verification"}
               </button>
             </form>
           </div>

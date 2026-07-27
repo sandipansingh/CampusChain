@@ -9,8 +9,7 @@ This report presents a thorough audit of the completed Soroban smart contracts a
 The following table lists the screens defined in the Stitch design workspace, their core visual components, and the corresponding data and actions required from the backend (smart contracts and Horizon API).
 
 | Screen Name | Device Type | Key Components | Data / Actions Required from Backend |
-| :--- | :--- | :--- | :--- |
-| **University Login** | Desktop & Mobile | Centralized login container, "Connect Wallet" button with Freighter icon, network status. | • Connect wallet (retrieve user Stellar public key)<br>• Fetch role via `get_role` from `CampusToken` contract<br>• Fetch membership status via `get_membership` from `CampusService` contract |
+| **University Login** | Desktop & Mobile | Centralized connect container, "Connect Wallet" button, on-chain onboarding form. | • Connect wallet (retrieve user Stellar public key)<br>• Fetch profile via `get_profile` from `CampusIdentity` contract<br>• Register profile via `register_profile` on `CampusIdentity` contract |
 | **Student Wallet Dashboard** | Desktop & Mobile | • Sidebar navigation menu (Desktop) or bottom tab bar (Mobile)<br>• Total Balance Card (showing XLM and CAMP balance)<br>• Quick actions grid (Scan & Pay, Send, Buy CAMP, Marketplace)<br>• Monthly metrics cards (Total Spent, CAMP Earned, Events Attended)<br>• Recent Transactions ledger with status icons and detail rows | • Fetch XLM balance via Horizon API<br>• Fetch CAMP balance via `balance(address)` on `CampusToken`<br>• Poll transaction logs and decoded on-chain events via Soroban RPC |
 | **Send & Receive** | Desktop & Mobile | • Tabs: "Send" / "Receive"<br>• Form: Recipient address, Amount input, Asset dropdown (XLM/CAMP), Memo<br>• Receive view: User Stellar address QR Code, copy public key button | • Verify recipient account format<br>• Submit payment: standard `Operation.payment` via Horizon (for XLM) or `transfer` call via Soroban RPC (for CAMP) |
 | **QR Scan & Pay** | Desktop & Mobile | • Camera viewfinder scanner interface<br>• Confirm transaction drawer overlay with pre-filled Recipient and Amount | • Parse QR data payload (Stellar URI / JSON)<br>• Submit transaction envelope to the ledger (Horizon/Soroban RPC) |
@@ -117,9 +116,12 @@ The initial build plan suggested creating separate contracts (`CampusMarketplace
 
 ---
 
-## 5. Frontend Architecture Gap
+## 5. Frontend Architecture & Authentication Details
 
 The frontend features a robust and modular architecture with zero remaining architectural gaps:
+
+0. **On-Chain Authentication & Identity**:
+   Traditional SSO login was fully replaced with wallet-first authentication. User profiles, roles (Student, Merchant, Admin), and verification status are queried and stored fully on-chain using the `CampusIdentity` contract. No backend server, password hashing, or database exists in the project; wallet connection is the sole authenticator and the on-chain registry is the single source of truth.
 
 1. **StellarWalletsKit Integration**:
    Built under `src/features/wallet/service/wallet.ts` and `src/features/wallet/hooks/useWallet.ts`, the app integrates `@creit.tech/stellar-wallets-kit` providing unified multi-wallet connect workflows (Freighter, xBull, Albedo, etc.).

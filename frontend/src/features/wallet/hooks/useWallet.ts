@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchBalance,
-  fetchUserRole,
   fetchTokenMetadata,
   executeTransfer,
   executeApprove,
@@ -11,6 +10,12 @@ import {
   executeDenyRoleChange,
   fetchPendingRoleRequests,
 } from "../service/campusToken";
+import {
+  fetchUserProfile,
+  executeRegisterProfile,
+  executeSetRole as executeSetIdentityRole,
+  executeSetVerified,
+} from "../service/campusIdentity";
 
 export function useCampusBalance(address: string | null) {
   return useQuery({
@@ -34,7 +39,8 @@ export function useCampusUserRole(address: string | null) {
     queryFn: async () => {
       if (!address) return 0;
       try {
-        return await fetchUserRole(address);
+        const profile = await fetchUserProfile(address);
+        return profile ? profile.role : 1; // Default to Student (1) if no profile
       } catch (err) {
         console.warn("Failed to fetch on-chain user role, using default fallback", err);
         return 1; // Default to Student
@@ -181,5 +187,80 @@ export function usePendingRoleRequests(address?: string) {
       return fetchPendingRoleRequests(address);
     },
     refetchInterval: 15000,
+  });
+}
+
+export function useCampusProfile(address: string | null) {
+  return useQuery({
+    queryKey: ["campus-profile", address],
+    queryFn: async () => {
+      if (!address) return null;
+      return fetchUserProfile(address);
+    },
+    enabled: !!address,
+  });
+}
+
+export function useRegisterProfileMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      address,
+      fullName,
+      universityId,
+      department,
+    }: {
+      address: string;
+      fullName: string;
+      universityId: number;
+      department: string;
+    }) => {
+      return executeRegisterProfile(address, fullName, universityId, department);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.address] });
+      queryClient.invalidateQueries({ queryKey: ["campus-role", variables.address] });
+    },
+  });
+}
+
+export function useSetIdentityRoleMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      admin,
+      user,
+      role,
+    }: {
+      admin: string;
+      user: string;
+      role: number;
+    }) => {
+      return executeSetIdentityRole(admin, user, role);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.user] });
+      queryClient.invalidateQueries({ queryKey: ["campus-role", variables.user] });
+    },
+  });
+}
+
+export function useSetVerifiedMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      admin,
+      user,
+      verified,
+    }: {
+      admin: string;
+      user: string;
+      verified: boolean;
+    }) => {
+      return executeSetVerified(admin, user, verified);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.user] });
+    },
   });
 }
