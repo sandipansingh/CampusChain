@@ -1,6 +1,8 @@
 "use client";
 
 import { useState } from "react";
+import { useWallet } from "@/shared/stellar/useWallet";
+import { useRegisterProfileMutation } from "@/features/wallet/hooks/useWallet";
 import { Select, SelectOption } from "@/shared/ui/Select";
 import { CustomToggle } from "@/shared/ui/CustomToggle";
 import { Skeleton } from "@/shared/ui/Skeleton";
@@ -12,7 +14,6 @@ import {
   Check,
   ArrowRight,
   AlertCircle,
-  SlidersHorizontal,
 } from "lucide-react";
 
 interface LoginProps {
@@ -20,19 +21,23 @@ interface LoginProps {
 }
 
 const DEPARTMENTS: SelectOption[] = [
-  { value: "cs", label: "Computer Science" },
-  { value: "eng", label: "Engineering" },
-  { value: "bus", label: "Business" },
-  { value: "arts", label: "Arts & Sciences" },
+  { value: "Computer Science", label: "Computer Science" },
+  { value: "Engineering", label: "Engineering" },
+  { value: "Business", label: "Business" },
+  { value: "Arts & Sciences", label: "Arts & Sciences" },
 ];
 
-export function Login({ showOnboarding: initialShowOnboarding = false }: LoginProps) {
-  // Mock Control Panel States (for demonstration of multiple UI states)
-  const [currentStep, setCurrentStep] = useState<"connect" | "onboarding" | "success">(
-    initialShowOnboarding ? "onboarding" : "connect"
-  );
-  const [dataState, setDataState] = useState<"loaded" | "loading" | "empty">("loaded");
-  const [copied, setCopied] = useState(false);
+export function Login({ showOnboarding = false }: LoginProps) {
+  const {
+    connect,
+    isConnecting,
+    error: walletError,
+    wrongNetwork,
+    address,
+    isConnected,
+  } = useWallet();
+
+  const registerProfile = useRegisterProfileMutation();
 
   // Form States
   const [fullName, setFullName] = useState("");
@@ -40,109 +45,104 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
   const [department, setDepartment] = useState("");
   const [email, setEmail] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
-
-  const mockAddress = "GABCDE...WXYZ1234";
+  const [copied, setCopied] = useState(false);
+  const [formError, setFormError] = useState<string | null>(null);
 
   const handleCopyAddress = () => {
-    navigator.clipboard.writeText(mockAddress);
+    if (!address) return;
+    navigator.clipboard.writeText(address);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleConnectWallet = () => {
-    setDataState("loading");
-    setTimeout(() => {
-      setDataState("loaded");
-      setCurrentStep("onboarding");
-    }, 1200);
+  const handleConnect = async () => {
+    try {
+      await connect();
+    } catch (err) {
+      console.error("Wallet connection failed", err);
+    }
   };
 
-  const handleSubmitProfile = (e: React.FormEvent) => {
+  const handleOnboardingSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setDataState("loading");
-    setTimeout(() => {
-      setDataState("loaded");
-      setCurrentStep("success");
-    }, 1500);
+    setFormError(null);
+
+    if (!fullName.trim()) {
+      setFormError("Please enter your full name.");
+      return;
+    }
+    const idNum = Number(universityId);
+    if (isNaN(idNum) || idNum <= 0) {
+      setFormError("Please enter a valid positive University ID number.");
+      return;
+    }
+    if (!department.trim()) {
+      setFormError("Please select a department.");
+      return;
+    }
+    if (!acceptTerms) {
+      setFormError("You must accept the Campus Terms of Use to proceed.");
+      return;
+    }
+
+    if (!address) {
+      setFormError("No connected wallet found. Please connect your wallet first.");
+      return;
+    }
+
+    try {
+      await registerProfile.mutateAsync({
+        address,
+        fullName: fullName.trim(),
+        universityId: idNum,
+        department: department.trim(),
+      });
+    } catch (err: unknown) {
+      const msg = err instanceof Error ? err.message : String(err);
+      setFormError(msg || "Failed to register profile on-chain.");
+    }
   };
+
+  const isLoading = isConnecting || registerProfile.isPending;
+
+  // Network Guard: Block access if wrong network (Stitch State C)
+  if (isConnected && wrongNetwork) {
+    return (
+      <main className="min-h-screen w-full flex items-center justify-center bg-[#F7F7F5] text-zinc-950 p-6">
+        <div className="w-full max-w-[480px] bg-white rounded-2xl border border-red-200 p-8 shadow-xl flex flex-col items-center text-center">
+          <div className="h-16 w-16 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600 mb-6">
+            <AlertCircle className="h-8 w-8 animate-pulse" />
+          </div>
+          <h1 className="text-2xl font-extrabold tracking-tight text-zinc-950 mb-3">
+            Wrong Network Detected
+          </h1>
+          <p className="text-sm text-zinc-500 mb-6 leading-relaxed">
+            CampusChain runs exclusively on the <strong>Stellar Testnet</strong>. Your connected wallet is currently pointed to a different network.
+          </p>
+          <div className="w-full bg-red-50/50 border border-red-100 rounded-xl p-4 text-xs text-left mb-6 space-y-2">
+            <span className="font-bold text-red-800">How to switch:</span>
+            <ol className="list-decimal list-inside space-y-1 text-zinc-600">
+              <li>Open your wallet extension (e.g. Freighter, Albedo).</li>
+              <li>Go to Settings / Network configuration.</li>
+              <li>Switch the active network to <strong>Testnet</strong>.</li>
+              <li>Refresh this page or wait for auto-reconnect.</li>
+            </ol>
+          </div>
+          <p className="text-xs text-zinc-400">
+            Current network passphrase must match: <code className="block mt-1 p-1 bg-zinc-100 border border-zinc-200 rounded text-[10px] select-all font-mono text-zinc-800">&quot;Test SDF Network ; September 2015&quot;</code>
+          </p>
+        </div>
+      </main>
+    );
+  }
 
   return (
-    <div className="min-h-screen w-full bg-[#F7F7F5] text-zinc-950 font-sans flex flex-col items-center justify-center p-6 relative select-none">
-      
-      {/* ── INTERACTIVE MOCK CONTROL PANEL ── */}
-      <div className="fixed top-4 left-1/2 -translate-x-1/2 z-50 bg-white border border-zinc-200 rounded-full px-4 py-2 shadow-sm flex items-center gap-4 text-xs font-medium">
-        <div className="flex items-center gap-1 text-zinc-500">
-          <SlidersHorizontal className="h-3.5 w-3.5" />
-          <span>Interactive Preview:</span>
-        </div>
-        <div className="flex gap-1.5 border-r border-zinc-200 pr-3">
-          <button
-            onClick={() => {
-              setCurrentStep("connect");
-              setDataState("loaded");
-            }}
-            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-              currentStep === "connect" ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"
-            }`}
-          >
-            1. Connect
-          </button>
-          <button
-            onClick={() => {
-              setCurrentStep("onboarding");
-              setDataState("loaded");
-            }}
-            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-              currentStep === "onboarding" ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"
-            }`}
-          >
-            2. Onboard
-          </button>
-          <button
-            onClick={() => {
-              setCurrentStep("success");
-              setDataState("loaded");
-            }}
-            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-              currentStep === "success" ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"
-            }`}
-          >
-            3. Success
-          </button>
-        </div>
-        <div className="flex gap-1.5">
-          <button
-            onClick={() => setDataState("loaded")}
-            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-              dataState === "loaded" ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"
-            }`}
-          >
-            Normal
-          </button>
-          <button
-            onClick={() => setDataState("loading")}
-            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-              dataState === "loading" ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"
-            }`}
-          >
-            Skeleton
-          </button>
-          <button
-            onClick={() => setDataState("empty")}
-            className={`px-2.5 py-1 rounded-full transition-all cursor-pointer ${
-              dataState === "empty" ? "bg-zinc-950 text-white" : "text-zinc-600 hover:bg-zinc-100"
-            }`}
-          >
-            Empty
-          </button>
-        </div>
-      </div>
-
+    <div className="min-h-screen w-full bg-[#F7F7F5] text-zinc-950 font-sans flex flex-col items-center justify-center p-6 relative">
       {/* Main Container */}
       <main className="w-full max-w-md bg-white border border-zinc-200 rounded-xl p-8 shadow-[0px_4px_20px_rgba(0,0,0,0.02)] relative z-10 flex flex-col items-center">
         
         {/* ─── STATE A: CONNECT WALLET VIEW ─── */}
-        {currentStep === "connect" && (
+        {!showOnboarding ? (
           <div className="w-full flex flex-col items-center">
             {/* Header / Wordmark */}
             <div className="text-center mb-8">
@@ -152,30 +152,25 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
               </p>
             </div>
 
+            {/* Error notifications */}
+            {(walletError || formError) && (
+              <div className="w-full text-xs p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-center font-medium mb-4">
+                {walletError || formError}
+              </div>
+            )}
+
             {/* Content states */}
-            {dataState === "loading" && (
+            {isLoading ? (
               <div className="w-full flex flex-col gap-3">
                 <Skeleton className="h-[74px] w-full rounded-lg" />
                 <Skeleton className="h-[74px] w-full rounded-lg" />
                 <Skeleton className="h-[74px] w-full rounded-lg" />
               </div>
-            )}
-
-            {dataState === "empty" && (
-              <div className="w-full border border-dashed border-zinc-200 rounded-lg p-8 flex flex-col items-center text-center gap-3">
-                <AlertCircle className="h-10 w-10 text-zinc-400" />
-                <h3 className="text-sm font-semibold text-zinc-950">No Wallets Detected</h3>
-                <p className="text-xs text-zinc-500 leading-relaxed max-w-[260px]">
-                  Please install a Stellar wallet extension (e.g. Freighter, xBull, or Albedo) to connect your campus identity.
-                </p>
-              </div>
-            )}
-
-            {dataState === "loaded" && (
+            ) : (
               <div className="w-full flex flex-col gap-3">
                 {/* Freighter Option */}
                 <button
-                  onClick={() => handleConnectWallet()}
+                  onClick={handleConnect}
                   className="w-full bg-white border border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50 transition-all p-4 rounded-lg flex items-center justify-between group cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
@@ -189,7 +184,7 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
 
                 {/* xBull Option */}
                 <button
-                  onClick={() => handleConnectWallet()}
+                  onClick={handleConnect}
                   className="w-full bg-white border border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50 transition-all p-4 rounded-lg flex items-center justify-between group cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
@@ -203,7 +198,7 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
 
                 {/* Albedo Option */}
                 <button
-                  onClick={() => handleConnectWallet()}
+                  onClick={handleConnect}
                   className="w-full bg-white border border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50 transition-all p-4 rounded-lg flex items-center justify-between group cursor-pointer"
                 >
                   <div className="flex items-center gap-4">
@@ -217,10 +212,8 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
               </div>
             )}
           </div>
-        )}
-
-        {/* ─── STATE B: ONBOARDING VIEW ─── */}
-        {currentStep === "onboarding" && (
+        ) : (
+          /* ─── STATE B: ONBOARDING VIEW ─── */
           <div className="w-full flex flex-col gap-6">
             
             {/* Header Section */}
@@ -229,7 +222,14 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
               <p className="text-sm text-zinc-500">Setup your academic identity for the network.</p>
             </div>
 
-            {dataState === "loading" && (
+            {/* Error notifications */}
+            {(formError || walletError) && (
+              <div className="w-full text-xs p-3 rounded-lg border border-red-200 bg-red-50 text-red-700 text-center font-medium">
+                {formError || walletError}
+              </div>
+            )}
+
+            {isLoading ? (
               <div className="w-full flex flex-col gap-4">
                 <Skeleton className="h-[38px] w-full rounded-full" />
                 <div className="space-y-1">
@@ -246,37 +246,30 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
                 </div>
                 <Skeleton className="h-[48px] w-full rounded-lg mt-4" />
               </div>
-            )}
-
-            {dataState === "empty" && (
-              <div className="w-full border border-dashed border-zinc-200 rounded-lg p-8 flex flex-col items-center text-center gap-3">
-                <AlertCircle className="h-10 w-10 text-zinc-400" />
-                <h3 className="text-sm font-semibold text-zinc-950">No Details Allowed</h3>
-                <p className="text-xs text-zinc-500 leading-relaxed max-w-[260px]">
-                  Academic onboarding is currently restricted. Please contact your university administrator.
-                </p>
-              </div>
-            )}
-
-            {dataState === "loaded" && (
+            ) : (
               <div className="w-full flex flex-col gap-5">
                 {/* Wallet Address Pill */}
-                <div className="bg-zinc-50 rounded-full py-2 px-4 flex items-center justify-between border border-zinc-200">
-                  <div className="flex items-center gap-2">
-                    <Wallet className="h-4 w-4 text-zinc-500" />
-                    <span className="text-xs text-zinc-500 font-mono tracking-wider">{mockAddress}</span>
+                {address && (
+                  <div className="bg-zinc-50 rounded-full py-2 px-4 flex items-center justify-between border border-zinc-200">
+                    <div className="flex items-center gap-2">
+                      <Wallet className="h-4 w-4 text-zinc-500" />
+                      <span className="text-xs text-zinc-500 font-mono tracking-wider">
+                        {address.slice(0, 6)}...{address.slice(-6)}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={handleCopyAddress}
+                      aria-label="Copy wallet address"
+                      className="text-zinc-500 hover:text-zinc-950 transition-colors flex items-center cursor-pointer p-0.5"
+                    >
+                      {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
+                    </button>
                   </div>
-                  <button
-                    onClick={handleCopyAddress}
-                    aria-label="Copy wallet address"
-                    className="text-zinc-500 hover:text-zinc-950 transition-colors flex items-center cursor-pointer p-0.5"
-                  >
-                    {copied ? <Check className="h-4 w-4 text-emerald-600" /> : <Copy className="h-4 w-4" />}
-                  </button>
-                </div>
+                )}
 
                 {/* Form Fields */}
-                <form onSubmit={handleSubmitProfile} className="flex flex-col gap-4 w-full">
+                <form onSubmit={handleOnboardingSubmit} className="flex flex-col gap-4 w-full">
                   {/* Full Name */}
                   <div className="flex flex-col gap-1.5">
                     <label className="text-sm font-semibold text-zinc-950" htmlFor="fullName">
@@ -347,7 +340,7 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
                   {/* Submit Button */}
                   <button
                     type="submit"
-                    disabled={!acceptTerms}
+                    disabled={!acceptTerms || registerProfile.isPending}
                     className="w-full bg-zinc-950 text-white font-semibold rounded-lg py-4 px-6 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-colors focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-zinc-950 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer mt-4"
                   >
                     <span>Continue</span>
@@ -363,28 +356,6 @@ export function Login({ showOnboarding: initialShowOnboarding = false }: LoginPr
                 </div>
               </div>
             )}
-          </div>
-        )}
-
-        {/* ─── STATE C: ONBOARDING SUCCESS VIEW ─── */}
-        {currentStep === "success" && (
-          <div className="w-full flex flex-col items-center gap-6 py-4">
-            <div className="w-16 h-16 bg-zinc-50 border border-zinc-200 rounded-full flex items-center justify-center text-zinc-950">
-              <Check className="h-8 w-8 stroke-[3]" />
-            </div>
-            <div className="text-center space-y-2">
-              <h2 className="text-2xl font-semibold text-zinc-950">Profile Registered</h2>
-              <p className="text-sm text-zinc-500 max-w-[280px] mx-auto leading-relaxed">
-                Welcome to CampusChain! Your campus identity has been registered successfully.
-              </p>
-            </div>
-
-            <button
-              onClick={() => setCurrentStep("connect")}
-              className="w-full bg-zinc-950 text-white font-semibold rounded-lg py-3.5 px-6 flex items-center justify-center gap-2 hover:bg-zinc-800 transition-all cursor-pointer"
-            >
-              <span>Done</span>
-            </button>
           </div>
         )}
       </main>
