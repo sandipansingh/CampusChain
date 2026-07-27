@@ -34,6 +34,13 @@ curl -s "http://localhost:8000/friendbot?addr=$ADMIN_ADDRESS" &> /dev/null || tr
 echo "Building contracts..."
 stellar contract build
 
+echo "Deploying CampusIdentity..."
+IDENTITY_CONTRACT_ID=$(stellar contract deploy \
+    --wasm target/wasm32v1-none/release/campus_identity.wasm \
+    --source "$IDENTITY" \
+    --network "$NETWORK")
+echo "Deployed CampusIdentity: $IDENTITY_CONTRACT_ID"
+
 echo "Deploying CampusToken..."
 TOKEN_CONTRACT_ID=$(stellar contract deploy \
     --wasm target/wasm32v1-none/release/campus_token.wasm \
@@ -50,9 +57,10 @@ echo "Deployed CampusService: $SERVICE_CONTRACT_ID"
 
 echo "========================================="
 echo "DEPLOYMENT COMPLETE"
+echo "CampusIdentity ID: $IDENTITY_CONTRACT_ID"
 echo "CampusToken ID: $TOKEN_CONTRACT_ID"
 echo "CampusService ID: $SERVICE_CONTRACT_ID"
 echo "========================================="
 
 echo "To initialize and wire contracts, run:"
-echo "./deploy/init.sh $TOKEN_CONTRACT_ID $SERVICE_CONTRACT_ID $IDENTITY $NETWORK"
+echo "./deploy/init.sh $TOKEN_CONTRACT_ID $SERVICE_CONTRACT_ID $IDENTITY_CONTRACT_ID $IDENTITY $NETWORK"

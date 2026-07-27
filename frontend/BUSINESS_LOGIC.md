@@ -13,7 +13,7 @@
 ## 2. Contract Interfaces
 
 ### CampusToken Contract
-- **Contract ID**: `CDGMOVTFKTMHVDZSQRSH3O4Y3FXFLORCJW3JM2YXNXQTLCBMZVKXQXJP` (Testnet fallback)
+- **Contract ID**: `CAVSOYND5FJRRLEPSSVTRRKFEZ2KTX6WR7LZP5GLCLFDXNYUNPERKDXJ` (Testnet fallback)
 - **Functions called**:
   - `balance(address)`: 
     - *Purpose*: Get CAMP token balance.
@@ -50,8 +50,23 @@
     - *Purpose*: List all role changes waiting for approval.
     - *Return*: Array of `RoleRequest` structs.
 
+### CampusIdentity Contract
+- **Contract ID**: `CBDU4NVTNNWFCGQEXE4MJDB62QQ4XTACSH3NPLNPGUY2HWSJBS2L2LTJ` (Testnet fallback)
+- **Functions called**:
+  - `register_profile(address, full_name, university_id, department)`:
+    - *Purpose*: Register a new profile (Student role, unverified by default).
+  - `get_profile(address)`:
+    - *Purpose*: Fetch on-chain profile metadata (name, role, verification status).
+    - *Return*: `Profile` struct.
+  - `set_role(admin, target_address, role)`:
+    - *Purpose*: Modify user role (Admin only).
+  - `set_verified(admin, target_address, verified)`:
+    - *Purpose*: Toggle profile verification status (Admin only).
+  - `update_profile(address, full_name, university_id, department)`:
+    - *Purpose*: Update personal profile fields (Owner only).
+
 ### CampusService Contract
-- **Contract ID**: `CDTJ56RPMPE2VNYLCV7CFPS3IHUVR4UZIRC4JJ2RWCE5WDHB6BVAYSSM` (Testnet fallback)
+- **Contract ID**: `CCNGBCJIUTWFJAFHXYSNLABXHC3MXLMK7TEZYKY5Z4DFCWHLIIBGCJMO` (Testnet fallback)
 - **Functions called**:
   - `get_escrow(escrow_id)`:
     - *Purpose*: Fetch active escrow details.
