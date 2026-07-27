@@ -301,3 +301,6 @@ impl CampusIdentity {
         Ok(())
     }
 }
+
+#[cfg(test)]
+mod test;

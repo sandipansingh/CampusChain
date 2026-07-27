@@ -2,6 +2,7 @@
 
 use super::*;
 use campus_token::{CampusToken, CampusTokenClient};
+use campus_identity::{CampusIdentity, CampusIdentityClient};
 use soroban_sdk::{testutils::Address as _, Address, Env, String};
 
 #[test]
@@ -422,4 +423,96 @@ fn test_access_control_and_invalid_transitions() {
     // Second release attempt should fail
     let result_second = service_client.try_release_escrow(&escrow_id, &buyer);
     assert!(result_second.is_err());
+}
+
+#[test]
+fn test_identity_contract_integration() {
+    let env = Env::default();
+    env.mock_all_auths();
+
+    let admin = Address::generate(&env);
+    let student = Address::generate(&env);
+    let seller = Address::generate(&env);
+
+    // Register token contract
+    let token_id = env.register_contract(None, CampusToken);
+    let token_client = CampusTokenClient::new(&env, &token_id);
+    let name = String::from_str(&env, "Campus Token");
+    let symbol = String::from_str(&env, "CAMP");
+    token_client.initialize(&admin, &name, &symbol, &7);
+
+    // Register identity contract
+    let identity_id = env.register_contract(None, CampusIdentity);
+    let identity_client = CampusIdentityClient::new(&env, &identity_id);
+    identity_client.initialize(
+        &admin,
+        &String::from_str(&env, "Admin User"),
+        &123u64,
+        &String::from_str(&env, "Administration"),
+    );
+
+    // Register service contract
+    let service_id = env.register_contract(None, CampusService);
+    let service_client = CampusServiceClient::new(&env, &service_id);
+    service_client.initialize(&admin, &token_id);
+
+    // Link identity contract to service contract
+    service_client.set_identity_contract(&admin, &identity_id);
+    assert_eq!(service_client.identity_contract(), Some(identity_id.clone()));
+
+    // 1. Trying to create a listing when seller does not have a profile in identity contract fails
+    let result = service_client.try_create_listing(
+        &seller,
+        &String::from_str(&env, "Textbook"),
+        &String::from_str(&env, "Math 101"),
+        &50i128,
+        &1u32,
+        &false,
+    );
+    assert!(result.is_err());
+
+    // Register profiles in Identity contract
+    identity_client.register_profile(
+        &seller,
+        &String::from_str(&env, "Bob Merchant"),
+        &456u64,
+        &String::from_str(&env, "Business"),
+    );
+    identity_client.register_profile(
+        &student,
+        &String::from_str(&env, "Alice Student"),
+        &789u64,
+        &String::from_str(&env, "Engineering"),
+    );
+
+    // Now Bobs' listing creation succeeds
+    let listing_id = service_client.create_listing(
+        &seller,
+        &String::from_str(&env, "Textbook"),
+        &String::from_str(&env, "Math 101"),
+        &50i128,
+        &1u32,
+        &false,
+    );
+    assert_eq!(listing_id, 1);
+
+    // 2. Scholarship application: fails if student profile is not verified
+    token_client.mint(&admin, &1000i128);
+    token_client.approve(&admin, &service_id, &1000i128, &1000);
+
+    let program_id = service_client.create_scholarship_program(
+        &admin,
+        &String::from_str(&env, "Engineering Grant"),
+        &500i128,
+        &350u32,
+    );
+    let app_result = service_client.try_apply_for_scholarship(&student, &program_id, &380u32);
+    assert!(app_result.is_err()); // fails because student is not verified yet
+
+    // Admin verifies the student profile
+    identity_client.set_verified(&admin, &student, &true);
+
+    // Now application succeeds
+    let app_id = service_client.apply_for_scholarship(&student, &program_id, &380u32);
+    assert_eq!(app_id, 1);
 }
