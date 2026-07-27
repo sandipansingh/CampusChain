@@ -1,0 +1,114 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# pr-checks.yml
+#
+# Runs on every pull-request targeting `main`.
+# All jobs must pass for the PR to be mergeable (enforce via branch protection).
+#
+# Steps per job:
+#   contracts  → cargo fmt --check · cargo clippy · cargo test
+#   frontend   → npm ci · tsc --noEmit · eslint · vitest run · next build
+#
+# No secrets required for this workflow.
+# ─────────────────────────────────────────────────────────────────────────────
+name: PR Checks
+
+on:
+  pull_request:
+    branches: [main]
+
+# Cancel any in-progress run for the same PR branch when a new commit is pushed.
+concurrency:
+  group: pr-checks-${{ github.head_ref }}
+  cancel-in-progress: true
+
+# ── Soroban Contract Checks ──────────────────────────────────────────────────
+jobs:
+  contracts:
+    name: "Contracts — fmt · clippy · test"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      # Pin to the same toolchain version used locally (Rust 1.97 / edition 2021).
+      # dtolnay/rust-toolchain handles rustup under the hood and is cache-aware.
+      - name: Install Rust toolchain (stable + wasm32)
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          toolchain: stable
+          targets: wasm32-unknown-unknown
+          components: rustfmt,clippy
+
+      - name: Restore Cargo cache
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+          restore-keys: ${{ runner.os }}-cargo-
+
+      - name: Check formatting (cargo fmt)
+        run: cargo fmt --all -- --check
+
+      - name: Lint (cargo clippy)
+        # Deny warnings so clippy findings are hard failures.
+        run: cargo clippy --all-targets --all-features -- -D warnings
+
+      - name: Unit tests (cargo test)
+        run: cargo test
+
+# ── Next.js Frontend Checks ──────────────────────────────────────────────────
+  frontend:
+    name: "Frontend — typecheck · lint · test · build"
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24 (LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies (npm ci)
+        working-directory: frontend
+        run: npm ci
+
+      # TypeScript strict check — independent of Next.js build so errors surface
+      # fast and with clean output before the slower build step runs.
+      - name: TypeScript typecheck (tsc --noEmit)
+        working-directory: frontend
+        run: npx tsc --noEmit
+
+      - name: Lint (eslint)
+        working-directory: frontend
+        run: npm run lint
+
+      # Vitest runs in headless jsdom mode — no Freighter popup, no network calls.
+      # StellarWalletsKit is mocked in src/test/setup.ts.
+      - name: Unit & integration tests (vitest)
+        working-directory: frontend
+        run: npm run test
+
+      # Full Next.js production build — catches any module-resolution or
+      # server-component boundary errors that tsc alone would miss.
+      - name: Production build (next build)
+        working-directory: frontend
+        run: npm run build
+        env:
+          # Provide stub values so Next.js env-var validation passes in CI.
+          # These are NOT real credentials — contract calls are never made
+          # during a build (all writes are client-side mutations).
+          NEXT_PUBLIC_STELLAR_RPC_URL: https://soroban-testnet.stellar.org
+          NEXT_PUBLIC_STELLAR_PASSPHRASE: "Test SDF Network ; September 2015"
+          NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID: CDGMOVTFKTMHVDZSQRSH3O4Y3FXFLORCJW3JM2YXNXQTLCBMZVKXQXJP
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID: CDTJ56RPMPE2VNYLCV7CFPS3IHUVR4UZIRC4JJ2RWCE5WDHB6BVAYSSM
+          NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS: GBPVICMAESR2O4LJRDAV2YGGIQDAEY6ANCAF3GLIXEYRAIDDXM7WQP7X

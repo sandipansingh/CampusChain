@@ -1,0 +1,132 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# deploy.yml
+#
+# Triggered on push to `main` (i.e. after a PR is merged).
+# Deploys the Next.js frontend to Vercel via the official Vercel CLI.
+#
+# ⚠  Contract deployment is intentionally EXCLUDED from this workflow.
+#    Re-deploying contracts changes their on-chain addresses, which requires
+#    updating .env.local and re-deploying the frontend with new contract IDs.
+#    Contract deployments are performed manually via `./scripts/deploy.sh`.
+#
+# ── Required GitHub Secrets ──────────────────────────────────────────────────
+#   VERCEL_TOKEN          Vercel personal access token (Account → Settings → Tokens)
+#   VERCEL_ORG_ID         Vercel team/org ID  (vercel link → .vercel/project.json → orgId)
+#   VERCEL_PROJECT_ID     Vercel project ID   (vercel link → .vercel/project.json → projectId)
+#
+#   NEXT_PUBLIC_STELLAR_RPC_URL              Soroban RPC endpoint
+#   NEXT_PUBLIC_STELLAR_PASSPHRASE           Network passphrase
+#   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID     Deployed CampusToken contract address
+#   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID   Deployed CampusService contract address
+#   NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS         Admin Stellar address (for XLM purchases)
+#
+# ── How to obtain Vercel IDs ─────────────────────────────────────────────────
+#   1. npm i -g vercel
+#   2. cd frontend && vercel link       (authenticate and link the project)
+#   3. cat .vercel/project.json         (contains orgId and projectId)
+#   4. Add both values to GitHub Secrets.
+#
+# ── Fallback (no Vercel yet) ─────────────────────────────────────────────────
+#   Leave VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID unset (or empty).
+#   The workflow will still build the app and upload the .next output as a
+#   GitHub Actions artefact (90-day retention) for manual deployment.
+# ─────────────────────────────────────────────────────────────────────────────
+name: Deploy Frontend
+
+on:
+  push:
+    branches: [main]
+
+# Only one deploy should run at a time; cancel any queued run if a new
+# commit lands on main before the previous deploy finishes.
+concurrency:
+  group: deploy-main
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    name: "Build & deploy frontend"
+    runs-on: ubuntu-latest
+
+    # Expose VERCEL_TOKEN as a job-level env var so step `if:` conditions can
+    # test it. (secrets.* is not available in `if:` expressions — only in
+    # `run:`, `env:`, and `with:` blocks.)
+    env:
+      VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+      VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+      VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 24 (LTS)
+        uses: actions/setup-node@v4
+        with:
+          node-version: "24"
+          cache: "npm"
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies (npm ci)
+        working-directory: frontend
+        run: npm ci
+
+      # ── Production build ──────────────────────────────────────────────────
+      # Injects real contract addresses from GitHub Secrets so the built
+      # bundle points to the deployed testnet contracts.
+      - name: Build Next.js for production
+        working-directory: frontend
+        run: npm run build
+        env:
+          NEXT_PUBLIC_STELLAR_RPC_URL: ${{ secrets.NEXT_PUBLIC_STELLAR_RPC_URL }}
+          NEXT_PUBLIC_STELLAR_PASSPHRASE: ${{ secrets.NEXT_PUBLIC_STELLAR_PASSPHRASE }}
+          NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID }}
+          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID }}
+          NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS: ${{ secrets.NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS }}
+
+      # ── Deploy to Vercel (production) ─────────────────────────────────────
+      # Uses the Vercel CLI directly (no third-party action dependency).
+      # Skipped when VERCEL_TOKEN is not configured — see fallback step below.
+      - name: Deploy to Vercel
+        if: env.VERCEL_TOKEN != ''
+        working-directory: frontend
+        run: |
+          npm install --global vercel@latest
+          vercel pull --yes \
+            --environment=production \
+            --token="$VERCEL_TOKEN"
+          vercel build --prod \
+            --token="$VERCEL_TOKEN"
+          vercel deploy --prebuilt --prod \
+            --token="$VERCEL_TOKEN"
+
+      # ── Fallback: upload build artefact ──────────────────────────────────
+      # When Vercel is not yet configured, upload the .next output so the
+      # build artefact is available for manual deployment or inspection.
+      - name: Upload build artefact (fallback when Vercel not configured)
+        if: env.VERCEL_TOKEN == ''
+        uses: actions/upload-artifact@v4
+        with:
+          name: nextjs-build-${{ github.sha }}
+          path: |
+            frontend/.next/
+            frontend/public/
+          retention-days: 90
+          if-no-files-found: error
+
+      # ── Post-deploy summary ───────────────────────────────────────────────
+      - name: Write deployment summary
+        if: always()
+        run: |
+          IS_VERCEL="${{ env.VERCEL_TOKEN != '' && 'Yes ✅' || 'No — artefact uploaded ⚠️' }}"
+          echo "## 🚀 Deployment Summary" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Key | Value |" >> "$GITHUB_STEP_SUMMARY"
+          echo "|-----|-------|" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Commit | \`${{ github.sha }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Ref | \`${{ github.ref_name }}\` |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Triggered by | @${{ github.actor }} |" >> "$GITHUB_STEP_SUMMARY"
+          echo "| Vercel configured | $IS_VERCEL |" >> "$GITHUB_STEP_SUMMARY"
+          echo "" >> "$GITHUB_STEP_SUMMARY"
+          echo "> ⚠️  **Contract deployment is manual.**" >> "$GITHUB_STEP_SUMMARY"
+          echo "> Run \`CAMPUSCHAIN_ADMIN_KEY=<secret> ./scripts/deploy.sh\` locally after any Soroban contract changes." >> "$GITHUB_STEP_SUMMARY"
