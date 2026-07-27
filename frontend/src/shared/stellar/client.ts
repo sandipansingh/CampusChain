@@ -12,6 +12,8 @@ import {
   Asset,
 } from "@stellar/stellar-sdk";
 
+import { useTransactionStatusStore, mapTransactionError } from "../hooks/useTransactionStatus";
+
 export const NEXT_PUBLIC_STELLAR_RPC_URL =
   process.env.NEXT_PUBLIC_STELLAR_RPC_URL || "https://soroban-testnet.stellar.org";
 export const NEXT_PUBLIC_STELLAR_PASSPHRASE =
@@ -70,37 +72,53 @@ export async function invokeContractMethod(
   userAddress: string,
   signTxFn: (xdr: string, passphrase: string, address: string) => Promise<string>
 ): Promise<string> {
-  const server = getRpcServer();
-  const sourceAccount = await server.getAccount(userAddress);
+  const store = useTransactionStatusStore.getState();
+  const label = `Invoke contract method: ${methodName}`;
 
-  const contract = new Contract(contractId);
-  const operation = contract.call(methodName, ...args);
+  const run = async (): Promise<string> => {
+    store.setPending(label, run);
+    try {
+      const server = getRpcServer();
+      const sourceAccount = await server.getAccount(userAddress);
 
-  let tx = new TransactionBuilder(sourceAccount, {
-    fee: "1000",
-    networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
-  })
-    .addOperation(operation)
-    .setTimeout(60)
-    .build();
+      const contract = new Contract(contractId);
+      const operation = contract.call(methodName, ...args);
 
-  // Prepare transaction (simulates and estimates resource limits/fees)
-  tx = await server.prepareTransaction(tx);
+      let tx = new TransactionBuilder(sourceAccount, {
+        fee: "1000",
+        networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
+      })
+        .addOperation(operation)
+        .setTimeout(60)
+        .build();
 
-  // Sign transaction XDR via Freighter or other wallet
-  const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
+      tx = await server.prepareTransaction(tx);
 
-  // Submit signed transaction envelope
-  const submission = await server.sendTransaction(
-    new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
-  );
+      const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
 
-  if (submission.status === "ERROR") {
-    const errorXdr = submission.errorResult ? submission.errorResult.toXDR("base64") : "Unknown XDR";
-    throw new Error(`Transaction submission error: ${errorXdr}`);
-  }
+      store.setProcessing();
 
-  return submission.hash;
+      const submission = await server.sendTransaction(
+        new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
+      );
+
+      if (submission.status === "ERROR") {
+        const errorXdr = submission.errorResult ? submission.errorResult.toXDR("base64") : "Unknown XDR";
+        throw new Error(`Transaction submission error: ${errorXdr}`);
+      }
+
+      await pollTransactionStatus(submission.hash);
+      
+      store.setConfirmed(submission.hash);
+      return submission.hash;
+    } catch (err: unknown) {
+      const mapped = mapTransactionError(err);
+      store.setFailed(mapped);
+      throw err;
+    }
+  };
+
+  return run();
 }
 
 export async function sendNativePayment(
@@ -109,34 +127,51 @@ export async function sendNativePayment(
   userAddress: string,
   signTxFn: (xdr: string, passphrase: string, address: string) => Promise<string>
 ): Promise<string> {
-  const horizon = new Horizon.Server("https://horizon-testnet.stellar.org");
-  const sourceAccount = await horizon.loadAccount(userAddress);
+  const store = useTransactionStatusStore.getState();
+  const label = `Transfer XLM payment`;
 
-  const paymentOp = Operation.payment({
-    destination: xlmDestination,
-    asset: Asset.native(),
-    amount: xlmAmount,
-  });
+  const run = async (): Promise<string> => {
+    store.setPending(label, run);
+    try {
+      const horizon = new Horizon.Server("https://horizon-testnet.stellar.org");
+      const sourceAccount = await horizon.loadAccount(userAddress);
 
-  const tx = new TransactionBuilder(sourceAccount, {
-    fee: "1000",
-    networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
-  })
-    .addOperation(paymentOp)
-    .setTimeout(60)
-    .build();
+      const paymentOp = Operation.payment({
+        destination: xlmDestination,
+        asset: Asset.native(),
+        amount: xlmAmount,
+      });
 
-  const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
+      const tx = new TransactionBuilder(sourceAccount, {
+        fee: "1000",
+        networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
+      })
+        .addOperation(paymentOp)
+        .setTimeout(60)
+        .build();
 
-  const submission = await horizon.submitTransaction(
-    new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
-  );
+      const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
 
-  if (!submission.successful) {
-    throw new Error(`Payment failed: ${JSON.stringify(submission)}`);
-  }
+      store.setProcessing();
 
-  return submission.hash;
+      const submission = await horizon.submitTransaction(
+        new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
+      );
+
+      if (!submission.successful) {
+        throw new Error(`Payment failed: ${JSON.stringify(submission)}`);
+      }
+
+      store.setConfirmed(submission.hash);
+      return submission.hash;
+    } catch (err: unknown) {
+      const mapped = mapTransactionError(err);
+      store.setFailed(mapped);
+      throw err;
+    }
+  };
+
+  return run();
 }
 
 export async function pollTransactionStatus(
