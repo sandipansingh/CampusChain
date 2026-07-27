@@ -142,7 +142,7 @@ pub struct MarketplaceListing {
     pub description: String,
     pub price: i128,
     pub category: u32, // 1: Books, 2: Electronics, 3: Notes, 4: Hostel, 5: Others
-    pub status: u32, // 1: Active, 2: Sold, 3: Cancelled
+    pub status: u32,   // 1: Active, 2: Sold, 3: Cancelled
     pub escrow_enabled: bool,
 }
 
@@ -1038,11 +1038,7 @@ impl CampusService {
         Ok(())
     }
 
-    pub fn set_native_token(
-        env: Env,
-        admin: Address,
-        native_token: Address,
-    ) -> Result<(), Error> {
+    pub fn set_native_token(env: Env, admin: Address, native_token: Address) -> Result<(), Error> {
         let stored_admin = get_admin(&env)?;
         stored_admin.require_auth();
         if admin != stored_admin {
@@ -1059,9 +1055,7 @@ impl CampusService {
 
     pub fn native_token(env: Env) -> Option<Address> {
         extend_instance(&env);
-        env.storage()
-            .instance()
-            .get(&DataKey::NativeTokenContract)
+        env.storage().instance().get(&DataKey::NativeTokenContract)
     }
 
     // --- MARKETPLACE OPERATIONS ---
@@ -1124,538 +1118,559 @@ impl CampusService {
         );
 
         Ok(counter)
-      }
-
-      pub fn get_listing(env: Env, id: u64) -> Result<MarketplaceListing, Error> {
-          let key = DataKey::Listing(id);
-          extend_persistent(&env, &key);
-          env.storage()
-              .persistent()
-              .get(&key)
-              .ok_or(Error::UniversityNotFound) // CustomListingNotFound
-      }
-
-      pub fn update_listing(
-          env: Env,
-          id: u64,
-          seller: Address,
-          new_price: i128,
-          new_status: u32,
-      ) -> Result<(), Error> {
-          seller.require_auth();
-
-          let key = DataKey::Listing(id);
-          extend_persistent(&env, &key);
-
-          let mut listing: MarketplaceListing = env
-              .storage()
-              .persistent()
-              .get(&key)
-              .ok_or(Error::UniversityNotFound)?;
-
-          if listing.seller != seller {
-              return Err(Error::Unauthorized);
-          }
-          if listing.status != 1 {
-              return Err(Error::InvalidEscrowStatus); // Already closed
-          }
-          if new_price <= 0 {
-              return Err(Error::InvalidAmount);
-          }
-          if new_status != 1 && new_status != 3 {
-              return Err(Error::InvalidEscrowStatus);
-          }
-
-          listing.price = new_price;
-          listing.status = new_status;
-
-          env.storage().persistent().set(&key, &listing);
-
-          env.events().publish(
-              (Symbol::new(&env, "item_updated"), id, seller),
-              (new_price, new_status),
-          );
-
-          Ok(())
-      }
-
-      pub fn buy_listing(env: Env, id: u64, buyer: Address) -> Result<(), Error> {
-          let key = DataKey::Listing(id);
-          extend_persistent(&env, &key);
-
-          let mut listing: MarketplaceListing = env
-              .storage()
-              .persistent()
-              .get(&key)
-              .ok_or(Error::UniversityNotFound)?;
-
-          if listing.status != 1 {
-              return Err(Error::InvalidEscrowStatus);
-          }
-
-          if listing.escrow_enabled {
-              // Create escrow agreement internally
-              let escrow_id = Self::create_escrow(env.clone(), buyer.clone(), listing.seller.clone(), listing.price)?;
-              listing.status = 2; // Sold
-              env.storage().persistent().set(&key, &listing);
-
-              env.events().publish(
-                  (Symbol::new(&env, "item_sold"), id, buyer),
-                  (listing.price, escrow_id),
-              );
-          } else {
-              // Direct payment transfer C2C
-              let token_addr = get_token_contract(&env)?;
-              let token_client = CampusTokenClient::new(&env, &token_addr);
-              token_client.transfer_from(
-                  &env.current_contract_address(),
-                  &buyer,
-                  &listing.seller,
-                  &listing.price,
-              );
-
-              listing.status = 2; // Sold
-              env.storage().persistent().set(&key, &listing);
-
-              env.events().publish(
-                  (Symbol::new(&env, "item_sold"), id, buyer),
-                  (listing.price, 0u64),
-              );
-          }
-
-          Ok(())
-      }
-
-      // --- SCHOLARSHIP OPERATIONS ---
-
-      pub fn create_scholarship_program(
-          env: Env,
-          admin: Address,
-          name: String,
-          amount: i128,
-          min_gpa: u32,
-      ) -> Result<u64, Error> {
-          let token_addr = get_token_contract(&env)?;
-          let token_client = CampusTokenClient::new(&env, &token_addr);
-
-          // Verify admin role is Admin (4)
-          let role = token_client.get_role(&admin);
-          if role != 4 {
-              return Err(Error::Unauthorized);
-          }
-
-          if amount <= 0 {
-              return Err(Error::InvalidAmount);
-          }
-
-          // Fund scholarship program: lock CAMP tokens in this contract
-          token_client.transfer_from(
-              &env.current_contract_address(),
-              &admin,
-              &env.current_contract_address(),
-              &amount,
-          );
-
-          extend_instance(&env);
-          let mut counter: u64 = env
-              .storage()
-              .instance()
-              .get(&DataKey::ScholarshipProgramCounter)
-              .unwrap_or(0);
-          counter += 1;
-          env.storage()
-              .instance()
-              .set(&DataKey::ScholarshipProgramCounter, &counter);
-
-          let program = ScholarshipProgram {
-              id: counter,
-              name: name.clone(),
-              amount,
-              sponsor: admin.clone(),
-              min_gpa,
-              active: true,
-          };
-
-          let key = DataKey::ScholarshipProgram(counter);
-          env.storage().persistent().set(&key, &program);
-          extend_persistent(&env, &key);
-
-          env.events().publish(
-              (Symbol::new(&env, "scholarship_program_created"), counter, admin),
-              (amount, name),
-          );
-
-          Ok(counter)
-      }
-
-      pub fn get_scholarship_program(env: Env, id: u64) -> Result<ScholarshipProgram, Error> {
-          let key = DataKey::ScholarshipProgram(id);
-          extend_persistent(&env, &key);
-          env.storage()
-              .persistent()
-              .get(&key)
-              .ok_or(Error::UniversityNotFound)
-      }
-
-      pub fn apply_for_scholarship(
-          env: Env,
-          applicant: Address,
-          program_id: u64,
-          gpa: u32,
-      ) -> Result<u64, Error> {
-          applicant.require_auth();
-
-          let prog_key = DataKey::ScholarshipProgram(program_id);
-          extend_persistent(&env, &prog_key);
-
-          let program: ScholarshipProgram = env
-              .storage()
-              .persistent()
-              .get(&prog_key)
-              .ok_or(Error::UniversityNotFound)?;
-
-          if !program.active {
-              return Err(Error::InvalidEscrowStatus);
-          }
-          if gpa < program.min_gpa {
-              return Err(Error::TokenError); // GPA below minimum requirement
-          }
-
-          let token_addr = get_token_contract(&env)?;
-          let token_client = CampusTokenClient::new(&env, &token_addr);
-
-          // Verify applicant is a Student (1)
-          let role = token_client.get_role(&applicant);
-          if role != 1 {
-              return Err(Error::Unauthorized);
-          }
-
-          extend_instance(&env);
-          let mut counter: u64 = env
-              .storage()
-              .instance()
-              .get(&DataKey::ScholarshipApplicationCounter)
-              .unwrap_or(0);
-          counter += 1;
-          env.storage()
-              .instance()
-              .set(&DataKey::ScholarshipApplicationCounter, &counter);
-
-          let application = ScholarshipApplication {
-              id: counter,
-              program_id,
-              applicant: applicant.clone(),
-              gpa,
-              status: 0, // Applied
-          };
-
-          let key = DataKey::ScholarshipApplication(counter);
-          env.storage().persistent().set(&key, &application);
-          extend_persistent(&env, &key);
-
-          env.events().publish(
-              (Symbol::new(&env, "scholarship_applied"), counter, applicant),
-              program_id,
-          );
-
-          Ok(counter)
-      }
-
-      pub fn get_scholarship_application(env: Env, id: u64) -> Result<ScholarshipApplication, Error> {
-          let key = DataKey::ScholarshipApplication(id);
-          extend_persistent(&env, &key);
-          env.storage()
-              .persistent()
-              .get(&key)
-              .ok_or(Error::UniversityNotFound)
-      }
-
-      pub fn review_scholarship_application(
-          env: Env,
-          admin: Address,
-          application_id: u64,
-          approved: bool,
-      ) -> Result<(), Error> {
-          admin.require_auth();
-
-          let token_addr = get_token_contract(&env)?;
-          let token_client = CampusTokenClient::new(&env, &token_addr);
-
-          // Verify admin role is Admin (4)
-          let role = token_client.get_role(&admin);
-          if role != 4 {
-              return Err(Error::Unauthorized);
-          }
-
-          let app_key = DataKey::ScholarshipApplication(application_id);
-          extend_persistent(&env, &app_key);
-
-          let mut application: ScholarshipApplication = env
-              .storage()
-              .persistent()
-              .get(&app_key)
-              .ok_or(Error::UniversityNotFound)?;
-
-          if application.status != 0 {
-              return Err(Error::InvalidEscrowStatus); // Only pending can be reviewed
-          }
-
-          application.status = if approved { 2 } else { 3 }; // 2: Approved, 3: Rejected
-          env.storage().persistent().set(&app_key, &application);
-
-          env.events().publish(
-              (Symbol::new(&env, "scholarship_reviewed"), application_id, admin),
-              application.status,
-          );
-
-          Ok(())
-      }
-
-      pub fn disburse_scholarship(
-          env: Env,
-          admin: Address,
-          application_id: u64,
-      ) -> Result<(), Error> {
-          admin.require_auth();
-
-          let token_addr = get_token_contract(&env)?;
-          let token_client = CampusTokenClient::new(&env, &token_addr);
-
-          // Verify admin role is Admin (4)
-          let role = token_client.get_role(&admin);
-          if role != 4 {
-              return Err(Error::Unauthorized);
-          }
-
-          let app_key = DataKey::ScholarshipApplication(application_id);
-          extend_persistent(&env, &app_key);
-
-          let mut application: ScholarshipApplication = env
-              .storage()
-              .persistent()
-              .get(&app_key)
-              .ok_or(Error::UniversityNotFound)?;
-
-          if application.status != 2 {
-              return Err(Error::InvalidEscrowStatus); // Only approved can be disbursed
-          }
-
-          let prog_key = DataKey::ScholarshipProgram(application.program_id);
-          extend_persistent(&env, &prog_key);
-
-          let mut program: ScholarshipProgram = env
-              .storage()
-              .persistent()
-              .get(&prog_key)
-              .ok_or(Error::UniversityNotFound)?;
-
-          if !program.active {
-              return Err(Error::InvalidEscrowStatus);
-          }
-
-          // Transfer funds from contract to applicant
-          token_client.transfer(
-              &env.current_contract_address(),
-              &application.applicant,
-              &program.amount,
-          );
-
-          application.status = 4; // Disbursed
-          program.active = false; // Program finished/spent
-
-          env.storage().persistent().set(&app_key, &application);
-          env.storage().persistent().set(&prog_key, &program);
-
-          env.events().publish(
-              (Symbol::new(&env, "scholarship_disbursed"), application_id, application.applicant),
-              program.amount,
-          );
-
-          Ok(())
-      }
-
-      // --- REWARD UTILITY REDEMPTION OPERATIONS ---
-
-      pub fn create_utility_reward(
-          env: Env,
-          admin: Address,
-          name: String,
-          cost_camp: i128,
-          stock: u32,
-      ) -> Result<u64, Error> {
-          admin.require_auth();
-
-          let token_addr = get_token_contract(&env)?;
-          let token_client = CampusTokenClient::new(&env, &token_addr);
-
-          // Verify admin role is Admin (4)
-          let role = token_client.get_role(&admin);
-          if role != 4 {
-              return Err(Error::Unauthorized);
-          }
-
-          if cost_camp <= 0 {
-              return Err(Error::InvalidAmount);
-          }
-
-          extend_instance(&env);
-          let mut counter: u64 = env
-              .storage()
-              .instance()
-              .get(&DataKey::UtilityRewardCounter)
-              .unwrap_or(0);
-          counter += 1;
-          env.storage()
-              .instance()
-              .set(&DataKey::UtilityRewardCounter, &counter);
-
-          let reward = UtilityReward {
-              id: counter,
-              name: name.clone(),
-              cost_camp,
-              stock,
-          };
-
-          let key = DataKey::UtilityReward(counter);
-          env.storage().persistent().set(&key, &reward);
-          extend_persistent(&env, &key);
-
-          env.events().publish(
-              (Symbol::new(&env, "reward_created"), counter, admin),
-              (cost_camp, name),
-          );
-
-          Ok(counter)
-      }
-
-      pub fn get_utility_reward(env: Env, id: u64) -> Result<UtilityReward, Error> {
-          let key = DataKey::UtilityReward(id);
-          extend_persistent(&env, &key);
-          env.storage()
-              .persistent()
-              .get(&key)
-              .ok_or(Error::UniversityNotFound)
-      }
-
-      pub fn redeem_reward(env: Env, student: Address, reward_id: u64) -> Result<u64, Error> {
-          let rew_key = DataKey::UtilityReward(reward_id);
-          extend_persistent(&env, &rew_key);
-
-          let mut reward: UtilityReward = env
-              .storage()
-              .persistent()
-              .get(&rew_key)
-              .ok_or(Error::UniversityNotFound)?;
-
-          if reward.stock == 0 {
-              return Err(Error::EventFull); // Stock depleted
-          }
-
-          let token_addr = get_token_contract(&env)?;
-          let token_client = CampusTokenClient::new(&env, &token_addr);
-
-          // Verify student is a Student (1)
-          let role = token_client.get_role(&student);
-          if role != 1 {
-              return Err(Error::Unauthorized);
-          }
-
-          // Transfer cost to contract address
-          token_client.transfer_from(
-              &env.current_contract_address(),
-              &student,
-              &env.current_contract_address(),
-              &reward.cost_camp,
-          );
-
-          // Burn the redeemed tokens to reduce circulating supply
-          token_client.burn(&env.current_contract_address(), &reward.cost_camp);
-
-          reward.stock -= 1;
-          env.storage().persistent().set(&rew_key, &reward);
-
-          extend_instance(&env);
-          let mut counter: u64 = env
-              .storage()
-              .instance()
-              .get(&DataKey::RedemptionCounter)
-              .unwrap_or(0);
-          counter += 1;
-          env.storage()
-              .instance()
-              .set(&DataKey::RedemptionCounter, &counter);
-
-          // Generate a pseudo-random unique redemption code based on ledger timestamp and counter
-          let code = env.ledger().timestamp() + counter;
-
-          let redemption = RedemptionRecord {
-              id: counter,
-              student: student.clone(),
-              reward_id,
-              code,
-              status: 1, // Redeemed
-          };
-
-          let red_key = DataKey::Redemption(counter);
-          env.storage().persistent().set(&red_key, &redemption);
-          extend_persistent(&env, &red_key);
-
-          env.events().publish(
-              (Symbol::new(&env, "reward_redeemed"), counter, student),
-              (reward_id, code),
-          );
-
-          Ok(counter)
-      }
-
-      pub fn get_redemption(env: Env, id: u64) -> Result<RedemptionRecord, Error> {
-          let key = DataKey::Redemption(id);
-          extend_persistent(&env, &key);
-          env.storage()
-              .persistent()
-              .get(&key)
-              .ok_or(Error::UniversityNotFound)
-      }
-
-      pub fn fulfill_redemption(
-          env: Env,
-          merchant: Address,
-          redemption_id: u64,
-      ) -> Result<(), Error> {
-          merchant.require_auth();
-
-          let token_addr = get_token_contract(&env)?;
-          let token_client = CampusTokenClient::new(&env, &token_addr);
-
-          // Verify merchant role is Merchant (2) or Admin (4)
-          let role = token_client.get_role(&merchant);
-          if role != 2 && role != 4 {
-              return Err(Error::Unauthorized);
-          }
-
-          let red_key = DataKey::Redemption(redemption_id);
-          extend_persistent(&env, &red_key);
-
-          let mut redemption: RedemptionRecord = env
-              .storage()
-              .persistent()
-              .get(&red_key)
-              .ok_or(Error::UniversityNotFound)?;
-
-          if redemption.status != 1 {
-              return Err(Error::InvalidEscrowStatus); // Already fulfilled
-          }
-
-          redemption.status = 2; // Fulfilled
-          env.storage().persistent().set(&red_key, &redemption);
-
-          env.events().publish(
-              (Symbol::new(&env, "redemption_fulfilled"), redemption_id, merchant),
-              redemption.reward_id,
-          );
-
-          Ok(())
-      }
+    }
+
+    pub fn get_listing(env: Env, id: u64) -> Result<MarketplaceListing, Error> {
+        let key = DataKey::Listing(id);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::UniversityNotFound) // CustomListingNotFound
+    }
+
+    pub fn update_listing(
+        env: Env,
+        id: u64,
+        seller: Address,
+        new_price: i128,
+        new_status: u32,
+    ) -> Result<(), Error> {
+        seller.require_auth();
+
+        let key = DataKey::Listing(id);
+        extend_persistent(&env, &key);
+
+        let mut listing: MarketplaceListing = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if listing.seller != seller {
+            return Err(Error::Unauthorized);
+        }
+        if listing.status != 1 {
+            return Err(Error::InvalidEscrowStatus); // Already closed
+        }
+        if new_price <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+        if new_status != 1 && new_status != 3 {
+            return Err(Error::InvalidEscrowStatus);
+        }
+
+        listing.price = new_price;
+        listing.status = new_status;
+
+        env.storage().persistent().set(&key, &listing);
+
+        env.events().publish(
+            (Symbol::new(&env, "item_updated"), id, seller),
+            (new_price, new_status),
+        );
+
+        Ok(())
+    }
+
+    pub fn buy_listing(env: Env, id: u64, buyer: Address) -> Result<(), Error> {
+        let key = DataKey::Listing(id);
+        extend_persistent(&env, &key);
+
+        let mut listing: MarketplaceListing = env
+            .storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if listing.status != 1 {
+            return Err(Error::InvalidEscrowStatus);
+        }
+
+        if listing.escrow_enabled {
+            // Create escrow agreement internally
+            let escrow_id = Self::create_escrow(
+                env.clone(),
+                buyer.clone(),
+                listing.seller.clone(),
+                listing.price,
+            )?;
+            listing.status = 2; // Sold
+            env.storage().persistent().set(&key, &listing);
+
+            env.events().publish(
+                (Symbol::new(&env, "item_sold"), id, buyer),
+                (listing.price, escrow_id),
+            );
+        } else {
+            // Direct payment transfer C2C
+            let token_addr = get_token_contract(&env)?;
+            let token_client = CampusTokenClient::new(&env, &token_addr);
+            token_client.transfer_from(
+                &env.current_contract_address(),
+                &buyer,
+                &listing.seller,
+                &listing.price,
+            );
+
+            listing.status = 2; // Sold
+            env.storage().persistent().set(&key, &listing);
+
+            env.events().publish(
+                (Symbol::new(&env, "item_sold"), id, buyer),
+                (listing.price, 0u64),
+            );
+        }
+
+        Ok(())
+    }
+
+    // --- SCHOLARSHIP OPERATIONS ---
+
+    pub fn create_scholarship_program(
+        env: Env,
+        admin: Address,
+        name: String,
+        amount: i128,
+        min_gpa: u32,
+    ) -> Result<u64, Error> {
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        // Verify admin role is Admin (4)
+        let role = token_client.get_role(&admin);
+        if role != 4 {
+            return Err(Error::Unauthorized);
+        }
+
+        if amount <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+
+        // Fund scholarship program: lock CAMP tokens in this contract
+        token_client.transfer_from(
+            &env.current_contract_address(),
+            &admin,
+            &env.current_contract_address(),
+            &amount,
+        );
+
+        extend_instance(&env);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::ScholarshipProgramCounter)
+            .unwrap_or(0);
+        counter += 1;
+        env.storage()
+            .instance()
+            .set(&DataKey::ScholarshipProgramCounter, &counter);
+
+        let program = ScholarshipProgram {
+            id: counter,
+            name: name.clone(),
+            amount,
+            sponsor: admin.clone(),
+            min_gpa,
+            active: true,
+        };
+
+        let key = DataKey::ScholarshipProgram(counter);
+        env.storage().persistent().set(&key, &program);
+        extend_persistent(&env, &key);
+
+        env.events().publish(
+            (
+                Symbol::new(&env, "scholarship_program_created"),
+                counter,
+                admin,
+            ),
+            (amount, name),
+        );
+
+        Ok(counter)
+    }
+
+    pub fn get_scholarship_program(env: Env, id: u64) -> Result<ScholarshipProgram, Error> {
+        let key = DataKey::ScholarshipProgram(id);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::UniversityNotFound)
+    }
+
+    pub fn apply_for_scholarship(
+        env: Env,
+        applicant: Address,
+        program_id: u64,
+        gpa: u32,
+    ) -> Result<u64, Error> {
+        applicant.require_auth();
+
+        let prog_key = DataKey::ScholarshipProgram(program_id);
+        extend_persistent(&env, &prog_key);
+
+        let program: ScholarshipProgram = env
+            .storage()
+            .persistent()
+            .get(&prog_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if !program.active {
+            return Err(Error::InvalidEscrowStatus);
+        }
+        if gpa < program.min_gpa {
+            return Err(Error::TokenError); // GPA below minimum requirement
+        }
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        // Verify applicant is a Student (1)
+        let role = token_client.get_role(&applicant);
+        if role != 1 {
+            return Err(Error::Unauthorized);
+        }
+
+        extend_instance(&env);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::ScholarshipApplicationCounter)
+            .unwrap_or(0);
+        counter += 1;
+        env.storage()
+            .instance()
+            .set(&DataKey::ScholarshipApplicationCounter, &counter);
+
+        let application = ScholarshipApplication {
+            id: counter,
+            program_id,
+            applicant: applicant.clone(),
+            gpa,
+            status: 0, // Applied
+        };
+
+        let key = DataKey::ScholarshipApplication(counter);
+        env.storage().persistent().set(&key, &application);
+        extend_persistent(&env, &key);
+
+        env.events().publish(
+            (Symbol::new(&env, "scholarship_applied"), counter, applicant),
+            program_id,
+        );
+
+        Ok(counter)
+    }
+
+    pub fn get_scholarship_application(env: Env, id: u64) -> Result<ScholarshipApplication, Error> {
+        let key = DataKey::ScholarshipApplication(id);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::UniversityNotFound)
+    }
+
+    pub fn review_scholarship_application(
+        env: Env,
+        admin: Address,
+        application_id: u64,
+        approved: bool,
+    ) -> Result<(), Error> {
+        admin.require_auth();
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        // Verify admin role is Admin (4)
+        let role = token_client.get_role(&admin);
+        if role != 4 {
+            return Err(Error::Unauthorized);
+        }
+
+        let app_key = DataKey::ScholarshipApplication(application_id);
+        extend_persistent(&env, &app_key);
+
+        let mut application: ScholarshipApplication = env
+            .storage()
+            .persistent()
+            .get(&app_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if application.status != 0 {
+            return Err(Error::InvalidEscrowStatus); // Only pending can be reviewed
+        }
+
+        application.status = if approved { 2 } else { 3 }; // 2: Approved, 3: Rejected
+        env.storage().persistent().set(&app_key, &application);
+
+        env.events().publish(
+            (
+                Symbol::new(&env, "scholarship_reviewed"),
+                application_id,
+                admin,
+            ),
+            application.status,
+        );
+
+        Ok(())
+    }
+
+    pub fn disburse_scholarship(
+        env: Env,
+        admin: Address,
+        application_id: u64,
+    ) -> Result<(), Error> {
+        admin.require_auth();
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        // Verify admin role is Admin (4)
+        let role = token_client.get_role(&admin);
+        if role != 4 {
+            return Err(Error::Unauthorized);
+        }
+
+        let app_key = DataKey::ScholarshipApplication(application_id);
+        extend_persistent(&env, &app_key);
+
+        let mut application: ScholarshipApplication = env
+            .storage()
+            .persistent()
+            .get(&app_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if application.status != 2 {
+            return Err(Error::InvalidEscrowStatus); // Only approved can be disbursed
+        }
+
+        let prog_key = DataKey::ScholarshipProgram(application.program_id);
+        extend_persistent(&env, &prog_key);
+
+        let mut program: ScholarshipProgram = env
+            .storage()
+            .persistent()
+            .get(&prog_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if !program.active {
+            return Err(Error::InvalidEscrowStatus);
+        }
+
+        // Transfer funds from contract to applicant
+        token_client.transfer(
+            &env.current_contract_address(),
+            &application.applicant,
+            &program.amount,
+        );
+
+        application.status = 4; // Disbursed
+        program.active = false; // Program finished/spent
+
+        env.storage().persistent().set(&app_key, &application);
+        env.storage().persistent().set(&prog_key, &program);
+
+        env.events().publish(
+            (
+                Symbol::new(&env, "scholarship_disbursed"),
+                application_id,
+                application.applicant,
+            ),
+            program.amount,
+        );
+
+        Ok(())
+    }
+
+    // --- REWARD UTILITY REDEMPTION OPERATIONS ---
+
+    pub fn create_utility_reward(
+        env: Env,
+        admin: Address,
+        name: String,
+        cost_camp: i128,
+        stock: u32,
+    ) -> Result<u64, Error> {
+        admin.require_auth();
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        // Verify admin role is Admin (4)
+        let role = token_client.get_role(&admin);
+        if role != 4 {
+            return Err(Error::Unauthorized);
+        }
+
+        if cost_camp <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+
+        extend_instance(&env);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::UtilityRewardCounter)
+            .unwrap_or(0);
+        counter += 1;
+        env.storage()
+            .instance()
+            .set(&DataKey::UtilityRewardCounter, &counter);
+
+        let reward = UtilityReward {
+            id: counter,
+            name: name.clone(),
+            cost_camp,
+            stock,
+        };
+
+        let key = DataKey::UtilityReward(counter);
+        env.storage().persistent().set(&key, &reward);
+        extend_persistent(&env, &key);
+
+        env.events().publish(
+            (Symbol::new(&env, "reward_created"), counter, admin),
+            (cost_camp, name),
+        );
+
+        Ok(counter)
+    }
+
+    pub fn get_utility_reward(env: Env, id: u64) -> Result<UtilityReward, Error> {
+        let key = DataKey::UtilityReward(id);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::UniversityNotFound)
+    }
+
+    pub fn redeem_reward(env: Env, student: Address, reward_id: u64) -> Result<u64, Error> {
+        let rew_key = DataKey::UtilityReward(reward_id);
+        extend_persistent(&env, &rew_key);
+
+        let mut reward: UtilityReward = env
+            .storage()
+            .persistent()
+            .get(&rew_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if reward.stock == 0 {
+            return Err(Error::EventFull); // Stock depleted
+        }
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        // Verify student is a Student (1)
+        let role = token_client.get_role(&student);
+        if role != 1 {
+            return Err(Error::Unauthorized);
+        }
+
+        // Transfer cost to contract address
+        token_client.transfer_from(
+            &env.current_contract_address(),
+            &student,
+            &env.current_contract_address(),
+            &reward.cost_camp,
+        );
+
+        // Burn the redeemed tokens to reduce circulating supply
+        token_client.burn(&env.current_contract_address(), &reward.cost_camp);
+
+        reward.stock -= 1;
+        env.storage().persistent().set(&rew_key, &reward);
+
+        extend_instance(&env);
+        let mut counter: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::RedemptionCounter)
+            .unwrap_or(0);
+        counter += 1;
+        env.storage()
+            .instance()
+            .set(&DataKey::RedemptionCounter, &counter);
+
+        // Generate a pseudo-random unique redemption code based on ledger timestamp and counter
+        let code = env.ledger().timestamp() + counter;
+
+        let redemption = RedemptionRecord {
+            id: counter,
+            student: student.clone(),
+            reward_id,
+            code,
+            status: 1, // Redeemed
+        };
+
+        let red_key = DataKey::Redemption(counter);
+        env.storage().persistent().set(&red_key, &redemption);
+        extend_persistent(&env, &red_key);
+
+        env.events().publish(
+            (Symbol::new(&env, "reward_redeemed"), counter, student),
+            (reward_id, code),
+        );
+
+        Ok(counter)
+    }
+
+    pub fn get_redemption(env: Env, id: u64) -> Result<RedemptionRecord, Error> {
+        let key = DataKey::Redemption(id);
+        extend_persistent(&env, &key);
+        env.storage()
+            .persistent()
+            .get(&key)
+            .ok_or(Error::UniversityNotFound)
+    }
+
+    pub fn fulfill_redemption(
+        env: Env,
+        merchant: Address,
+        redemption_id: u64,
+    ) -> Result<(), Error> {
+        merchant.require_auth();
+
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
+
+        // Verify merchant role is Merchant (2) or Admin (4)
+        let role = token_client.get_role(&merchant);
+        if role != 2 && role != 4 {
+            return Err(Error::Unauthorized);
+        }
+
+        let red_key = DataKey::Redemption(redemption_id);
+        extend_persistent(&env, &red_key);
+
+        let mut redemption: RedemptionRecord = env
+            .storage()
+            .persistent()
+            .get(&red_key)
+            .ok_or(Error::UniversityNotFound)?;
+
+        if redemption.status != 1 {
+            return Err(Error::InvalidEscrowStatus); // Already fulfilled
+        }
+
+        redemption.status = 2; // Fulfilled
+        env.storage().persistent().set(&red_key, &redemption);
+
+        env.events().publish(
+            (
+                Symbol::new(&env, "redemption_fulfilled"),
+                redemption_id,
+                merchant,
+            ),
+            redemption.reward_id,
+        );
+
+        Ok(())
+    }
 
     pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), Error> {
         let admin = get_admin(&env)?;

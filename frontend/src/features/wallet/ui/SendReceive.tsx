@@ -4,6 +4,10 @@ import { useState, useEffect } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { Dropdown } from "@/shared/ui/Dropdown";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
+import { executeTransfer } from "@/features/wallet/service/campusToken";
+import { sendNativePayment } from "@/shared/stellar/client";
+import { signTx } from "@/features/wallet/service/wallet";
 import {
   Search,
   ArrowUpRight,
@@ -21,8 +25,8 @@ interface UserSuggestion {
 }
 
 const mockUsers: UserSuggestion[] = [
-  { id: "sm", name: "Sarah Miller", username: "@sarahm", address: "GCO2...3F9A" },
-  { id: "al", name: "Alex Lin", username: "@alexl", address: "GAXX...3K9L" },
+  { id: "sm", name: "Sarah Miller", username: "@sarahm", address: "GCO2SNG2EX2J4422T2C5Q6O3J62JLUWZZXJ75K6K3S3SH6FX23B33333" },
+  { id: "al", name: "Alex Lin", username: "@alexl", address: "GBPVICMAESR2O4LJRDAV2YGGIQDAEY6ANCAF3GLIXEYRAIDDXM7WQP7X" },
 ];
 
 export function SendReceive() {
@@ -30,8 +34,10 @@ export function SendReceive() {
   const [activeTab, setActiveTab] = useState<"send" | "receive">("send");
   const [toInput, setToInput] = useState("");
   const [amount, setAmount] = useState("50.00");
-  const [asset, setAsset] = useState<"XLM" | "CAMP">("XLM");
+  const [asset, setAsset] = useState<"XLM" | "CAMP">("CAMP");
   const [memo, setMemo] = useState("");
+  const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
+
   
   // Suggestion list states
   const [suggestions, setSuggestions] = useState<UserSuggestion[]>([]);
@@ -83,12 +89,57 @@ export function SendReceive() {
     ? `≈ ${(parseFloat(amount) || 0) * 0.1} CAMP`
     : `≈ ${(parseFloat(amount) || 0) * 0.05} XLM`;
 
+  const queryClient = useQueryClient();
+  const transferMutation = useMutation({
+    mutationFn: async () => {
+      if (!address) throw new Error("Wallet not connected");
+      if (!toInput) throw new Error("Recipient address is required");
+      const amt = parseFloat(amount);
+      if (isNaN(amt) || amt <= 0) throw new Error("Please enter a valid amount");
+
+      setStatusMsg({ type: "info", text: "Preparing transaction..." });
+      
+      if (asset === "CAMP") {
+        return await executeTransfer(address, toInput, amt);
+      } else {
+        return await sendNativePayment(toInput, amount, address, signTx);
+      }
+    },
+    onSuccess: (txHash) => {
+      setStatusMsg({ type: "success", text: `Payment completed successfully! Hash: ${txHash.slice(0, 8)}...${txHash.slice(-8)}` });
+      queryClient.invalidateQueries({ queryKey: ["campus-balance", address] });
+      queryClient.invalidateQueries({ queryKey: ["campus-balance", toInput] });
+      setToInput("");
+      setAmount("0.00");
+    },
+    onError: (err: unknown) => {
+      const errMsg = err instanceof Error ? err.message : String(err);
+      setStatusMsg({ type: "error", text: `Transaction failed: ${errMsg}` });
+    },
+  });
+
   return (
     <div className="bg-card rounded-2xl border border-border w-full max-w-md p-6 shadow-sm mx-auto">
+      {/* Status Alerts */}
+      {statusMsg && (
+        <div className={`mb-4 p-3 rounded-lg text-xs font-semibold border ${
+          statusMsg.type === "success"
+            ? "bg-emerald-500/10 text-emerald-600 border-emerald-500/20"
+            : statusMsg.type === "error"
+            ? "bg-destructive/10 text-destructive border-destructive/20"
+            : "bg-blue-500/10 text-blue-600 border-blue-500/20 animate-pulse"
+        }`}>
+          {statusMsg.text}
+        </div>
+      )}
+
       {/* 1. Tab Switcher */}
       <div className="bg-muted p-1 rounded-full flex mb-6">
         <button
-          onClick={() => setActiveTab("send")}
+          onClick={() => {
+            setActiveTab("send");
+            setStatusMsg(null);
+          }}
           className={`flex-1 py-2 rounded-full font-semibold text-sm text-center transition-all cursor-pointer ${
             activeTab === "send"
               ? "bg-primary text-primary-foreground shadow-sm"
@@ -98,7 +149,10 @@ export function SendReceive() {
           Send
         </button>
         <button
-          onClick={() => setActiveTab("receive")}
+          onClick={() => {
+            setActiveTab("receive");
+            setStatusMsg(null);
+          }}
           className={`flex-1 py-2 rounded-full font-semibold text-sm text-center transition-all cursor-pointer ${
             activeTab === "receive"
               ? "bg-primary text-primary-foreground shadow-sm"
@@ -130,7 +184,7 @@ export function SendReceive() {
               />
             </div>
 
-            {/* Suggestions Dropdown (simulating loading, loaded, empty states) */}
+            {/* Suggestions Dropdown */}
             {showSuggestions && (
               <div className="absolute w-full mt-2 bg-card border border-border rounded-lg shadow-md z-50 overflow-hidden">
                 {isSearching ? (
@@ -223,8 +277,12 @@ export function SendReceive() {
           </div>
 
           {/* Action Button */}
-          <button className="w-full h-12 mt-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/95 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99]">
-            <span>Review & Send</span>
+          <button
+            onClick={() => transferMutation.mutate()}
+            disabled={transferMutation.isPending}
+            className="w-full h-12 mt-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/95 transition-all flex items-center justify-center gap-2 cursor-pointer active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+          >
+            <span>{transferMutation.isPending ? "Sending..." : "Review & Send"}</span>
             <ArrowUpRight className="h-4 w-4" />
           </button>
         </div>

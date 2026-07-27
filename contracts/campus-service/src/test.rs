@@ -254,7 +254,7 @@ fn test_scholarship_flow() {
 
     // Set roles
     token_client.set_role(&admin, &student, &1); // Student
-    token_client.set_role(&admin, &admin, &4);   // Admin
+    token_client.set_role(&admin, &admin, &4); // Admin
 
     // Mint CAMP to admin and approve service contract
     token_client.mint(&admin, &2000i128);
@@ -321,7 +321,7 @@ fn test_rewards_redemption_flow() {
     // Set roles
     token_client.set_role(&admin, &student, &1); // Student
     token_client.set_role(&admin, &merchant, &2); // Merchant
-    token_client.set_role(&admin, &admin, &4);   // Admin
+    token_client.set_role(&admin, &admin, &4); // Admin
 
     // Create utility reward item
     let reward_id = service_client.create_utility_reward(
