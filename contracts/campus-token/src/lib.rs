@@ -1,3 +1,22 @@
+/*
+CALL CHAIN DOCUMENTATION:
+=========================
+This contract (CampusToken) acts as the core fungible token (CAMP) and role registry.
+It is invoked by the CampusService contract to perform:
+1. secure token minting on purchase:
+   CampusService::buy_camp_tokens -> CampusToken::mint_purchase (verifies caller is CampusService)
+2. token burning on utility redemption:
+   CampusService::redeem_reward -> CampusToken::transfer_from -> CampusToken::burn
+3. RBAC role validation checks:
+   CampusService::create_event -> CampusToken::get_role
+   CampusService::register_university -> CampusToken::get_role
+4. Escrow and Event payments:
+   CampusService::create_escrow -> CampusToken::transfer_from
+   CampusService::release_escrow -> CampusToken::transfer
+   CampusService::refund_escrow -> CampusToken::transfer
+   CampusService::buy_ticket -> CampusToken::transfer_from
+*/
+
 #![no_std]
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, String, Symbol, Vec,
@@ -33,6 +52,7 @@ pub enum DataKey {
     FaucetClaimed(Address),
     RoleRequestCounter,
     RoleRequest(u64),
+    ServiceContract,
 }
 
 #[contracttype]
@@ -358,10 +378,26 @@ impl CampusToken {
         Ok(())
     }
 
-    pub fn mint_purchase(env: Env, to: Address, amount: i128) -> Result<(), Error> {
-        // Called by CampusService — no admin auth needed for purchase flow
+    pub fn mint_purchase(
+        env: Env,
+        caller: Address,
+        to: Address,
+        amount: i128,
+    ) -> Result<(), Error> {
         if amount <= 0 {
             return Err(Error::InvalidAmount);
+        }
+
+        // Verify that the caller is indeed the registered service contract if set
+        if let Some(service_contract) = env
+            .storage()
+            .instance()
+            .get::<DataKey, Address>(&DataKey::ServiceContract)
+        {
+            if caller != service_contract {
+                return Err(Error::Unauthorized);
+            }
+            caller.require_auth();
         }
 
         do_mint(&env, &to, amount);
@@ -370,6 +406,30 @@ impl CampusToken {
             .publish((Symbol::new(&env, "mint_purchase"), to), amount);
 
         Ok(())
+    }
+
+    pub fn set_service_contract(
+        env: Env,
+        admin: Address,
+        service_contract: Address,
+    ) -> Result<(), Error> {
+        let stored_admin = get_admin(&env)?;
+        stored_admin.require_auth();
+        if admin != stored_admin {
+            return Err(Error::Unauthorized);
+        }
+
+        env.storage()
+            .instance()
+            .set(&DataKey::ServiceContract, &service_contract);
+        extend_instance(&env);
+
+        Ok(())
+    }
+
+    pub fn service_contract(env: Env) -> Option<Address> {
+        extend_instance(&env);
+        env.storage().instance().get(&DataKey::ServiceContract)
     }
 
     pub fn burn(env: Env, from: Address, amount: i128) -> Result<(), Error> {
