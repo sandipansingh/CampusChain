@@ -3,6 +3,7 @@ import { Inter } from "next/font/google";
 import "./globals.css";
 import { Providers } from "./providers";
 import { TransactionStatusToast } from "@/shared/ui/TransactionStatusToast";
+import { ContractEventStreamController } from "@/shared/ui/ContractEventStreamController";
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -22,6 +23,7 @@ export default function RootLayout({
         <Providers>
           {children}
           <TransactionStatusToast />
+          <ContractEventStreamController />
         </Providers>
       </body>
     </html>

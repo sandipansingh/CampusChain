@@ -4,6 +4,8 @@ import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { Dropdown } from "@/shared/ui/Dropdown";
+import { ActivityFeedPanel } from "@/shared/ui/ActivityFeedPanel";
+import { useActivityFeedStore } from "@/shared/hooks/useActivityFeedStore";
 import {
   LayoutDashboard,
   Wallet,
@@ -48,10 +50,14 @@ type UIState = "success" | "loading" | "empty";
 export function WalletDashboard() {
   const { address, disconnect } = useWallet();
   const [uiState, setUiState] = useState<UIState>("success");
-  
+
   // Navigation active state
   const [activeTab, setActiveTab] = useState<string>("dashboard");
-  
+
+  // Activity Feed panel state
+  const [isFeedOpen, setIsFeedOpen] = useState(false);
+  const unreadCount = useActivityFeedStore((s) => s.unreadCount);
+
   // Marketplace sub-views state
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
   const [showSellForm, setShowSellForm] = useState(false);
@@ -144,9 +150,17 @@ export function WalletDashboard() {
                 onChange={(val) => setUiState(val)}
               />
             </div>
-            <button className="p-2 text-foreground relative">
+            <button
+              onClick={() => setIsFeedOpen(true)}
+              className="p-2 text-foreground relative cursor-pointer"
+              aria-label="Open activity feed"
+            >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-1">
+                  {unreadCount > 99 ? "99" : unreadCount}
+                </span>
+              )}
             </button>
             <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
               JD
@@ -421,9 +435,17 @@ export function WalletDashboard() {
               />
             </div>
 
-            <button className="text-muted-foreground hover:text-foreground p-2 rounded-full hover:bg-muted transition-colors relative cursor-pointer">
+            <button
+              onClick={() => setIsFeedOpen(true)}
+              className="text-muted-foreground hover:text-foreground p-2 rounded-full hover:bg-muted transition-colors relative cursor-pointer"
+              aria-label="Open activity feed"
+            >
               <Bell className="h-5 w-5" />
-              <span className="absolute top-1.5 right-1.5 w-2 h-2 rounded-full bg-primary" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-1">
+                  {unreadCount > 99 ? "99" : unreadCount}
+                </span>
+              )}
             </button>
 
             <div className="flex items-center gap-3">
@@ -445,6 +467,9 @@ export function WalletDashboard() {
           {renderContentView()}
         </main>
       </div>
+
+      {/* Activity Feed Panel */}
+      <ActivityFeedPanel isOpen={isFeedOpen} onClose={() => setIsFeedOpen(false)} />
 
       {/* 3. Mobile Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 h-20 bg-card border-t border-border z-40 md:hidden shadow-lg">
