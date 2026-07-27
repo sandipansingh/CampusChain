@@ -1,17 +1,17 @@
 "use client";
 
 import { useWallet } from "@/shared/stellar/useWallet";
+import { WalletDashboard } from "@/features/wallet/ui/WalletDashboard";
 import { useEffect } from "react";
+import { Wallet } from "lucide-react";
 
 export default function Home() {
   const {
-    address,
     isConnected,
     isConnecting,
     wrongNetwork,
     error,
     connect,
-    disconnect,
     initialize,
   } = useWallet();
 
@@ -19,18 +19,28 @@ export default function Home() {
     initialize();
   }, [initialize]);
 
-  return (
-    <main className="flex min-h-screen flex-col items-center justify-center p-24 bg-background text-foreground">
-      <div className="z-10 max-w-5xl w-full items-center justify-between font-mono text-sm flex flex-col gap-6">
-        <h1 className="text-4xl font-extrabold tracking-tight lg:text-5xl">
-          CampusChain
-        </h1>
-        <p className="text-xl text-muted-foreground text-center max-w-[600px]">
-          An advanced university decentralized operating system powered by the Stellar Network and Soroban smart contracts.
-        </p>
+  if (isConnected) {
+    return <WalletDashboard />;
+  }
 
-        <div className="flex flex-col items-center gap-4 mt-8 p-6 border rounded-lg bg-card text-card-foreground shadow-sm max-w-md w-full">
-          <h2 className="text-xl font-bold">Wallet Connection</h2>
+  return (
+    <main className="flex min-h-screen flex-col items-center justify-center p-6 bg-background text-foreground">
+      <div className="z-10 max-w-md w-full items-center justify-center flex flex-col gap-6 text-center">
+        <div className="flex items-center gap-3">
+          <div className="w-12 h-12 rounded-full bg-primary text-primary-foreground flex items-center justify-center">
+            <Wallet className="h-6 w-6" />
+          </div>
+          <div className="text-left">
+            <h1 className="text-2xl font-bold tracking-tight">CampusChain</h1>
+            <p className="text-xs text-muted-foreground">Radical Utility Dashboard</p>
+          </div>
+        </div>
+
+        <div className="flex flex-col items-center gap-4 p-6 border border-border rounded-xl bg-card text-card-foreground shadow-sm w-full">
+          <h2 className="text-lg font-bold">Connect Your Wallet</h2>
+          <p className="text-sm text-muted-foreground">
+            Sign in using Freighter, xBull, Albedo, or WalletConnect to access your student profile, marketplace, events, and rewards.
+          </p>
           
           {error && (
             <div className={`text-xs p-3 rounded-lg border w-full text-center ${wrongNetwork ? "bg-amber-50 text-amber-800 border-amber-200" : "bg-destructive/10 text-destructive border-destructive/20"}`}>
@@ -38,27 +48,13 @@ export default function Home() {
             </div>
           )}
 
-          {isConnected ? (
-            <div className="flex flex-col items-center gap-2 w-full">
-              <span className="text-xs bg-muted px-2 py-1 rounded select-all break-all text-center w-full">
-                {address}
-              </span>
-              <button
-                onClick={disconnect}
-                className="w-full mt-2 bg-destructive/90 text-destructive-foreground hover:bg-destructive px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-              >
-                Disconnect Wallet
-              </button>
-            </div>
-          ) : (
-            <button
-              onClick={connect}
-              disabled={isConnecting}
-              className="w-full bg-primary text-primary-foreground hover:bg-primary/90 disabled:opacity-50 px-4 py-2 rounded-lg font-medium transition-colors cursor-pointer"
-            >
-              {isConnecting ? "Connecting..." : "Connect Wallet"}
-            </button>
-          )}
+          <button
+            onClick={connect}
+            disabled={isConnecting}
+            className="w-full bg-primary text-primary-foreground hover:bg-primary/95 disabled:opacity-50 px-4 py-2.5 rounded-lg font-semibold transition-colors cursor-pointer"
+          >
+            {isConnecting ? "Connecting Wallet..." : "Connect Wallet"}
+          </button>
         </div>
       </div>
     </main>
