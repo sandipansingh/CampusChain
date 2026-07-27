@@ -28,7 +28,6 @@ class TelemetryLogger {
 
   error(message: string, error?: Error | unknown, context?: Record<string, unknown>) {
     console.error(`[ERROR] [${new Date().toISOString()}] ${message}`, error || "", context || "");
-    // Abstracted: Here you would transmit errors to third-party collectors (e.g. Sentry/Datadog)
     this.sendToCollector("ERROR_TRACKER", { message, error, context });
   }
 
@@ -38,27 +37,19 @@ class TelemetryLogger {
       durationMs: telemetry.durationMs,
       errorMessage: telemetry.errorMessage,
     });
-    
-    // Abstracted: Here you would log metrics to Datadog/Stellar event logger
     this.sendToCollector("METRICS_COLLECTOR", telemetry);
   }
 
   private sendToCollector(collectorType: string, payload: unknown) {
-    // In production, send via navigator.sendBeacon or fetch queue
     if (!this.isDevelopment) {
-      // Mock tracking call
       try {
         fetch("/api/telemetry", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ collectorType, payload, timestamp: Date.now() }),
           keepalive: true,
-        }).catch(() => {
-          // Fail silently on mock analytics call
-        });
-      } catch {
-        // Fail silently
-      }
+        }).catch(() => {});
+      } catch {}
     }
   }
 }

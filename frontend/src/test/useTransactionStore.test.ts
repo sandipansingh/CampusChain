@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach } from "vitest";
-import { useTransactionStore } from "../state/useTransactionStore";
+import { useTransactionStore } from "../features/transactions/state/useTransactionStore";
 
 describe("useTransactionStore", () => {
   beforeEach(() => {

@@ -1,12 +1,17 @@
-"use client";
-
+import { useQuery } from "@tanstack/react-query";
 import { useState, useEffect, useCallback } from "react";
-import {
-  getRpcServer,
-  NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
-  NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
-} from "@/services/contracts";
-import { decodeEvent, DecodedEvent } from "@/services/eventDecoder";
+import { fetchLedgerEventsRaw, fetchEventsPaginated } from "../service/events";
+import { DecodedEvent } from "@/shared/stellar/eventDecoder";
+
+export function useLedgerEvents() {
+  return useQuery({
+    queryKey: ["ledger-events"],
+    queryFn: async () => {
+      return fetchLedgerEventsRaw();
+    },
+    refetchInterval: 15000,
+  });
+}
 
 export function useActivityPagination() {
   const [events, setEvents] = useState<DecodedEvent[]>([]);
@@ -23,53 +28,20 @@ export function useActivityPagination() {
       if (isLoadMore) setLoadingMore(true);
       else setLoading(true);
 
-      const server = getRpcServer();
-      const baseFilters = [
-        { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] },
-        { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] },
-      ];
-
-      let res;
-      if (isLoadMore && cursor) {
-        res = await server.getEvents({ filters: baseFilters, cursor, limit: 40 });
-      } else {
-        const latestLedger = await server.getLatestLedger();
-        res = await server.getEvents({
-          startLedger: Math.max(1, latestLedger.sequence - 5000),
-          filters: baseFilters,
-          limit: 40,
-        });
-      }
-
-      const decodedEvents = res.events
-        .map((evt) => {
-          try {
-            return decodeEvent({
-              id: evt.id,
-              ledger: evt.ledger,
-              ledgerClosedAt: evt.ledgerClosedAt,
-              txHash: evt.txHash,
-              topic: evt.topic as unknown[],
-              value: evt.value as unknown,
-            });
-          } catch {
-            return null;
-          }
-        })
-        .filter((e): e is DecodedEvent => e !== null);
+      const res = await fetchEventsPaginated(isLoadMore ? cursor : null, 40);
 
       if (isLoadMore) {
         setEvents((prev) => {
           const existingIds = new Set(prev.map((e) => e.id));
-          const newEvents = decodedEvents.filter((e) => !existingIds.has(e.id));
+          const newEvents = res.events.filter((e) => !existingIds.has(e.id));
           return [...prev, ...newEvents];
         });
       } else {
-        setEvents(decodedEvents);
+        setEvents(res.events);
       }
 
-      setHasMore(res.events.length >= 40);
-      setCursor(res.cursor ?? null);
+      setHasMore(res.hasMore);
+      setCursor(res.cursor);
     } catch {
       // silent
     } finally {

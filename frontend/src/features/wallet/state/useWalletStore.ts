@@ -3,7 +3,7 @@ import {
   initWalletKit,
   connectWalletModal,
   disconnectWallet as sdkDisconnectWallet,
-} from "@/services/wallet";
+} from "../service/wallet";
 
 export type NetworkType = "testnet" | "public" | "standalone";
 

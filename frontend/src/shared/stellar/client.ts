@@ -11,8 +11,6 @@ import {
   Operation,
   Asset,
 } from "@stellar/stellar-sdk";
-import { signTx } from "@/services/wallet";
-import { logger } from "@/services/logger";
 
 export const NEXT_PUBLIC_STELLAR_RPC_URL =
   process.env.NEXT_PUBLIC_STELLAR_RPC_URL || "https://soroban-testnet.stellar.org";
@@ -69,7 +67,8 @@ export async function invokeContractMethod(
   contractId: string,
   methodName: string,
   args: xdr.ScVal[] = [],
-  userAddress: string
+  userAddress: string,
+  signTxFn: (xdr: string, passphrase: string, address: string) => Promise<string>
 ): Promise<string> {
   const server = getRpcServer();
   const sourceAccount = await server.getAccount(userAddress);
@@ -89,7 +88,7 @@ export async function invokeContractMethod(
   tx = await server.prepareTransaction(tx);
 
   // Sign transaction XDR via Freighter or other wallet
-  const signedXdr = await signTx(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
+  const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
 
   // Submit signed transaction envelope
   const submission = await server.sendTransaction(
@@ -107,7 +106,8 @@ export async function invokeContractMethod(
 export async function sendNativePayment(
   xlmDestination: string,
   xlmAmount: string,
-  userAddress: string
+  userAddress: string,
+  signTxFn: (xdr: string, passphrase: string, address: string) => Promise<string>
 ): Promise<string> {
   const horizon = new Horizon.Server("https://horizon-testnet.stellar.org");
   const sourceAccount = await horizon.loadAccount(userAddress);
@@ -126,7 +126,7 @@ export async function sendNativePayment(
     .setTimeout(60)
     .build();
 
-  const signedXdr = await signTx(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
+  const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
 
   const submission = await horizon.submitTransaction(
     new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
@@ -142,23 +142,19 @@ export async function sendNativePayment(
 export async function pollTransactionStatus(
   hash: string
 ): Promise<rpc.Api.GetTransactionResponse> {
-  logger.info(`Polling transaction status`, { hash });
   const server = getRpcServer();
   for (let i = 0; i < 40; i++) {
     const status = await server.getTransaction(hash);
     if (status.status === "SUCCESS") {
-      logger.info(`Transaction confirmed on-chain`, { hash });
       return status;
     }
     if (status.status === "FAILED") {
       const errMsg = `Transaction execution failed: ${JSON.stringify(status.resultXdr)}`;
-      logger.error(errMsg, null, { hash });
       throw new Error(errMsg);
     }
     // Wait 1.5 seconds between polls
     await new Promise((resolve) => setTimeout(resolve, 1500));
   }
-  logger.warn(`Transaction verification timed out`, { hash });
   throw new Error("Transaction verification timed out");
 }
 

@@ -23,15 +23,15 @@ export const useTransactionStore = create<TransactionState>()(
     (set) => ({
       transactions: [],
       addTransaction: (tx) =>
-        set((state) => ({
-          transactions: [tx, ...state.transactions],
-        })),
+          set((state) => ({
+            transactions: [tx, ...state.transactions],
+          })),
       updateTransaction: (hash, updates) =>
-        set((state) => ({
-          transactions: state.transactions.map((tx) =>
-            tx.hash === hash ? { ...tx, ...updates } : tx
-          ),
-        })),
+          set((state) => ({
+            transactions: state.transactions.map((tx) =>
+                tx.hash === hash ? { ...tx, ...updates } : tx
+            ),
+          })),
       clearTransactions: () => set({ transactions: [] }),
     }),
     {

@@ -1,7 +1,7 @@
 import { describe, it, expect, vi, beforeEach } from "vitest";
-import { useWalletStore } from "../state/useWalletStore";
+import { useWalletStore } from "../features/wallet/state/useWalletStore";
 
-vi.mock("@/services/wallet", () => ({
+vi.mock("@/features/wallet/service/wallet", () => ({
   initWalletKit: vi.fn(),
   connectWalletModal: vi.fn().mockResolvedValue("GBB2GDQ6NVSZ22MHTMXG7Q5CGF6V2YCYUNMXL6QGZYYJZ6KJV7Y6N3Y44"),
   disconnectWallet: vi.fn().mockResolvedValue(undefined),
