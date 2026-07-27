@@ -447,7 +447,7 @@ fn test_identity_contract_integration() {
     identity_client.initialize(
         &admin,
         &String::from_str(&env, "Admin User"),
-        &123u64,
+        &String::from_str(&env, "123"),
         &String::from_str(&env, "Administration"),
     );
 
@@ -475,13 +475,13 @@ fn test_identity_contract_integration() {
     identity_client.register_profile(
         &seller,
         &String::from_str(&env, "Bob Merchant"),
-        &456u64,
+        &String::from_str(&env, "456"),
         &String::from_str(&env, "Business"),
     );
     identity_client.register_profile(
         &student,
         &String::from_str(&env, "Alice Student"),
-        &789u64,
+        &String::from_str(&env, "789"),
         &String::from_str(&env, "Engineering"),
     );
 

@@ -47,7 +47,7 @@
                   "string": "Bob Merchant"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Business"
@@ -75,7 +75,7 @@
                   "string": "Alice Student"
                 },
                 {
-                  "u64": 789
+                  "string": "789"
                 },
                 {
                   "string": "Engineering"
@@ -852,7 +852,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 123
+                        "string": "123"
                       }
                     },
                     {
@@ -954,7 +954,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 789
+                        "string": "789"
                       }
                     },
                     {
@@ -1056,7 +1056,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 456
+                        "string": "456"
                       }
                     },
                     {
@@ -1702,7 +1702,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -1735,7 +1735,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -2220,7 +2220,7 @@
                   "string": "Bob Merchant"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Business"
@@ -2253,7 +2253,7 @@
                   "string": "Bob Merchant"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Business"
@@ -2313,7 +2313,7 @@
                   "string": "Alice Student"
                 },
                 {
-                  "u64": 789
+                  "string": "789"
                 },
                 {
                   "string": "Engineering"
@@ -2346,7 +2346,7 @@
                   "string": "Alice Student"
                 },
                 {
-                  "u64": 789
+                  "string": "789"
                 },
                 {
                   "string": "Engineering"
@@ -2515,7 +2515,7 @@
                     "symbol": "university_id"
                   },
                   "val": {
-                    "u64": 456
+                    "string": "456"
                   }
                 },
                 {
@@ -2907,7 +2907,7 @@
                     "symbol": "university_id"
                   },
                   "val": {
-                    "u64": 123
+                    "string": "123"
                   }
                 },
                 {
@@ -3200,7 +3200,7 @@
                     "symbol": "university_id"
                   },
                   "val": {
-                    "u64": 789
+                    "string": "789"
                   }
                 },
                 {
@@ -3517,7 +3517,7 @@
                     "symbol": "university_id"
                   },
                   "val": {
-                    "u64": 789
+                    "string": "789"
                   }
                 },
                 {

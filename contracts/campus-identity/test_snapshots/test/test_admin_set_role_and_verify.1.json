@@ -21,7 +21,7 @@
                   "string": "Campus Bookstore"
                 },
                 {
-                  "u64": 999
+                  "string": "999"
                 },
                 {
                   "string": "Retail"
@@ -276,7 +276,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 123
+                        "string": "123"
                       }
                     },
                     {
@@ -378,7 +378,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 999
+                        "string": "999"
                       }
                     },
                     {
@@ -494,7 +494,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -527,7 +527,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -587,7 +587,7 @@
                   "string": "Campus Bookstore"
                 },
                 {
-                  "u64": 999
+                  "string": "999"
                 },
                 {
                   "string": "Retail"
@@ -620,7 +620,7 @@
                   "string": "Campus Bookstore"
                 },
                 {
-                  "u64": 999
+                  "string": "999"
                 },
                 {
                   "string": "Retail"
@@ -901,7 +901,7 @@
                     "symbol": "university_id"
                   },
                   "val": {
-                    "u64": 999
+                    "string": "999"
                   }
                 },
                 {

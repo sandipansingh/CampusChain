@@ -21,7 +21,7 @@
                   "string": "Alice Smith"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Computer Science"
@@ -49,7 +49,7 @@
                   "string": "Alice J. Smith"
                 },
                 {
-                  "u64": 789
+                  "string": "789"
                 },
                 {
                   "string": "Software Engineering"
@@ -221,7 +221,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 123
+                        "string": "123"
                       }
                     },
                     {
@@ -323,7 +323,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 789
+                        "string": "789"
                       }
                     },
                     {
@@ -439,7 +439,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -472,7 +472,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -532,7 +532,7 @@
                   "string": "Alice Smith"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Computer Science"
@@ -565,7 +565,7 @@
                   "string": "Alice Smith"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Computer Science"
@@ -625,7 +625,7 @@
                   "string": "Alice J. Smith"
                 },
                 {
-                  "u64": 789
+                  "string": "789"
                 },
                 {
                   "string": "Software Engineering"
@@ -658,7 +658,7 @@
                   "string": "Alice J. Smith"
                 },
                 {
-                  "u64": 789
+                  "string": "789"
                 },
                 {
                   "string": "Software Engineering"
@@ -779,7 +779,7 @@
                     "symbol": "university_id"
                   },
                   "val": {
-                    "u64": 789
+                    "string": "789"
                   }
                 },
                 {

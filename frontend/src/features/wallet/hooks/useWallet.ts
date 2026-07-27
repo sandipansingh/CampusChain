@@ -212,7 +212,7 @@ export function useRegisterProfileMutation() {
     }: {
       address: string;
       fullName: string;
-      universityId: number;
+      universityId: string;
       department: string;
     }) => {
       return executeRegisterProfile(address, fullName, universityId, department);

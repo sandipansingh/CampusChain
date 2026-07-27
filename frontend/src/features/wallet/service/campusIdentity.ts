@@ -3,7 +3,6 @@ import {
   invokeContractMethod,
   addressToScVal,
   stringToScVal,
-  u64ToScVal,
   NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
 } from "@/shared/stellar/client";
 import { signTx } from "./wallet";
@@ -12,7 +11,7 @@ import { xdr, nativeToScVal } from "@stellar/stellar-sdk";
 export interface UserProfile {
   address: string;
   fullName: string;
-  universityId: number;
+  universityId: string;
   department: string;
   role: number; // 1 = Student, 2 = Merchant, 4 = Admin
   verified: boolean;
@@ -63,7 +62,7 @@ export async function fetchUserProfile(address: string): Promise<UserProfile | n
     return {
       address: String(profile.address || address),
       fullName: String(profile.full_name || ""),
-      universityId: Number(profile.university_id || 0),
+      universityId: String(profile.university_id || ""),
       department: String(profile.department || ""),
       role: parseRole(profile.role),
       verified: Boolean(profile.verified),
@@ -82,7 +81,7 @@ export async function fetchUserProfile(address: string): Promise<UserProfile | n
 export async function executeRegisterProfile(
   address: string,
   fullName: string,
-  universityId: number,
+  universityId: string,
   department: string
 ): Promise<string> {
   return invokeContractMethod(
@@ -91,7 +90,7 @@ export async function executeRegisterProfile(
     [
       addressToScVal(address),
       stringToScVal(fullName),
-      u64ToScVal(universityId),
+      stringToScVal(universityId),
       stringToScVal(department),
     ],
     address,

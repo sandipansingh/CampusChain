@@ -42,7 +42,7 @@ pub enum UserRole {
 pub struct Profile {
     pub address: Address,
     pub full_name: String,
-    pub university_id: u64,
+    pub university_id: String,
     pub department: String,
     pub role: UserRole,
     pub verified: bool,
@@ -94,14 +94,14 @@ impl CampusIdentity {
         env: Env,
         admin: Address,
         full_name: String,
-        university_id: u64,
+        university_id: String,
         department: String,
     ) -> Result<(), Error> {
         if env.storage().instance().has(&DataKey::Admin) {
             return Err(Error::AlreadyInitialized);
         }
 
-        if full_name.len() == 0 || department.len() == 0 || university_id == 0 {
+        if full_name.len() == 0 || department.len() == 0 || university_id.len() == 0 {
             return Err(Error::InvalidInput);
         }
 
@@ -110,7 +110,7 @@ impl CampusIdentity {
         let admin_profile = Profile {
             address: admin.clone(),
             full_name: full_name.clone(),
-            university_id,
+            university_id: university_id.clone(),
             department: department.clone(),
             role: UserRole::Admin,
             verified: true,
@@ -135,7 +135,7 @@ impl CampusIdentity {
         env: Env,
         address: Address,
         full_name: String,
-        university_id: u64,
+        university_id: String,
         department: String,
     ) -> Result<(), Error> {
         address.require_auth();
@@ -149,14 +149,14 @@ impl CampusIdentity {
             return Err(Error::ProfileAlreadyExists);
         }
 
-        if full_name.len() == 0 || department.len() == 0 || university_id == 0 {
+        if full_name.len() == 0 || department.len() == 0 || university_id.len() == 0 {
             return Err(Error::InvalidInput);
         }
 
         let new_profile = Profile {
             address: address.clone(),
             full_name: full_name.clone(),
-            university_id,
+            university_id: university_id.clone(),
             department: department.clone(),
             role: UserRole::Student,
             verified: false,
@@ -258,12 +258,12 @@ impl CampusIdentity {
         env: Env,
         address: Address,
         full_name: String,
-        university_id: u64,
+        university_id: String,
         department: String,
     ) -> Result<(), Error> {
         address.require_auth();
 
-        if full_name.len() == 0 || department.len() == 0 || university_id == 0 {
+        if full_name.len() == 0 || department.len() == 0 || university_id.len() == 0 {
             return Err(Error::InvalidInput);
         }
 
@@ -275,7 +275,7 @@ impl CampusIdentity {
             .ok_or(Error::ProfileNotFound)?;
 
         profile.full_name = full_name.clone();
-        profile.university_id = university_id;
+        profile.university_id = university_id.clone();
         profile.department = department.clone();
 
         env.storage().persistent().set(&profile_key, &profile);

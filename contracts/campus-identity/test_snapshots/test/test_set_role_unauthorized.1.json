@@ -21,7 +21,7 @@
                   "string": "Name"
                 },
                 {
-                  "u64": 111
+                  "string": "111"
                 },
                 {
                   "string": "Dept"
@@ -49,7 +49,7 @@
                   "string": "Name"
                 },
                 {
-                  "u64": 222
+                  "string": "222"
                 },
                 {
                   "string": "Dept"
@@ -221,7 +221,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 123
+                        "string": "123"
                       }
                     },
                     {
@@ -323,7 +323,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 111
+                        "string": "111"
                       }
                     },
                     {
@@ -425,7 +425,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 222
+                        "string": "222"
                       }
                     },
                     {
@@ -541,7 +541,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -574,7 +574,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -634,7 +634,7 @@
                   "string": "Name"
                 },
                 {
-                  "u64": 111
+                  "string": "111"
                 },
                 {
                   "string": "Dept"
@@ -667,7 +667,7 @@
                   "string": "Name"
                 },
                 {
-                  "u64": 111
+                  "string": "111"
                 },
                 {
                   "string": "Dept"
@@ -727,7 +727,7 @@
                   "string": "Name"
                 },
                 {
-                  "u64": 222
+                  "string": "222"
                 },
                 {
                   "string": "Dept"
@@ -760,7 +760,7 @@
                   "string": "Name"
                 },
                 {
-                  "u64": 222
+                  "string": "222"
                 },
                 {
                   "string": "Dept"

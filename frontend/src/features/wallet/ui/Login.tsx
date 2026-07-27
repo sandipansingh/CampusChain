@@ -3,8 +3,6 @@
 import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { useRegisterProfileMutation } from "@/features/wallet/hooks/useWallet";
-import { Select, SelectOption } from "@/shared/ui/Select";
-import { CustomToggle } from "@/shared/ui/CustomToggle";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import {
   Wallet,
@@ -19,13 +17,6 @@ import {
 interface LoginProps {
   showOnboarding?: boolean;
 }
-
-const DEPARTMENTS: SelectOption[] = [
-  { value: "Computer Science", label: "Computer Science" },
-  { value: "Engineering", label: "Engineering" },
-  { value: "Business", label: "Business" },
-  { value: "Arts & Sciences", label: "Arts & Sciences" },
-];
 
 export function Login({ showOnboarding = false }: LoginProps) {
   const {
@@ -71,13 +62,12 @@ export function Login({ showOnboarding = false }: LoginProps) {
       setFormError("Please enter your full name.");
       return;
     }
-    const idNum = Number(universityId);
-    if (isNaN(idNum) || idNum <= 0) {
-      setFormError("Please enter a valid positive University ID number.");
+    if (!universityId.trim()) {
+      setFormError("Please enter your University ID.");
       return;
     }
     if (!department.trim()) {
-      setFormError("Please select a department.");
+      setFormError("Please enter your department.");
       return;
     }
     if (!acceptTerms) {
@@ -94,7 +84,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
       await registerProfile.mutateAsync({
         address,
         fullName: fullName.trim(),
-        universityId: idNum,
+        universityId: universityId.trim(),
         department: department.trim(),
       });
     } catch (err: unknown) {
@@ -302,14 +292,21 @@ export function Login({ showOnboarding = false }: LoginProps) {
                     />
                   </div>
 
-                  {/* Department Dropdown (Custom Dropdown component) */}
-                  <Select
-                    options={DEPARTMENTS}
-                    value={department}
-                    onChange={(val) => setDepartment(val)}
-                    placeholder="Select Department"
-                    label="Department"
-                  />
+                  {/* Department Input (Typing is supported directly) */}
+                  <div className="flex flex-col gap-1.5">
+                    <label className="text-sm font-semibold text-zinc-950" htmlFor="department">
+                      Department
+                    </label>
+                    <input
+                      id="department"
+                      type="text"
+                      required
+                      value={department}
+                      onChange={(e) => setDepartment(e.target.value)}
+                      placeholder="e.g. Computer Science"
+                      className="w-full bg-white border border-zinc-200 rounded-lg px-4 py-3 text-body-md text-zinc-950 focus:outline-none focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 transition-colors placeholder:text-zinc-400"
+                    />
+                  </div>
 
                   {/* Email (Optional) */}
                   <div className="flex flex-col gap-1.5">
@@ -329,13 +326,19 @@ export function Login({ showOnboarding = false }: LoginProps) {
                     />
                   </div>
 
-                  {/* Custom Toggle / Accept Terms */}
-                  <CustomToggle
-                    checked={acceptTerms}
-                    onChange={(val) => setAcceptTerms(val)}
-                    label="Accept Campus Terms of Use"
-                    className="mt-2"
-                  />
+                  {/* Accessible Checkbox for Terms */}
+                  <div className="flex items-center gap-3 mt-2">
+                    <input
+                      id="acceptTerms"
+                      type="checkbox"
+                      checked={acceptTerms}
+                      onChange={(e) => setAcceptTerms(e.target.checked)}
+                      className="h-4 w-4 rounded border-zinc-300 text-zinc-950 focus:ring-zinc-950 accent-zinc-950 cursor-pointer"
+                    />
+                    <label htmlFor="acceptTerms" className="text-sm text-zinc-600 select-none cursor-pointer">
+                      Accept Campus Terms of Use
+                    </label>
+                  </div>
 
                   {/* Submit Button */}
                   <button

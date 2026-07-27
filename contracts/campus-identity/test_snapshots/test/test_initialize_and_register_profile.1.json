@@ -22,7 +22,7 @@
                   "string": "Alice Smith"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Computer Science"
@@ -161,7 +161,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 123
+                        "string": "123"
                       }
                     },
                     {
@@ -263,7 +263,7 @@
                         "symbol": "university_id"
                       },
                       "val": {
-                        "u64": 456
+                        "string": "456"
                       }
                     },
                     {
@@ -379,7 +379,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -412,7 +412,7 @@
                   "string": "Admin User"
                 },
                 {
-                  "u64": 123
+                  "string": "123"
                 },
                 {
                   "string": "Administration"
@@ -533,7 +533,7 @@
                     "symbol": "university_id"
                   },
                   "val": {
-                    "u64": 123
+                    "string": "123"
                   }
                 },
                 {
@@ -578,7 +578,7 @@
                   "string": "Alice Smith"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Computer Science"
@@ -611,7 +611,7 @@
                   "string": "Alice Smith"
                 },
                 {
-                  "u64": 456
+                  "string": "456"
                 },
                 {
                   "string": "Computer Science"
@@ -732,7 +732,7 @@
                     "symbol": "university_id"
                   },
                   "val": {
-                    "u64": 456
+                    "string": "456"
                   }
                 },
                 {
