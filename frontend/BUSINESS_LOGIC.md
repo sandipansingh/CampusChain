@@ -13,7 +13,7 @@
 ## 2. Contract Interfaces
 
 ### CampusToken Contract
-- **Contract ID**: `CDJQUJ7TK2X3FDQNYKM3MVV57A35FTP2UVRFNSVUABBBTAS6AMMWUZ4R` (Testnet fallback)
+- **Contract ID**: `CDGMOVTFKTMHVDZSQRSH3O4Y3FXFLORCJW3JM2YXNXQTLCBMZVKXQXJP` (Testnet fallback)
 - **Functions called**:
   - `balance(address)`: 
     - *Purpose*: Get CAMP token balance.
@@ -51,7 +51,7 @@
     - *Return*: Array of `RoleRequest` structs.
 
 ### CampusService Contract
-- **Contract ID**: `CCPBJGPUZJJ3OILAZBORJR3HTXUXJOT4LOO2EERTTP5FFM6SMQ6JO7JM` (Testnet fallback)
+- **Contract ID**: `CDTJ56RPMPE2VNYLCV7CFPS3IHUVR4UZIRC4JJ2RWCE5WDHB6BVAYSSM` (Testnet fallback)
 - **Functions called**:
   - `get_escrow(escrow_id)`:
     - *Purpose*: Fetch active escrow details.
