@@ -1,25 +1,39 @@
 /*
 CALL CHAIN DOCUMENTATION:
 =========================
-This contract (CampusService) handles campus services (escrow, event tickets, university hub,
-marketplace, scholarships, and rewards redemptions). It invokes CampusToken via:
+This contract (CampusService) handles campus services (escrow, event tickets, university registry,
+marketplace, scholarships, and rewards redemptions).
+
+It invokes CampusToken via:
 1. `buy_camp_tokens` -> calls `CampusToken::mint_purchase` (verifies secure payment and mints CAMP)
 2. `redeem_reward` -> calls `CampusToken::transfer_from` (to collect CAMP) and `CampusToken::burn` (to burn)
 3. `create_escrow` -> calls `CampusToken::transfer_from` (to lock buyer funds)
 4. `release_escrow` / `refund_escrow` -> calls `CampusToken::transfer` (to disburse/refund locked funds)
-5. `create_event` / `register_university` -> calls `CampusToken::get_role` (to verify organizer/admin roles)
-6. `buy_ticket` -> calls `CampusToken::transfer_from` (to collect ticket payments)
-7. `disburse_scholarship` -> calls `CampusToken::transfer` (to disburse scholarship grant funds)
+5. `buy_ticket` -> calls `CampusToken::transfer_from` (to collect ticket payments)
+6. `disburse_scholarship` -> calls `CampusToken::transfer` (to disburse scholarship grant funds)
+
+It invokes CampusIdentity via:
+1. `create_event` -> calls `CampusIdentity::get_profile` (verifies host has Club/Admin role)
+2. `register_university` -> calls `CampusIdentity::get_profile` (verifies admin has Admin role)
+3. `create_listing` -> calls `CampusIdentity::get_profile` (verifies seller has Student/Merchant role)
+4. `apply_for_scholarship` -> calls `CampusIdentity::get_profile` (verifies applicant is a verified Student)
+5. `disburse_scholarship` / `create_scholarship_program` -> calls `CampusIdentity::get_profile` (verifies admin role)
+6. `create_utility_reward` / `fulfill_redemption` -> calls `CampusIdentity::get_profile` (verifies admin/merchant roles)
 */
 
 #![no_std]
 mod token_wasm {
     soroban_sdk::contractimport!(file = "wasm/campus_token.wasm");
 }
+mod identity_wasm {
+    soroban_sdk::contractimport!(file = "wasm/campus_identity.wasm");
+}
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, String, Symbol, Vec,
 };
 use token_wasm::Client as CampusTokenClient;
+use identity_wasm::Client as CampusIdentityClient;
+use identity_wasm::UserRole as IdentityUserRole;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -73,6 +87,7 @@ pub enum DataKey {
     UtilityReward(u64),
     RedemptionCounter,
     Redemption(u64),
+    IdentityContract,
 }
 
 #[contracttype]
@@ -224,6 +239,55 @@ fn get_token_contract(env: &Env) -> Result<Address, Error> {
         .instance()
         .get(&DataKey::TokenContract)
         .ok_or(Error::NotInitialized)
+}
+
+fn verify_role(env: &Env, address: &Address, min_role: u32) -> Result<(), Error> {
+    verify_role_and_verification(env, address, min_role, false)
+}
+
+fn verify_role_and_verification(
+    env: &Env,
+    address: &Address,
+    min_role: u32,
+    require_verified: bool,
+) -> Result<(), Error> {
+    if let Some(identity_contract) = env
+        .storage()
+        .instance()
+        .get::<DataKey, Address>(&DataKey::IdentityContract)
+    {
+        let identity_client = CampusIdentityClient::new(env, &identity_contract);
+        match identity_client.try_get_profile(address) {
+            Ok(Ok(profile)) => {
+                let role_val = match profile.role {
+                    IdentityUserRole::Student => 1,
+                    IdentityUserRole::Merchant => 2,
+                    IdentityUserRole::Admin => 4,
+                };
+                let mut meets_role = role_val >= min_role;
+                if min_role == 3 {
+                    meets_role = role_val >= 2;
+                }
+                if meets_role {
+                    if require_verified && !profile.verified {
+                        return Err(Error::Unauthorized);
+                    }
+                    return Ok(());
+                }
+            }
+            _ => {}
+        }
+        return Err(Error::Unauthorized);
+    }
+
+    let token_addr = get_token_contract(env)?;
+    let token_client = CampusTokenClient::new(env, &token_addr);
+    let role = token_client.get_role(address);
+    if role >= min_role {
+        Ok(())
+    } else {
+        Err(Error::Unauthorized)
+    }
 }
 
 #[contract]
@@ -425,14 +489,8 @@ impl CampusService {
             return Err(Error::TokenError);
         }
 
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
         // RBAC validation: Host must be Club (3) or Admin (4)
-        let role = token_client.get_role(&host);
-        if role != 3 && role != 4 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &host, 3)?;
 
         extend_instance(&env);
         let mut counter: u64 = env
@@ -608,14 +666,8 @@ impl CampusService {
     ) -> Result<u64, Error> {
         admin.require_auth();
 
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
         // Require role 4 (University Admin)
-        let role = token_client.get_role(&admin);
-        if role != 4 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &admin, 4)?;
 
         extend_instance(&env);
         let mut counter: u64 = env
@@ -1058,6 +1110,30 @@ impl CampusService {
         env.storage().instance().get(&DataKey::NativeTokenContract)
     }
 
+    pub fn set_identity_contract(
+        env: Env,
+        admin: Address,
+        identity_contract: Address,
+    ) -> Result<(), Error> {
+        let stored_admin = get_admin(&env)?;
+        stored_admin.require_auth();
+        if admin != stored_admin {
+            return Err(Error::Unauthorized);
+        }
+
+        env.storage()
+            .instance()
+            .set(&DataKey::IdentityContract, &identity_contract);
+        extend_instance(&env);
+
+        Ok(())
+    }
+
+    pub fn identity_contract(env: Env) -> Option<Address> {
+        extend_instance(&env);
+        env.storage().instance().get(&DataKey::IdentityContract)
+    }
+
     // --- MARKETPLACE OPERATIONS ---
 
     pub fn create_listing(
@@ -1079,12 +1155,7 @@ impl CampusService {
         }
 
         // RBAC validation: seller must be Student (1) or Merchant (2)
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-        let role = token_client.get_role(&seller);
-        if role != 1 && role != 2 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &seller, 1)?;
 
         extend_instance(&env);
         let mut counter: u64 = env
@@ -1234,20 +1305,16 @@ impl CampusService {
         amount: i128,
         min_gpa: u32,
     ) -> Result<u64, Error> {
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
         // Verify admin role is Admin (4)
-        let role = token_client.get_role(&admin);
-        if role != 4 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &admin, 4)?;
 
         if amount <= 0 {
             return Err(Error::InvalidAmount);
         }
 
         // Fund scholarship program: lock CAMP tokens in this contract
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
         token_client.transfer_from(
             &env.current_contract_address(),
             &admin,
@@ -1324,14 +1391,8 @@ impl CampusService {
             return Err(Error::TokenError); // GPA below minimum requirement
         }
 
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
-        // Verify applicant is a Student (1)
-        let role = token_client.get_role(&applicant);
-        if role != 1 {
-            return Err(Error::Unauthorized);
-        }
+        // Verify applicant is a Student (1) and verified
+        verify_role_and_verification(&env, &applicant, 1, true)?;
 
         extend_instance(&env);
         let mut counter: u64 = env
@@ -1381,14 +1442,8 @@ impl CampusService {
     ) -> Result<(), Error> {
         admin.require_auth();
 
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
         // Verify admin role is Admin (4)
-        let role = token_client.get_role(&admin);
-        if role != 4 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &admin, 4)?;
 
         let app_key = DataKey::ScholarshipApplication(application_id);
         extend_persistent(&env, &app_key);
@@ -1425,14 +1480,8 @@ impl CampusService {
     ) -> Result<(), Error> {
         admin.require_auth();
 
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
         // Verify admin role is Admin (4)
-        let role = token_client.get_role(&admin);
-        if role != 4 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &admin, 4)?;
 
         let app_key = DataKey::ScholarshipApplication(application_id);
         extend_persistent(&env, &app_key);
@@ -1461,6 +1510,8 @@ impl CampusService {
         }
 
         // Transfer funds from contract to applicant
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
         token_client.transfer(
             &env.current_contract_address(),
             &application.applicant,
@@ -1496,14 +1547,8 @@ impl CampusService {
     ) -> Result<u64, Error> {
         admin.require_auth();
 
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
         // Verify admin role is Admin (4)
-        let role = token_client.get_role(&admin);
-        if role != 4 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &admin, 4)?;
 
         if cost_camp <= 0 {
             return Err(Error::InvalidAmount);
@@ -1562,16 +1607,12 @@ impl CampusService {
             return Err(Error::EventFull); // Stock depleted
         }
 
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
         // Verify student is a Student (1)
-        let role = token_client.get_role(&student);
-        if role != 1 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &student, 1)?;
 
         // Transfer cost to contract address
+        let token_addr = get_token_contract(&env)?;
+        let token_client = CampusTokenClient::new(&env, &token_addr);
         token_client.transfer_from(
             &env.current_contract_address(),
             &student,
@@ -1635,14 +1676,8 @@ impl CampusService {
     ) -> Result<(), Error> {
         merchant.require_auth();
 
-        let token_addr = get_token_contract(&env)?;
-        let token_client = CampusTokenClient::new(&env, &token_addr);
-
         // Verify merchant role is Merchant (2) or Admin (4)
-        let role = token_client.get_role(&merchant);
-        if role != 2 && role != 4 {
-            return Err(Error::Unauthorized);
-        }
+        verify_role(&env, &merchant, 2)?;
 
         let red_key = DataKey::Redemption(redemption_id);
         extend_persistent(&env, &red_key);

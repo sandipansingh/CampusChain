@@ -1,20 +1,20 @@
 /*
 CALL CHAIN DOCUMENTATION:
 =========================
-This contract (CampusToken) acts as the core fungible token (CAMP) and role registry.
+This contract (CampusToken) acts as the core fungible token (CAMP).
 It is invoked by the CampusService contract to perform:
 1. secure token minting on purchase:
    CampusService::buy_camp_tokens -> CampusToken::mint_purchase (verifies caller is CampusService)
 2. token burning on utility redemption:
    CampusService::redeem_reward -> CampusToken::transfer_from -> CampusToken::burn
-3. RBAC role validation checks:
-   CampusService::create_event -> CampusToken::get_role
-   CampusService::register_university -> CampusToken::get_role
-4. Escrow and Event payments:
+3. Escrow and Event payments:
    CampusService::create_escrow -> CampusToken::transfer_from
    CampusService::release_escrow -> CampusToken::transfer
    CampusService::refund_escrow -> CampusToken::transfer
    CampusService::buy_ticket -> CampusToken::transfer_from
+
+Note: The role registry in CampusToken now serves as a legacy fallback.
+CampusIdentity is the single source of truth for roles and profile details.
 */
 
 #![no_std]

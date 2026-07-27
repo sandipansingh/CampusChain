@@ -3,6 +3,7 @@ resolver = "2"
 members = [
     "contracts/campus-token",
     "contracts/campus-service",
+    "contracts/campus-identity",
 ]
 
 [profile.release]
