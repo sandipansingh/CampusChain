@@ -22,6 +22,7 @@ import {
 } from "@/shared/stellar/client";
 import { decodeEvent } from "@/shared/stellar/eventDecoder";
 import { useActivityFeedStore } from "./useActivityFeedStore";
+import { eventMonitor, captureError } from "@/shared/lib/observability";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -156,6 +157,19 @@ export function useContractEventStream(address: string | null | undefined) {
         // Push all new decoded events into the activity feed store
         addItems(decoded);
 
+        // Emit a structured batch log entry + per-event entries through the monitor
+        eventMonitor.recordBatch(
+          decoded.map((evt) => ({
+            eventName: evt.eventName,
+            type: evt.type,
+            ledger: evt.ledger,
+            txHash: evt.fullTxHash,
+            details: evt.details,
+            ledgerClosedAt: evt.ledgerClosedAt,
+          })),
+          address ?? undefined
+        );
+
         // Collect unique cache keys to invalidate (deduplicate)
         const keysToInvalidate = new Set<string>();
         for (const evt of decoded) {
@@ -168,8 +182,10 @@ export function useContractEventStream(address: string | null | undefined) {
           const queryKey = JSON.parse(keyJson) as string[];
           queryClient.invalidateQueries({ queryKey });
         }
-      } catch {
-        // Silently ignore poll failures (network blips, rate limits, etc.)
+      } catch (err: unknown) {
+        // Log poll failures — network blips, rate limits, etc.
+        // Do not re-throw: the next interval tick will retry automatically.
+        captureError(err, { action: "event_stream_poll", contract: "soroban-rpc", walletAddress: address ?? undefined });
       } finally {
         isRunningRef.current = false;
       }

@@ -42,14 +42,14 @@ describe("XLM ↔ CAMP conversion arithmetic", () => {
   });
 
   it("handles 0 CAMP → 0 raw stroops → 0 CAMP", () => {
-    expect(campToRawStroops(0)).toBe(0n);
-    expect(rawStroopsToCamp(0n)).toBe(0);
+    expect(campToRawStroops(0)).toBe(BigInt(0));
+    expect(rawStroopsToCamp(BigInt(0))).toBe(0);
   });
 
   it("handles large amounts without overflow", () => {
     const camp = 1_000_000;
     const raw = campToRawStroops(camp);
-    expect(raw).toBe(10_000_000_000_000n);
+    expect(raw).toBe(BigInt(10_000_000_000_000));
     expect(rawStroopsToCamp(raw)).toBe(camp);
   });
 });

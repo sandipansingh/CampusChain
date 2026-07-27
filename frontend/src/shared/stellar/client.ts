@@ -13,6 +13,7 @@ import {
 } from "@stellar/stellar-sdk";
 
 import { useTransactionStatusStore, mapTransactionError } from "../hooks/useTransactionStatus";
+import { txMonitor, captureError } from "../lib/observability";
 
 export const NEXT_PUBLIC_STELLAR_RPC_URL =
   process.env.NEXT_PUBLIC_STELLAR_RPC_URL || "https://soroban-testnet.stellar.org";
@@ -77,6 +78,7 @@ export async function invokeContractMethod(
 
   const run = async (): Promise<string> => {
     store.setPending(label, run);
+    txMonitor.record({ action: methodName, status: "pending", contractId, walletAddress: userAddress });
     try {
       const server = getRpcServer();
       const sourceAccount = await server.getAccount(userAddress);
@@ -97,6 +99,7 @@ export async function invokeContractMethod(
       const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
 
       store.setProcessing();
+      txMonitor.record({ action: methodName, status: "processing", contractId, walletAddress: userAddress });
 
       const submission = await server.sendTransaction(
         new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
@@ -108,12 +111,15 @@ export async function invokeContractMethod(
       }
 
       await pollTransactionStatus(submission.hash);
-      
+
       store.setConfirmed(submission.hash);
+      txMonitor.record({ action: methodName, status: "confirmed", contractId, walletAddress: userAddress, txHash: submission.hash });
       return submission.hash;
     } catch (err: unknown) {
       const mapped = mapTransactionError(err);
       store.setFailed(mapped);
+      txMonitor.record({ action: methodName, status: "failed", contractId, walletAddress: userAddress, errorMessage: mapped });
+      captureError(err, { action: methodName, contract: contractId, walletAddress: userAddress });
       throw err;
     }
   };
@@ -132,6 +138,7 @@ export async function sendNativePayment(
 
   const run = async (): Promise<string> => {
     store.setPending(label, run);
+    txMonitor.record({ action: "xlm_payment", status: "pending", walletAddress: userAddress });
     try {
       const horizon = new Horizon.Server("https://horizon-testnet.stellar.org");
       const sourceAccount = await horizon.loadAccount(userAddress);
@@ -153,6 +160,7 @@ export async function sendNativePayment(
       const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
 
       store.setProcessing();
+      txMonitor.record({ action: "xlm_payment", status: "processing", walletAddress: userAddress });
 
       const submission = await horizon.submitTransaction(
         new Transaction(signedXdr, NEXT_PUBLIC_STELLAR_PASSPHRASE)
@@ -163,10 +171,13 @@ export async function sendNativePayment(
       }
 
       store.setConfirmed(submission.hash);
+      txMonitor.record({ action: "xlm_payment", status: "confirmed", walletAddress: userAddress, txHash: submission.hash });
       return submission.hash;
     } catch (err: unknown) {
       const mapped = mapTransactionError(err);
       store.setFailed(mapped);
+      txMonitor.record({ action: "xlm_payment", status: "failed", walletAddress: userAddress, errorMessage: mapped });
+      captureError(err, { action: "xlm_payment", contract: "horizon", walletAddress: userAddress });
       throw err;
     }
   };
