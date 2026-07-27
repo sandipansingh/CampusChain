@@ -1,35 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { useQueryClient } from "@tanstack/react-query";
-import { useWalletStore } from "@/state/useWalletStore";
-import {
-  useCampusUserRole,
-  useSetRoleMutation,
-  useRequestRoleChangeMutation,
-  useApproveRoleChangeMutation,
-  useDenyRoleChangeMutation,
-  usePendingRoleRequests,
-} from "@/hooks/useCampusToken";
-import { useTransactionStore } from "@/state/useTransactionStore";
-import { pollTransactionStatus } from "@/services/contracts";
-import { logger } from "@/services/logger";
-import {
-  useUniversities,
-  useMembership,
-  usePendingRequests,
-  useRegisterUniversityMutation,
-  useRequestJoinMutation,
-  useApproveMemberMutation,
-  useDenyMemberMutation,
-  useInviteMemberMutation,
-  useLeaveUniversityMutation,
-} from "@/hooks/useCampusService";
+import React from "react";
+import { useUniversityProfile } from "@/hooks/useUniversityProfile";
 import ProfileAvatar from "@/components/ProfileAvatar";
 import {
   User,
-  Shield,
-  CheckCircle,
   Loader2,
   GraduationCap,
   Store,
@@ -44,46 +19,40 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
-  const { address } = useWalletStore();
-  const { data: role } = useCampusUserRole(address);
-  const setRoleMut = useSetRoleMutation();
-  const requestRoleMut = useRequestRoleChangeMutation();
-  const approveRoleMut = useApproveRoleChangeMutation();
-  const denyRoleMut = useDenyRoleChangeMutation();
-  const { data: pendingRoleReqs = [] } = usePendingRoleRequests();
-  const queryClient = useQueryClient();
-
-  const addTransaction = useTransactionStore((state) => state.addTransaction);
-  const updateTransaction = useTransactionStore((state) => state.updateTransaction);
-
-  const [selectedRole, setSelectedRole] = useState<number>(0);
-
-  // Sync selectedRole to the actual on-chain role once it loads
-  useEffect(() => {
-    if (role !== undefined && role !== null) {
-      setSelectedRole(Number(role));
-    }
-  }, [role]);
-  const [copied, setCopied] = useState(false);
-
-  const { data: universities = [] } = useUniversities();
-  const { data: membershipUniId } = useMembership(address);
-
-  const regUniMut = useRegisterUniversityMutation();
-  const reqJoinMut = useRequestJoinMutation();
-  const approveMut = useApproveMemberMutation();
-  const denyMut = useDenyMemberMutation();
-  const inviteMut = useInviteMemberMutation();
-  const leaveMut = useLeaveUniversityMutation();
-
-  const myUniversity = universities.find((u) => u.admin === address);
-  const { data: pendingReqs = [] } = usePendingRequests(myUniversity?.id ?? null);
-  const myUni = universities.find((u) => u.id === membershipUniId);
-
-  const [uniName, setUniName] = useState("");
-  const [uniLocation, setUniLocation] = useState("");
-  const [uniDesc, setUniDesc] = useState("");
-  const [inviteAddress, setInviteAddress] = useState("");
+  const {
+    address,
+    role,
+    selectedRole,
+    setSelectedRole,
+    copied,
+    universities,
+    myUniversity,
+    pendingReqs,
+    myUni,
+    pendingRoleReqs,
+    uniName,
+    setUniName,
+    uniLocation,
+    setUniLocation,
+    uniDesc,
+    setUniDesc,
+    inviteAddress,
+    setInviteAddress,
+    handleCopy,
+    handleRegisterRole,
+    handleCreateUniversity,
+    handleRequestJoin,
+    handleApprove,
+    handleDeny,
+    handleInvite,
+    handleLeave,
+    handleApproveRole,
+    handleDenyRole,
+    setRolePending,
+    createUniPending,
+    invitePending,
+    leavePending,
+  } = useUniversityProfile();
 
   const getRoleInfo = (roleNum?: number) => {
     const roles: Record<number, { label: string; desc: string; icon: React.ElementType; color: string }> = {
@@ -94,153 +63,6 @@ export default function ProfilePage() {
       4: { label: "University Admin", desc: "Register universities, manage members, distribute rewards.", icon: Building, color: "text-rose-700 bg-rose-50" },
     };
     return roles[roleNum ?? 0];
-  };
-
-  const handleCopy = () => {
-    if (!address) return;
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
-
-  const handleRegisterRole = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address) return;
-    const startTime = Date.now();
-    const actionName = "REQUEST ROLE CHANGE";
-    try {
-      if (selectedRole <= 1) {
-        // Guest (0) / Student (1): self-assignable, no admin needed
-        const hash = await setRoleMut.mutateAsync({ admin: address, user: address, role: selectedRole });
-        addTransaction({ hash, status: "pending", method: "UPDATE ROLE", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-        updateTransaction(hash, { status: "processing" });
-        await pollTransactionStatus(hash);
-        updateTransaction(hash, { status: "confirmed" });
-        queryClient.invalidateQueries({ queryKey: ["campus-role", address] });
-        logger.trackTransaction({ hash, method: actionName, status: "confirmed", durationMs: Date.now() - startTime });
-      } else {
-        // Merchant (2) / Club (3) / Admin (4): requires admin approval via role request
-        const hash = await requestRoleMut.mutateAsync({ applicant: address, requestedRole: selectedRole });
-        addTransaction({ hash, status: "pending", method: actionName, timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-        updateTransaction(hash, { status: "processing" });
-        await pollTransactionStatus(hash);
-        updateTransaction(hash, { status: "confirmed" });
-        queryClient.invalidateQueries({ queryKey: ["role-requests"] });
-        logger.trackTransaction({ hash, method: actionName, status: "confirmed", durationMs: Date.now() - startTime });
-      }
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : "Role registration failed";
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: actionName, timestamp: Date.now(), errorMessage: errMsg });
-      logger.error("Role update failed", err);
-    }
-  };
-
-  const handleCreateUniversity = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address || !uniName || !uniLocation) return;
-    try {
-      const hash = await regUniMut.mutateAsync({ admin: address, name: uniName, location: uniLocation, description: uniDesc });
-      addTransaction({ hash, status: "pending", method: "REGISTER UNIVERSITY", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-      setUniName(""); setUniLocation(""); setUniDesc("");
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "REGISTER UNIVERSITY", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleRequestJoin = async (uniId: number) => {
-    if (!address) return;
-    try {
-      const hash = await reqJoinMut.mutateAsync({ universityId: uniId, applicant: address });
-      addTransaction({ hash, status: "pending", method: "REQUEST JOIN", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "REQUEST JOIN", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleApprove = async (reqId: number) => {
-    if (!address) return;
-    try {
-      const hash = await approveMut.mutateAsync({ requestId: reqId, admin: address });
-      addTransaction({ hash, status: "pending", method: "APPROVE MEMBER", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "APPROVE MEMBER", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleDeny = async (reqId: number) => {
-    if (!address) return;
-    try {
-      const hash = await denyMut.mutateAsync({ requestId: reqId, admin: address });
-      addTransaction({ hash, status: "pending", method: "DENY MEMBER", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "DENY MEMBER", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleInvite = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address || !myUniversity || !inviteAddress) return;
-    try {
-      const hash = await inviteMut.mutateAsync({ universityId: myUniversity.id, invitee: inviteAddress, admin: address });
-      addTransaction({ hash, status: "pending", method: "INVITE MEMBER", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-      setInviteAddress("");
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "INVITE MEMBER", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleLeave = async () => {
-    if (!address) return;
-    try {
-      const hash = await leaveMut.mutateAsync({ member: address });
-      addTransaction({ hash, status: "pending", method: "LEAVE UNIVERSITY", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "LEAVE UNIVERSITY", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleApproveRole = async (reqId: number) => {
-    if (!address) return;
-    try {
-      const hash = await approveRoleMut.mutateAsync({ requestId: reqId, admin: address });
-      addTransaction({ hash, status: "pending", method: "APPROVE ROLE", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "APPROVE ROLE", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleDenyRole = async (reqId: number) => {
-    if (!address) return;
-    try {
-      const hash = await denyRoleMut.mutateAsync({ requestId: reqId, admin: address });
-      addTransaction({ hash, status: "pending", method: "DENY ROLE", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "DENY ROLE", timestamp: Date.now(), errorMessage: String(err) });
-    }
   };
 
   const getRoleLabel = (r: number) => {
@@ -259,194 +81,296 @@ export default function ProfilePage() {
         </div>
       </div>
 
+      {/* Grid: Identity Card (Left) & Controls (Right) */}
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        
+        {/* Left Side: Avatar Card */}
         <div className="lg:col-span-1 flex flex-col gap-6">
-          <div className="bg-white rounded-[24px] p-6 flex flex-col items-center text-center gap-6 shadow-sm">
-            <div className="relative">
-              <ProfileAvatar address={address} size={96} />
-              <div className="absolute -bottom-2 -right-2 w-8 h-8 rounded-full bg-slate-900 border-2 border-white flex items-center justify-center text-white">
-                <Shield className="w-4 h-4 text-accent" />
-              </div>
-            </div>
-            <div className="flex flex-col gap-1.5 w-full">
-              <span className="font-semibold text-slate-900 truncate px-4">{address ? `${address.slice(0, 8)}...${address.slice(-8)}` : "Guest Wallet"}</span>
-              <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded self-center ${currentRole.color}`}>{currentRole.label}</span>
-            </div>
-            <p className="text-xs text-slate-800 font-semibold leading-relaxed px-2">{currentRole.desc}</p>
-            {address && (
-              <button onClick={handleCopy} className="h-10 px-4 w-full bg-slate-50 text-xs font-bold text-slate-600 rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all shadow-sm">
-                {copied ? <><CheckCircle className="w-4 h-4 text-emerald-600" />Copied Address</> : "Copy Wallet Address"}
-              </button>
-            )}
-          </div>
-        </div>
-
-        <div className="lg:col-span-2 bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
-          <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-bold text-slate-900 uppercase">On-Chain Identity Registrar</h3>
-            <p className="text-xs text-slate-700 font-semibold mt-1">Soroban smart contracts secure permissions using Role-Based Access Control (RBAC).</p>
-          </div>
-          <form onSubmit={handleRegisterRole} className="flex flex-col gap-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {[ { id: 1, name: "Student", icon: GraduationCap, desc: "Lock escrows, buy ticket passes, transfer tokens" }, { id: 2, name: "Merchant", icon: Store, desc: "Accept peer payments and settle locked escrows — requires admin approval" }, { id: 3, name: "Club Organizer", icon: Calendar, desc: "Mint ticket passes and run door authentication — requires admin approval" }, { id: 4, name: "University Admin", icon: Building, desc: "Register universities, distribute scholarship rewards" } ].map((r) => {
-                const Icon = r.icon;
-                const isSelected = selectedRole === r.id;
-                return (
-                  <div key={r.id} onClick={() => setSelectedRole(r.id)} className={`p-4 rounded-xl cursor-pointer flex gap-4 transition-all ${isSelected ? "bg-slate-100 text-slate-950 font-bold" : "bg-slate-50/50 hover:bg-slate-50 text-slate-700"}`}>
-                    <div className={`w-10 h-10 rounded-xl flex items-center justify-center shrink-0 ${isSelected ? "bg-accent text-white" : "bg-slate-100 text-slate-700"}`}><Icon className="w-5 h-5" /></div>
-                    <div className="flex flex-col"><span className="text-xs font-bold uppercase">{r.name}</span><span className="text-[10px] text-slate-700 font-semibold mt-1 leading-normal">{r.desc}</span></div>
-                  </div>
-                );
-              })}
-            </div>
-            <button type="submit" disabled={setRoleMut.isPending || requestRoleMut.isPending} className="h-12 w-full bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50 disabled:pointer-events-none mt-2">
-              {setRoleMut.isPending || requestRoleMut.isPending ? <><Loader2 className="w-4 h-4 animate-spin" />Processing...</> : selectedRole <= 1 ? "Update On-Chain Role" : `Request ${getRoleLabel(selectedRole)} Role`}
+          <div className="bg-white rounded-[24px] p-6 flex flex-col items-center text-center shadow-sm">
+            <ProfileAvatar address={address} size={96} />
+            <span className="text-sm font-bold text-slate-900 mt-4 break-all max-w-full px-2 font-mono">
+              {address ? `${address.slice(0, 12)}...${address.slice(-12)}` : "Disconnected"}
+            </span>
+            <button
+              onClick={handleCopy}
+              className="mt-2 text-[10px] font-bold text-slate-700 hover:text-accent transition-colors uppercase"
+            >
+              {copied ? "Copied Public Key!" : "Copy Public Key"}
             </button>
-            {selectedRole >= 2 && (
-              <p className="text-[10px] font-semibold text-amber-600 bg-amber-50 border border-amber-100 rounded-xl p-2 text-center">
-                Merchant, Club Organizer, and Admin roles require approval from the contract super-admin.
-              </p>
-            )}
-          </form>
-        </div>
-      </div>
 
-      {/* University Section */}
-      <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
-        {role === 4 ? (
-          <div className="flex flex-col gap-6">
-            <div className="border-b border-slate-100 pb-4">
-              <h3 className="text-base font-bold text-slate-900 uppercase flex items-center gap-2"><Building className="w-5 h-5 text-slate-700" />University Administration</h3>
-              <p className="text-xs text-slate-700 font-semibold mt-1">Register your university on-chain and manage members.</p>
-            </div>
-
-            {!myUniversity ? (
-              <form onSubmit={handleCreateUniversity} className="flex flex-col gap-4 max-w-xl">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">University Name</label>
-                    <input type="text" required placeholder="e.g., Stellar Tech University" value={uniName} onChange={(e) => setUniName(e.target.value)} className="h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-350 transition-all" />
-                  </div>
-                  <div className="flex flex-col gap-2">
-                    <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Location</label>
-                    <input type="text" required placeholder="e.g., San Francisco, CA" value={uniLocation} onChange={(e) => setUniLocation(e.target.value)} className="h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-350 transition-all" />
-                  </div>
-                </div>
-                <div className="flex flex-col gap-2">
-                  <label className="text-[10px] font-semibold text-slate-700 uppercase tracking-wider">Description</label>
-                  <input type="text" placeholder="Brief details about your campus economy..." value={uniDesc} onChange={(e) => setUniDesc(e.target.value)} className="h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-350 transition-all" />
-                </div>
-                <button type="submit" disabled={regUniMut.isPending} className="h-11 px-6 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all self-start">
-                  {regUniMut.isPending ? <><Loader2 className="w-4 h-4 animate-spin" />Registering...</> : <><PlusCircle className="w-4 h-4" />Register University On-Chain</>}
-                </button>
-              </form>
-            ) : (
-              <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                <div className="bg-slate-50/50 p-6 rounded-[20px] flex flex-col justify-between min-h-[160px]">
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[9px] font-bold text-accent uppercase tracking-wider">Active On-Chain Portal</span>
-                    <h4 className="text-lg font-bold text-slate-900 leading-none">{myUniversity.name}</h4>
-                    <span className="text-xs font-semibold text-slate-700">Location: {myUniversity.location}</span>
-                    <p className="text-xs text-slate-700 font-semibold mt-2 leading-relaxed">{myUniversity.description || "No description."}</p>
-                    <span className="text-[10px] font-bold text-slate-500 mt-1">{myUniversity.member_count} members</span>
-                  </div>
-                </div>
-                <div className="flex flex-col gap-4">
-                  <div className="flex flex-col gap-2">
-                    <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><Users className="w-4 h-4" />Invite Member</span>
-                    <form onSubmit={handleInvite} className="flex gap-2">
-                      <input type="text" required placeholder="Stellar address (G...)" value={inviteAddress} onChange={(e) => setInviteAddress(e.target.value)} className="flex-1 h-10 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none" />
-                      <button type="submit" disabled={inviteMut.isPending} className="h-10 px-4 bg-accent text-white text-xs font-bold rounded-xl flex items-center gap-1.5">
-                        {inviteMut.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <Send className="w-3 h-3" />}Invite
-                      </button>
-                    </form>
-                  </div>
-                  <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider flex items-center gap-1.5"><Users className="w-4 h-4" />Pending Requests ({pendingReqs.length})</span>
-                  <div className="flex flex-col gap-2 max-h-60 overflow-y-auto pr-2">
-                    {pendingReqs.length === 0 ? (
-                      <div className="text-xs font-semibold text-slate-700 py-6 text-center border border-dashed border-slate-200 rounded-xl">No pending requests.</div>
-                    ) : pendingReqs.map((req) => (
-                      <div key={req.id} className="bg-slate-50 p-4 rounded-xl flex items-center justify-between gap-4">
-                        <span className="text-xs font-mono font-semibold text-slate-900 truncate flex-1">{req.applicant.slice(0, 12)}...{req.applicant.slice(-8)}</span>
-                        <div className="flex items-center gap-1.5 shrink-0">
-                          <button onClick={() => handleApprove(req.id)} className="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600"><Check className="w-4 h-4" /></button>
-                          <button onClick={() => handleDeny(req.id)} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-600"><X className="w-4 h-4" /></button>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
+            {/* Current Active Role Badge */}
+            <div className={`mt-6 w-full rounded-2xl p-4 border border-slate-100 flex items-center gap-3 ${currentRole.color}`}>
+              <div className="w-10 h-10 rounded-xl bg-white flex items-center justify-center border border-current/10 shrink-0">
+                <currentRole.icon className="w-5 h-5" />
               </div>
-            )}
+              <div className="text-left min-w-0">
+                <span className="text-[10px] font-bold tracking-wider uppercase opacity-75">Active Permission</span>
+                <h4 className="text-sm font-bold truncate uppercase">{currentRole.label}</h4>
+              </div>
+            </div>
           </div>
-        ) : (
-          <div className="flex flex-col gap-4">
+
+          {/* Card: Register Role */}
+          <div className="bg-white rounded-[24px] p-6 flex flex-col gap-4 shadow-sm">
+            <h3 className="text-sm font-bold text-slate-900 uppercase">Request Role Change</h3>
+            <p className="text-[10px] text-slate-700 font-semibold leading-relaxed">
+              Student roles are self-assigned immediately. Merchant, Club, and Admin roles require verification approval.
+            </p>
+            <form onSubmit={handleRegisterRole} className="flex flex-col gap-4">
+              <div className="flex flex-col gap-2">
+                <label className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Select Role</label>
+                <select
+                  value={selectedRole}
+                  onChange={(e) => setSelectedRole(parseInt(e.target.value))}
+                  className="w-full h-11 bg-slate-50 border border-slate-200 rounded-xl px-4 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all cursor-pointer text-slate-800"
+                >
+                  <option value={0}>Guest (Viewer)</option>
+                  <option value={1}>Student</option>
+                  <option value={2}>Merchant (Needs Admin)</option>
+                  <option value={3}>Club Organizer (Needs Admin)</option>
+                  <option value={4}>University Admin (Needs Admin)</option>
+                </select>
+              </div>
+              <button
+                type="submit"
+                disabled={setRolePending || Number(role) === selectedRole}
+                className="w-full h-11 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+              >
+                {setRolePending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {selectedRole <= 1 ? "Update Role" : "Request Approval"}
+              </button>
+            </form>
+          </div>
+        </div>
+
+        {/* Right Side: University & Requests Console */}
+        <div className="lg:col-span-2 flex flex-col gap-6">
+          
+          {/* Section: University Association */}
+          <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
             <div className="border-b border-slate-100 pb-4">
-              <h3 className="text-base font-bold text-slate-900 uppercase">University Association</h3>
-              <p className="text-xs text-slate-700 font-semibold mt-1">Join a university directory to participate in the campus economy.</p>
+              <h3 className="text-base font-bold text-slate-900 uppercase">University Hub</h3>
+              <p className="text-xs text-slate-700 font-semibold mt-1">
+                Associate your identity with an accredited university or register a new campus registry instance.
+              </p>
             </div>
+
+            {/* University Details Panel */}
             {myUni ? (
-              <div className="bg-emerald-50/20 p-6 rounded-[20px] flex flex-col md:flex-row items-center justify-between gap-6">
-                <div className="flex flex-col gap-1.5">
-                  <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 px-2 py-0.5 rounded-full self-start uppercase">Verified On-Chain Member</span>
-                  <h4 className="text-lg font-bold text-slate-900 leading-none mt-1">{myUni.name}</h4>
-                  <span className="text-xs font-semibold text-slate-700">Location: {myUni.location}</span>
+              <div className="bg-slate-50 border border-slate-100 rounded-2xl p-5 flex flex-col md:flex-row justify-between items-start md:items-center gap-4 animate-in fade-in duration-200">
+                <div className="flex items-center gap-3">
+                  <div className="w-11 h-11 rounded-xl bg-white border border-slate-200 flex items-center justify-center text-slate-700 shrink-0 shadow-sm">
+                    <Building className="w-5 h-5" />
+                  </div>
+                  <div>
+                    <span className="text-[9px] font-bold text-emerald-600 bg-emerald-50 border border-emerald-100 rounded px-1.5 py-0.5 uppercase tracking-wide">Joined Member</span>
+                    <h4 className="text-sm font-extrabold text-slate-900 mt-1 uppercase">{myUni.name}</h4>
+                    <p className="text-[10px] text-slate-500 font-medium font-mono break-all">{myUni.location}</p>
+                  </div>
                 </div>
-                <button onClick={handleLeave} disabled={leaveMut.isPending} className="h-10 px-5 bg-white border border-red-100 text-red-600 font-semibold text-xs rounded-xl hover:bg-red-50 transition-colors">
-                  {leaveMut.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : "Leave University"}
+                <button
+                  onClick={handleLeave}
+                  disabled={leavePending}
+                  className="h-10 px-5 bg-white border border-slate-200 text-xs font-bold text-red-600 hover:bg-red-50 hover:border-red-100 rounded-xl transition-all active:scale-95 shrink-0 flex items-center gap-1.5 shadow-sm"
+                >
+                  {leavePending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : null}
+                  Leave Campus
                 </button>
               </div>
             ) : (
-              <div className="flex flex-col gap-4">
-                <span className="text-xs font-bold text-slate-700 uppercase tracking-wider">Available Universities On-Chain</span>
-                {universities.length === 0 ? (
-                  <div className="border border-dashed border-slate-200 rounded-xl p-8 text-center text-xs font-semibold text-slate-700">No universities registered yet. A University Admin must create one first.</div>
-                ) : (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {universities.map((uni) => (
-                      <div key={uni.id} className="bg-slate-50/50 p-4 rounded-xl flex flex-col justify-between gap-4">
-                        <div className="flex flex-col gap-1">
-                          <h5 className="font-bold text-xs text-slate-900">{uni.name}</h5>
-                          <span className="text-[10px] text-slate-700 font-semibold">{uni.location}</span>
-                          <span className="text-[9px] text-slate-500">{uni.member_count} members</span>
-                          <p className="text-[10px] text-slate-700 font-semibold mt-2 leading-relaxed">{uni.description || "No description."}</p>
+              <div className="border border-dashed border-slate-200 rounded-[24px] p-10 text-center flex flex-col items-center justify-center gap-2 bg-slate-50/20">
+                <Users className="w-8 h-8 text-slate-300" />
+                <span className="font-bold text-slate-700 text-xs uppercase tracking-widest">Unassociated Wallet</span>
+                <p className="text-[10px] text-slate-700 font-semibold max-w-sm">
+                  You are not registered under any university. Request access below or set up a new registry.
+                </p>
+              </div>
+            )}
+
+            {/* University Registry Registry Forms */}
+            {!myUni && (
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-4 border-t border-slate-100">
+                
+                {/* Join Form */}
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase">Available Registries</h4>
+                  {universities.length === 0 ? (
+                    <span className="text-xs font-semibold text-slate-400 italic">No registered universities yet.</span>
+                  ) : (
+                    <div className="flex flex-col gap-2.5 max-h-[220px] overflow-y-auto">
+                      {universities.map((uni) => (
+                        <div key={uni.id} className="border border-slate-100 rounded-xl p-3 flex justify-between items-center gap-2 hover:bg-slate-50/50 transition-colors bg-white">
+                          <div className="min-w-0">
+                            <span className="text-xs font-bold text-slate-900 truncate block uppercase">{uni.name}</span>
+                            <span className="text-[9px] text-slate-400 font-semibold font-mono block mt-0.5 truncate">{uni.location}</span>
+                          </div>
+                          <button
+                            onClick={() => handleRequestJoin(uni.id)}
+                            className="h-8 px-3 bg-slate-950 hover:bg-slate-800 text-white text-[10px] font-bold uppercase rounded-lg flex items-center gap-1 active:scale-95 transition-all shrink-0"
+                          >
+                            <UserPlus className="w-3.5 h-3.5" />
+                            Join
+                          </button>
                         </div>
-                        <button onClick={() => handleRequestJoin(uni.id)} disabled={reqJoinMut.isPending} className="h-9 w-full bg-slate-900 text-white text-xs font-semibold rounded-lg flex items-center justify-center gap-1.5 hover:bg-slate-800 transition-colors">
-                          {reqJoinMut.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : <><UserPlus className="w-3.5 h-3.5" />Request to Join</>}
-                        </button>
-                      </div>
-                    ))}
-                  </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+
+                {/* Create registry Form */}
+                {role === 4 && (
+                  <form onSubmit={handleCreateUniversity} className="flex flex-col gap-3.5 bg-slate-50/50 p-5 rounded-2xl border border-slate-100/50">
+                    <h4 className="text-xs font-bold text-slate-900 uppercase">Register New University</h4>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-bold text-slate-700 uppercase">Registry Name</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Stanford University"
+                        value={uniName}
+                        onChange={(e) => setUniName(e.target.value)}
+                        className="w-full h-10 bg-white border border-slate-200 rounded-lg px-3 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all uppercase"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-bold text-slate-700 uppercase">Location / Realm</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Stanford, CA"
+                        value={uniLocation}
+                        onChange={(e) => setUniLocation(e.target.value)}
+                        className="w-full h-10 bg-white border border-slate-200 rounded-lg px-3 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all uppercase"
+                      />
+                    </div>
+                    <div className="flex flex-col gap-1.5">
+                      <label className="text-[9px] font-bold text-slate-700 uppercase">Description</label>
+                      <input
+                        type="text"
+                        required
+                        placeholder="e.g. Stanford University Realm"
+                        value={uniDesc}
+                        onChange={(e) => setUniDesc(e.target.value)}
+                        className="w-full h-10 bg-white border border-slate-200 rounded-lg px-3 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all uppercase"
+                      />
+                    </div>
+                    <button
+                      type="submit"
+                      disabled={createUniPending}
+                      className="h-10 mt-2 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
+                    >
+                      {createUniPending ? <Loader2 className="w-4 h-4 animate-spin" /> : <PlusCircle className="w-4 h-4" />}
+                      Register University
+                    </button>
+                  </form>
                 )}
               </div>
             )}
           </div>
-        )}
-      </div>
 
-      {/* Role Approval Panel (Admin only) */}
-      {role === 4 && pendingRoleReqs.length > 0 && (
-        <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
-          <div className="border-b border-slate-100 pb-4">
-            <h3 className="text-base font-bold text-slate-900 uppercase flex items-center gap-2"><Shield className="w-5 h-5 text-slate-700" />Pending Role Change Requests</h3>
-            <p className="text-xs text-slate-700 font-semibold mt-1">Approve or deny role change requests from students.</p>
-          </div>
-          <div className="flex flex-col gap-2">
-            {pendingRoleReqs.map((req) => (
-              <div key={req.id} className="bg-slate-50 p-4 rounded-xl flex items-center justify-between gap-4">
-                <div className="flex flex-col gap-0.5 min-w-0">
-                  <span className="text-xs font-mono font-semibold text-slate-900 truncate">{req.applicant.slice(0, 12)}...{req.applicant.slice(-8)}</span>
-                  <span className="text-[10px] text-slate-700 font-semibold">wants: {getRoleLabel(req.requested_role)}</span>
-                </div>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <button onClick={() => handleApproveRole(req.id)} className="w-7 h-7 rounded-lg bg-emerald-50 hover:bg-emerald-100 flex items-center justify-center text-emerald-600"><Check className="w-4 h-4" /></button>
-                  <button onClick={() => handleDenyRole(req.id)} className="w-7 h-7 rounded-lg bg-red-50 hover:bg-red-100 flex items-center justify-center text-red-600"><X className="w-4 h-4" /></button>
+          {/* Admin Management Section: Member invites & Approvals (Only visible to Admin) */}
+          {role === 4 && (myUniversity || pendingRoleReqs.length > 0) && (
+            <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
+              <div className="border-b border-slate-100 pb-4">
+                <h3 className="text-base font-bold text-slate-900 uppercase">Admin Console</h3>
+                <p className="text-xs text-slate-700 font-semibold mt-1">Manage membership invitations, approve applicant requests, and verify RBAC registrations.</p>
+              </div>
+
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                {/* Left: Invites and Members Requests */}
+                {myUniversity && (
+                  <div className="flex flex-col gap-4">
+                    <h4 className="text-xs font-bold text-slate-900 uppercase">Member Registry</h4>
+                    <form onSubmit={handleInvite} className="flex gap-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Enter applicant G... address"
+                        value={inviteAddress}
+                        onChange={(e) => setInviteAddress(e.target.value)}
+                        className="flex-1 h-10 bg-slate-50 border border-slate-200 rounded-xl px-3 text-xs font-semibold outline-none focus:border-slate-300 focus:ring-1 focus:ring-slate-200/50 transition-all uppercase font-mono"
+                      />
+                      <button
+                        type="submit"
+                        disabled={invitePending}
+                        className="h-10 px-4 bg-slate-950 hover:bg-slate-800 text-white text-xs font-bold uppercase rounded-xl flex items-center gap-1 active:scale-95 transition-all shrink-0"
+                      >
+                        {invitePending ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Send className="w-3.5 h-3.5" />}
+                        Invite
+                      </button>
+                    </form>
+
+                    {/* Pending membership requests list */}
+                    <div className="flex flex-col gap-2 mt-2">
+                      <span className="text-[10px] font-bold text-slate-700 uppercase tracking-wider">Pending Admission Requests ({pendingReqs.length})</span>
+                      {pendingReqs.length === 0 ? (
+                        <span className="text-xs font-semibold text-slate-400 italic">No pending requests</span>
+                      ) : (
+                        <div className="flex flex-col gap-2 max-h-[200px] overflow-y-auto">
+                          {pendingReqs.map((req) => (
+                            <div key={req.id} className="border border-slate-100 rounded-xl p-3 flex justify-between items-center bg-slate-50/50">
+                              <span className="text-[10px] font-mono font-bold text-slate-800 truncate mr-2">{req.applicant}</span>
+                              <div className="flex gap-1.5 shrink-0">
+                                <button
+                                  onClick={() => handleApprove(req.id)}
+                                  className="w-7 h-7 rounded-lg bg-emerald-50 text-emerald-600 hover:bg-emerald-100 flex items-center justify-center active:scale-95 transition-all"
+                                >
+                                  <Check className="w-4 h-4" />
+                                </button>
+                                <button
+                                  onClick={() => handleDeny(req.id)}
+                                  className="w-7 h-7 rounded-lg bg-red-50 text-red-600 hover:bg-red-100 flex items-center justify-center active:scale-95 transition-all"
+                                >
+                                  <X className="w-4 h-4" />
+                                </button>
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  </div>
+                )}
+
+                {/* Right: Role requests approvals */}
+                <div className="flex flex-col gap-4">
+                  <h4 className="text-xs font-bold text-slate-900 uppercase">Pending Role Requests ({pendingRoleReqs.length})</h4>
+                  {pendingRoleReqs.length === 0 ? (
+                    <span className="text-xs font-semibold text-slate-400 italic">No pending role approvals</span>
+                  ) : (
+                    <div className="flex flex-col gap-2.5 max-h-[260px] overflow-y-auto">
+                      {pendingRoleReqs.map((req) => (
+                        <div key={req.id} className="border border-slate-100 rounded-xl p-3 flex flex-col gap-2 bg-slate-50/30">
+                          <div className="flex items-center justify-between">
+                            <span className="text-[10px] font-mono font-bold text-slate-800 truncate max-w-[120px]">{req.applicant}</span>
+                            <span className="text-[9px] font-bold text-purple-700 bg-purple-50 border border-purple-100 px-1.5 py-0.5 rounded uppercase">
+                              {getRoleLabel(req.requested_role)}
+                            </span>
+                          </div>
+                          <div className="flex gap-2">
+                            <button
+                              onClick={() => handleApproveRole(req.id)}
+                              className="flex-1 h-8 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-[10px] font-bold uppercase rounded-lg active:scale-95 transition-all"
+                            >
+                              Approve
+                            </button>
+                            <button
+                              onClick={() => handleDenyRole(req.id)}
+                              className="flex-1 h-8 bg-red-50 hover:bg-red-100 text-red-700 text-[10px] font-bold uppercase rounded-lg active:scale-95 transition-all"
+                            >
+                              Deny
+                            </button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
               </div>
-            ))}
-          </div>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 }

@@ -1,152 +1,50 @@
 "use client";
 
-import React, { useState } from "react";
-import { useWalletStore } from "@/state/useWalletStore";
+import React from "react";
 import { useCampusBalance } from "@/hooks/useCampusToken";
-import {
-  useEscrowAgreement,
-  useReleaseEscrowMutation,
-  useRefundEscrowMutation,
-  useClaimFaucetMutation,
-  useHasClaimedFaucet,
-  useBuyCampTokensMutation,
-} from "@/hooks/useCampusService";
-import { pollTransactionStatus } from "@/services/contracts";
-import { useTransactionStore } from "@/state/useTransactionStore";
-import { logger } from "@/services/logger";
+import { useWalletOperations } from "@/hooks/useWalletOperations";
 import {
   Wallet,
   Unlock,
   RefreshCw,
   Loader2,
-  AlertTriangle
+  AlertTriangle,
 } from "lucide-react";
 
 export default function WalletPage() {
-  const { address } = useWalletStore();
-  const { data: balance, isLoading: balanceLoading, refetch: refetchBalance } = useCampusBalance(address);
-  const { data: hasClaimed } = useHasClaimedFaucet(address ?? undefined);
+  // Hook-extracted operations and state
+  const {
+    address,
+    hasClaimed,
+    escrowIdInput,
+    setEscrowIdInput,
+    activeEscrowId,
+    copied,
+    escrow,
+    escrowLoading,
+    xlmAmount,
+    setXlmAmount,
+    PURCHASE_RATE,
+    handleClaimFaucet,
+    handleBuyCamp,
+    handleLookup,
+    handleCopy,
+    handleEscrowAction,
+    refetchAll,
+    claimFaucetPending,
+    buyCampPending,
+    releaseEscrowPending,
+    refundEscrowPending,
+  } = useWalletOperations();
 
-  // Escrow lookup state
-  const [escrowIdInput, setEscrowIdInput] = useState("");
-  const [activeEscrowId, setActiveEscrowId] = useState<number | null>(null);
-  const [copied, setCopied] = useState(false);
-
-  const { data: escrow, isLoading: escrowLoading, refetch: refetchEscrow } = useEscrowAgreement(activeEscrowId);
-
-  // Mutations
-  const releaseEscrowMut = useReleaseEscrowMutation();
-  const refundEscrowMut = useRefundEscrowMutation();
-  const claimFaucetMut = useClaimFaucetMutation();
-  const buyCampMut = useBuyCampTokensMutation();
-
-  // Buy CAMP form state
-  const [xlmAmount, setXlmAmount] = useState("");
-  const PURCHASE_RATE = 100; // 1 XLM = 100 CAMP
-
-  const addTransaction = useTransactionStore((state) => state.addTransaction);
-  const updateTransaction = useTransactionStore((state) => state.updateTransaction);
-
-  const handleClaimFaucet = async () => {
-    if (!address) return;
-    try {
-      const hash = await claimFaucetMut.mutateAsync({ recipient: address });
-      addTransaction({ hash, status: "pending", method: "CLAIM FAUCET", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-      refetchBalance();
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "CLAIM FAUCET", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleBuyCamp = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address || !xlmAmount) return;
-    try {
-      // Convert XLM to stroops (1 XLM = 10^7 stroops)
-      const xlmStroops = String(BigInt(Math.round(parseFloat(xlmAmount) * 10_000_000)));
-      const hash = await buyCampMut.mutateAsync({ recipient: address, xlmAmount: xlmStroops });
-      addTransaction({ hash, status: "pending", method: "BUY CAMP", timestamp: Date.now(), explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}` });
-      updateTransaction(hash, { status: "processing" });
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-      refetchBalance();
-      setXlmAmount("");
-    } catch (err) {
-      addTransaction({ hash: `err_${Date.now()}`, status: "failed", method: "BUY CAMP", timestamp: Date.now(), errorMessage: String(err) });
-    }
-  };
-
-  const handleLookup = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!escrowIdInput) return;
-    setActiveEscrowId(parseInt(escrowIdInput));
-  };
-
-  const handleCopy = () => {
-    if (!address) return;
-    navigator.clipboard.writeText(address);
-    setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
-  };
+  // Balance query for display
+  const { data: balance, isLoading: balanceLoading } = useCampusBalance(address);
 
   const getEscrowStatusLabel = (status?: number) => {
     if (status === 1) return { text: "Funded", style: "bg-blue-50 text-blue-700 border-blue-200" };
     if (status === 2) return { text: "Released", style: "bg-emerald-50 text-emerald-700 border-emerald-200" };
     if (status === 3) return { text: "Refunded", style: "bg-red-50 text-red-700 border-red-200" };
     return { text: "Unknown", style: "bg-slate-50 text-slate-700 border-slate-200" };
-  };
-
-  const handleEscrowAction = async (action: "release" | "refund") => {
-    if (!address || !escrow) return;
-    const startTime = Date.now();
-    const actionName = action === "release" ? "RELEASE ESCROW" : "REFUND ESCROW";
-    
-    try {
-      let hash = "";
-      if (action === "release") {
-        hash = await releaseEscrowMut.mutateAsync({ escrowId: escrow.id, caller: address });
-      } else {
-        hash = await refundEscrowMut.mutateAsync({ escrowId: escrow.id, caller: address });
-      }
-
-      addTransaction({
-        hash,
-        status: "pending",
-        method: actionName,
-        timestamp: Date.now(),
-        explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}`,
-      });
-      logger.trackTransaction({ hash, method: actionName, status: "pending" });
-
-      updateTransaction(hash, { status: "processing" });
-      logger.trackTransaction({ hash, method: actionName, status: "processing" });
-
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-      logger.trackTransaction({
-        hash,
-        method: actionName,
-        status: "confirmed",
-        durationMs: Date.now() - startTime,
-      });
-
-      refetchEscrow();
-      refetchBalance();
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : `${actionName} failed`;
-      const errHash = `err_${Date.now()}`;
-      addTransaction({
-        hash: errHash,
-        status: "failed",
-        method: actionName,
-        timestamp: Date.now(),
-        errorMessage: errMsg,
-      });
-      logger.error(`${actionName} failed`, err);
-    }
   };
 
   return (
@@ -162,7 +60,7 @@ export default function WalletPage() {
           </p>
         </div>
         <button
-          onClick={() => { refetchBalance(); if (activeEscrowId !== null) refetchEscrow(); }}
+          onClick={refetchAll}
           className="h-11 px-4 bg-white text-xs font-bold text-slate-800 rounded-xl hover:bg-slate-50 flex items-center gap-2 active:scale-95 transition-all shadow-sm"
         >
           <RefreshCw className="w-4 h-4 text-slate-700" />
@@ -189,21 +87,21 @@ export default function WalletPage() {
               <span className="text-4xl font-bold tracking-tight font-mono text-slate-900">
                 {balanceLoading ? "..." : balance?.toFixed(2)}
               </span>
-            <span className="text-xs font-bold tracking-widest uppercase text-accent mt-1">
-              CAMP Tokens Available
-            </span>
+              <span className="text-xs font-bold tracking-widest uppercase text-accent mt-1">
+                CAMP Tokens Available
+              </span>
 
-            {!hasClaimed && (
-              <button
-                onClick={handleClaimFaucet}
-                disabled={claimFaucetMut.isPending}
-                className="mt-3 h-9 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
-              >
-                {claimFaucetMut.isPending ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
-                Claim 100 CAMP Tokens
-              </button>
-            )}
-          </div>
+              {!hasClaimed && (
+                <button
+                  onClick={handleClaimFaucet}
+                  disabled={claimFaucetPending}
+                  className="mt-3 h-9 px-4 bg-emerald-50 hover:bg-emerald-100 text-emerald-700 text-xs font-bold rounded-lg flex items-center justify-center gap-2 transition-colors disabled:opacity-50"
+                >
+                  {claimFaucetPending ? <Loader2 className="w-3 h-3 animate-spin" /> : null}
+                  Claim 100 CAMP Tokens
+                </button>
+              )}
+            </div>
 
             <div className="border-t border-slate-100 pt-4 flex flex-col gap-1">
               <span className="text-[9px] font-bold text-slate-700 uppercase">Public Key</span>
@@ -251,10 +149,10 @@ export default function WalletPage() {
               </div>
               <button
                 type="submit"
-                disabled={buyCampMut.isPending || !xlmAmount}
+                disabled={buyCampPending || !xlmAmount}
                 className="w-full h-11 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-50"
               >
-                {buyCampMut.isPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
+                {buyCampPending ? <Loader2 className="w-4 h-4 animate-spin" /> : null}
                 Buy CAMP with XLM
               </button>
             </form>
@@ -359,11 +257,11 @@ export default function WalletPage() {
               {escrow.status === 1 ? (
                 <div className="border-t border-slate-100 pt-6 flex flex-col sm:flex-row gap-3">
                   <button
-                    disabled={address !== escrow.buyer || releaseEscrowMut.isPending}
+                    disabled={address !== escrow.buyer || releaseEscrowPending}
                     onClick={() => handleEscrowAction("release")}
                     className="flex-1 h-12 bg-accent hover:opacity-95 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
                   >
-                    {releaseEscrowMut.isPending ? (
+                    {releaseEscrowPending ? (
                       <Loader2 className="w-4 h-4 animate-spin" />
                     ) : (
                       <Unlock className="w-4 h-4" />
@@ -371,7 +269,7 @@ export default function WalletPage() {
                     Release Escrow (Buyer Only)
                   </button>
                   <button
-                    disabled={(address !== escrow.seller && address !== escrow.buyer) || refundEscrowMut.isPending}
+                    disabled={(address !== escrow.seller && address !== escrow.buyer) || refundEscrowPending}
                     onClick={() => handleEscrowAction("refund")}
                     className="flex-1 h-12 bg-slate-900 hover:bg-slate-800 text-white text-xs font-bold uppercase rounded-xl flex items-center justify-center gap-2 active:scale-95 transition-all disabled:opacity-40 disabled:pointer-events-none"
                   >

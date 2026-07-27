@@ -1,22 +1,12 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
+import React from "react";
 import { useWalletStore } from "@/state/useWalletStore";
 import { useTransactionStore } from "@/state/useTransactionStore";
-import {
-  useCampusBalance,
-  useCampusUserRole,
-  useTransferMutation,
-  useApproveMutation,
-} from "@/hooks/useCampusToken";
-import {
-  useCreateEscrowMutation,
-  useCreateEventMutation,
-  useBuyTicketMutation,
-} from "@/hooks/useCampusService";
-import { getRpcServer, NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID, pollTransactionStatus } from "@/services/contracts";
-import { decodeEvent, DecodedEvent, ICON_COLORS } from "@/services/eventDecoder";
-import { logger } from "@/services/logger";
+import { useCampusBalance, useCampusUserRole } from "@/hooks/useCampusToken";
+import { useDashboardOperations } from "@/hooks/useDashboardOperations";
+import { useLedgerEvents } from "@/hooks/useLedgerEvents";
+import { ICON_COLORS } from "@/services/eventDecoder";
 import {
   Wallet,
   Loader2,
@@ -40,82 +30,40 @@ export default function DashboardPage() {
   const { address, network } = useWalletStore();
   const { data: balance, isLoading: balanceLoading } = useCampusBalance(address);
   const { data: role } = useCampusUserRole(address);
-
-  // Form states
-  const [transferRecipient, setTransferRecipient] = useState("");
-  const [transferAmount, setTransferAmount] = useState("");
-
-  const [escrowSeller, setEscrowSeller] = useState("");
-  const [escrowAmount, setEscrowAmount] = useState("");
-
-  const [eventPrice, setEventPrice] = useState("");
-  const [eventCapacity, setEventCapacity] = useState("");
-
-  const [buyTicketEventId, setBuyTicketEventId] = useState("");
-
-  const [activeTab, setActiveTab] = useState<"send" | "escrow" | "events">("send");
-
-  // Search state
-  const [txSearchQuery, setTxSearchQuery] = useState("");
-
-  // Mutation Hooks
-  const transferMut = useTransferMutation();
-  const approveMut = useApproveMutation();
-  const createEscrowMut = useCreateEscrowMutation();
-  const createEventMut = useCreateEventMutation();
-  const buyTicketMut = useBuyTicketMutation();
-
-  const addTransaction = useTransactionStore((state) => state.addTransaction);
-  const updateTransaction = useTransactionStore((state) => state.updateTransaction);
   const transactions = useTransactionStore((state) => state.transactions);
 
-  // On-chain ledger events
-  const [ledgerEvents, setLedgerEvents] = useState<DecodedEvent[]>([]);
-  const [eventsLoading, setEventsLoading] = useState(true);
+  // Hook-extracted operations and state
+  const {
+    transferRecipient,
+    setTransferRecipient,
+    transferAmount,
+    setTransferAmount,
+    escrowSeller,
+    setEscrowSeller,
+    escrowAmount,
+    setEscrowAmount,
+    eventPrice,
+    setEventPrice,
+    eventCapacity,
+    setEventCapacity,
+    buyTicketEventId,
+    setBuyTicketEventId,
+    activeTab,
+    setActiveTab,
+    txSearchQuery,
+    setTxSearchQuery,
+    executeTransfer,
+    executeEscrow,
+    executeCreateEvent,
+    executeBuyTicket,
+    transferPending,
+    escrowPending,
+    eventPending,
+    buyTicketPending,
+  } = useDashboardOperations();
 
-  const fetchLedgerEvents = useCallback(async () => {
-    try {
-      const server = getRpcServer();
-      const latestLedger = await server.getLatestLedger();
-      const startLedger = Math.max(1, latestLedger.sequence - 2000);
-
-      const [sRes, tRes] = await Promise.all([
-        server.getEvents({ startLedger, filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] }], limit: 50 }),
-        server.getEvents({ startLedger, filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] }], limit: 50 }),
-      ]);
-
-      const allEvents = [...sRes.events, ...tRes.events]
-        .sort((a, b) => b.ledger - a.ledger)
-        .slice(0, 50);
-
-      const decoded = allEvents.map((evt) => {
-        try {
-          return decodeEvent({
-            id: evt.id,
-            ledger: evt.ledger,
-            ledgerClosedAt: evt.ledgerClosedAt,
-            txHash: evt.txHash,
-            topic: evt.topic as unknown[],
-            value: evt.value as unknown,
-          });
-        } catch {
-          return null;
-        }
-      }).filter((e): e is DecodedEvent => e !== null);
-
-      setLedgerEvents(decoded);
-    } catch (err) {
-      logger.error("Failed to fetch ledger events", err);
-    } finally {
-      setEventsLoading(false);
-    }
-  }, []);
-
-  useEffect(() => {
-    fetchLedgerEvents();
-    const interval = setInterval(fetchLedgerEvents, 15000);
-    return () => clearInterval(interval);
-  }, [fetchLedgerEvents]);
+  // Hook-extracted ledger events polling
+  const { ledgerEvents, eventsLoading } = useLedgerEvents();
 
   const getRoleLabel = (r?: number) => {
     if (r === 0) return "Guest";
@@ -124,138 +72,6 @@ export default function DashboardPage() {
     if (r === 3) return "Club Organizer";
     if (r === 4) return "University Admin";
     return "Member";
-  };
-
-  // Transaction execution wrapper
-  const handleTx = async (
-    name: string,
-    mutationCall: () => Promise<string>,
-    onComplete?: () => void
-  ) => {
-    const startTime = Date.now();
-    try {
-      const hash = await mutationCall();
-      addTransaction({
-        hash,
-        status: "pending",
-        method: name,
-        timestamp: Date.now(),
-        explorerUrl: `https://stellar.expert/explorer/testnet/tx/${hash}`,
-      });
-      logger.trackTransaction({ hash, method: name, status: "pending" });
-
-      updateTransaction(hash, { status: "processing" });
-      logger.trackTransaction({ hash, method: name, status: "processing" });
-
-      // Poll transaction completion
-      await pollTransactionStatus(hash);
-      updateTransaction(hash, { status: "confirmed" });
-      logger.trackTransaction({
-        hash,
-        method: name,
-        status: "confirmed",
-        durationMs: Date.now() - startTime,
-      });
-
-      if (onComplete) onComplete();
-    } catch (err) {
-      const errMsg = err instanceof Error ? err.message : "Transaction failed";
-      const errHash = `err_${Date.now()}`;
-      addTransaction({
-        hash: errHash,
-        status: "failed",
-        method: name,
-        timestamp: Date.now(),
-        errorMessage: errMsg,
-      });
-      logger.error(`Transaction failed: ${name}`, err);
-    }
-  };
-
-  const executeTransfer = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address || !transferRecipient || !transferAmount) return;
-    handleTx(
-      "TRANSFER",
-      () =>
-        transferMut.mutateAsync({
-          from: address,
-          to: transferRecipient,
-          amount: parseFloat(transferAmount),
-        }),
-      () => {
-        setTransferRecipient("");
-        setTransferAmount("");
-      }
-    );
-  };
-
-  const executeEscrow = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address || !escrowSeller || !escrowAmount) return;
-    const amount = parseFloat(escrowAmount);
-
-    handleTx("CREATE ESCROW", async () => {
-      // Step 1: Approve Escrow Contract
-      await approveMut.mutateAsync({
-        from: address,
-        spender: process.env.NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID || "CA5W44S3S7WTRHPHHY5W7RPHHY5W7RPHHY5W7RPHHY5W7RPHHY5W7RPH",
-        amount,
-      });
-
-      // Step 2: Create Escrow
-      const hash = await createEscrowMut.mutateAsync({
-        buyer: address,
-        seller: escrowSeller,
-        amount,
-      });
-      return hash;
-    }, () => {
-      setEscrowSeller("");
-      setEscrowAmount("");
-    });
-  };
-
-  const executeCreateEvent = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address || !eventCapacity) return;
-    const price = eventPrice ? parseFloat(eventPrice) : 0;
-    handleTx(
-      "CREATE EVENT",
-      () =>
-        createEventMut.mutateAsync({
-          host: address,
-          price,
-          capacity: parseInt(eventCapacity),
-        }),
-      () => {
-        setEventPrice("");
-        setEventCapacity("");
-      }
-    );
-  };
-
-  const executeBuyTicket = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!address || !buyTicketEventId) return;
-
-    handleTx("BUY EVENT TICKET", async () => {
-      // Step 1: Approve a safe allowance (matches ticket price from chain)
-      await approveMut.mutateAsync({
-        from: address,
-        spender: process.env.NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID || NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
-        amount: 1000, // safe ceiling; actual deduction is handled by contract
-      });
-
-      // Step 2: Purchase Ticket
-      const hash = await buyTicketMut.mutateAsync({
-        eventId: parseInt(buyTicketEventId),
-        buyer: address,
-      });
-      return hash;
-    }, () => {
-      setBuyTicketEventId("");
-    });
   };
 
   const ICON_MAP = {
@@ -269,11 +85,14 @@ export default function DashboardPage() {
     system: Clock,
   } as const;
 
-  const today = new Date().toLocaleDateString("en-US", { month: "long", day: "numeric", year: "numeric" });
+  const today = new Date().toLocaleDateString("en-US", {
+    month: "long",
+    day: "numeric",
+    year: "numeric",
+  });
 
   return (
     <div className="flex flex-col gap-6 w-full max-w-7xl mx-auto">
-      
       {/* Welcome Title Banner */}
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-semibold tracking-tight text-slate-900">
@@ -297,7 +116,11 @@ export default function DashboardPage() {
           </div>
           <div className="mt-4 flex flex-col">
             <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">
-              {balanceLoading ? <Loader2 className="w-4 h-4 animate-spin text-slate-700" /> : balance?.toFixed(0)}
+              {balanceLoading ? (
+                <Loader2 className="w-4 h-4 animate-spin text-slate-700" />
+              ) : (
+                balance?.toFixed(0)
+              )}
             </span>
             <span className="text-[10px] text-slate-400 font-semibold mt-2">CAMP</span>
           </div>
@@ -328,7 +151,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">{transactions.length}</span>
+            <span className="text-3xl font-semibold tracking-tight text-slate-900 font-mono">
+              {transactions.length}
+            </span>
             <span className="text-[10px] text-slate-400 font-semibold mt-2">this session</span>
           </div>
         </div>
@@ -342,7 +167,9 @@ export default function DashboardPage() {
             </div>
           </div>
           <div className="mt-4 flex flex-col">
-            <span className="text-3xl font-semibold tracking-tight text-slate-900 uppercase truncate max-w-[130px]">{network}</span>
+            <span className="text-3xl font-semibold tracking-tight text-slate-900 uppercase truncate max-w-[130px]">
+              {network}
+            </span>
             <span className="text-[10px] text-slate-400 font-semibold mt-2">Soroban</span>
           </div>
         </div>
@@ -364,13 +191,17 @@ export default function DashboardPage() {
                 <div key={m.label} className={`${m.color} rounded-2xl p-4 border border-current/10 flex flex-col gap-2`}>
                   <span className="text-xs font-bold uppercase tracking-wider opacity-70">{m.label}</span>
                   <span className="text-2xl font-extrabold font-mono">
-                    {eventsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : ledgerEvents.filter((e) => {
-                      if (m.key === "transferEvents") return e.type === "transfer";
-                      if (m.key === "escrowEvents") return e.type === "escrow";
-                      if (m.key === "ticketEvents") return e.type === "ticket";
-                      if (m.key === "roleEvents") return e.type === "role";
-                      return false;
-                    }).length}
+                    {eventsLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : (
+                      ledgerEvents.filter((e) => {
+                        if (m.key === "transferEvents") return e.type === "transfer";
+                        if (m.key === "escrowEvents") return e.type === "escrow";
+                        if (m.key === "ticketEvents") return e.type === "ticket";
+                        if (m.key === "roleEvents") return e.type === "role";
+                        return false;
+                      }).length
+                    )}
                   </span>
                 </div>
               ))}
@@ -385,12 +216,18 @@ export default function DashboardPage() {
                 <div key={m.label} className={`${m.color} rounded-2xl p-4 border border-current/10 flex flex-col gap-2`}>
                   <span className="text-xs font-bold uppercase tracking-wider opacity-70">{m.label}</span>
                   <span className="text-2xl font-extrabold font-mono">
-                    {eventsLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : m.key === "totalEvents" ? ledgerEvents.length : ledgerEvents.filter((e) => {
-                      if (m.key === "universityEvents") return e.type === "university";
-                      if (m.key === "membershipEvents") return e.type === "membership";
-                      if (m.key === "faucetEvents") return e.type === "faucet";
-                      return false;
-                    }).length}
+                    {eventsLoading ? (
+                      <Loader2 className="w-5 h-5 animate-spin" />
+                    ) : m.key === "totalEvents" ? (
+                      ledgerEvents.length
+                    ) : (
+                      ledgerEvents.filter((e) => {
+                        if (m.key === "universityEvents") return e.type === "university";
+                        if (m.key === "membershipEvents") return e.type === "membership";
+                        if (m.key === "faucetEvents") return e.type === "faucet";
+                        return false;
+                      }).length
+                    )}
                   </span>
                 </div>
               ))}
@@ -401,9 +238,7 @@ export default function DashboardPage() {
         {/* Interactive Action Controls (Right Panel) */}
         <div className="bg-white rounded-[24px] p-6 flex flex-col gap-6 shadow-sm">
           <div className="flex items-center justify-between border-b border-slate-100 pb-4 shrink-0">
-            <h3 className="text-base font-semibold text-slate-900">
-              Action Center
-            </h3>
+            <h3 className="text-base font-semibold text-slate-900">Action Center</h3>
             <SlidersHorizontal className="w-4 h-4 text-slate-700" />
           </div>
 
@@ -477,10 +312,10 @@ export default function DashboardPage() {
 
                 <button
                   type="submit"
-                  disabled={transferMut.isPending}
+                  disabled={transferPending}
                   className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                 >
-                  {transferMut.isPending ? (
+                  {transferPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Executing...
@@ -526,10 +361,10 @@ export default function DashboardPage() {
 
                 <button
                   type="submit"
-                  disabled={createEscrowMut.isPending || approveMut.isPending}
+                  disabled={escrowPending}
                   className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                 >
-                  {createEscrowMut.isPending || approveMut.isPending ? (
+                  {escrowPending ? (
                     <>
                       <Loader2 className="w-4 h-4 animate-spin" />
                       Locking Funds...
@@ -579,10 +414,10 @@ export default function DashboardPage() {
 
                     <button
                       type="submit"
-                      disabled={createEventMut.isPending}
+                      disabled={eventPending}
                       className="w-full h-12 mt-auto bg-accent hover:opacity-95 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      {createEventMut.isPending ? (
+                      {eventPending ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Minting Passes...
@@ -614,10 +449,10 @@ export default function DashboardPage() {
 
                     <button
                       type="submit"
-                      disabled={buyTicketMut.isPending || approveMut.isPending}
+                      disabled={buyTicketPending}
                       className="w-full h-12 mt-8 bg-accent hover:opacity-95 text-white font-semibold text-xs rounded-xl flex items-center justify-center gap-2 active:scale-[0.98] transition-all duration-200 disabled:opacity-50 disabled:pointer-events-none"
                     >
-                      {buyTicketMut.isPending || approveMut.isPending ? (
+                      {buyTicketPending ? (
                         <>
                           <Loader2 className="w-4 h-4 animate-spin" />
                           Acquiring Pass...
@@ -639,7 +474,9 @@ export default function DashboardPage() {
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
           <div>
             <h3 className="text-base font-semibold text-slate-900">Recent Ledger Events</h3>
-            <p className="text-xs text-slate-400 mt-0.5">Last {ledgerEvents.length} on-chain events across both contracts</p>
+            <p className="text-xs text-slate-400 mt-0.5">
+              Last {ledgerEvents.length} on-chain events across both contracts
+            </p>
           </div>
           <div className="flex items-center gap-3">
             <div className="relative flex items-center bg-slate-50 border border-slate-100 rounded-xl px-3 py-1.5 text-xs text-slate-700 font-semibold focus-within:border-slate-300 transition-all shadow-sm">
@@ -658,12 +495,16 @@ export default function DashboardPage() {
         {eventsLoading ? (
           <div className="flex flex-col items-center justify-center py-12 gap-4">
             <Loader2 className="w-8 h-8 animate-spin text-accent" />
-            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Fetching Ledger Events...</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-slate-400">
+              Fetching Ledger Events...
+            </span>
           </div>
         ) : ledgerEvents.length === 0 ? (
           <div className="border border-dashed border-slate-200 rounded-[24px] p-12 text-center flex flex-col items-center justify-center gap-3">
             <Clock className="w-8 h-8 text-slate-700" />
-            <span className="font-semibold text-slate-700 text-xs uppercase tracking-widest">No on-chain events detected</span>
+            <span className="font-semibold text-slate-700 text-xs uppercase tracking-widest">
+              No on-chain events detected
+            </span>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -682,10 +523,12 @@ export default function DashboardPage() {
                   .filter((evt) => {
                     if (!txSearchQuery.trim()) return true;
                     const q = txSearchQuery.toLowerCase().trim();
-                    return evt.message.toLowerCase().includes(q) ||
+                    return (
+                      evt.message.toLowerCase().includes(q) ||
                       evt.details.toLowerCase().includes(q) ||
                       evt.title.toLowerCase().includes(q) ||
-                      evt.fullTxHash.toLowerCase().includes(q);
+                      evt.fullTxHash.toLowerCase().includes(q)
+                    );
                   })
                   .map((evt) => {
                     const IconComponent = ICON_MAP[evt.icon];
@@ -694,7 +537,9 @@ export default function DashboardPage() {
                       <tr key={evt.id} className="hover:bg-slate-50/50 transition-colors">
                         <td className="py-4 px-3">
                           <div className="flex items-center gap-2">
-                            <div className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${colorClass}`}>
+                            <div
+                              className={`w-7 h-7 rounded-lg border flex items-center justify-center shrink-0 ${colorClass}`}
+                            >
                               <IconComponent className="w-3.5 h-3.5" />
                             </div>
                             <span className="font-bold text-slate-900 uppercase">{evt.title}</span>
@@ -706,9 +551,7 @@ export default function DashboardPage() {
                         <td className="py-4 px-3">
                           <span className="text-slate-500 font-mono text-[11px]">{evt.details}</span>
                         </td>
-                        <td className="py-4 px-3 font-mono text-slate-500">
-                          #{evt.ledger}
-                        </td>
+                        <td className="py-4 px-3 font-mono text-slate-500">#{evt.ledger}</td>
                         <td className="py-4 px-3 text-right">
                           <a
                             href={`https://stellar.expert/explorer/testnet/tx/${evt.fullTxHash}`}

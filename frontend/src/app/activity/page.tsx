@@ -1,12 +1,8 @@
 "use client";
 
-import React, { useState, useEffect, useCallback } from "react";
-import {
-  getRpcServer,
-  NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
-  NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
-} from "@/services/contracts";
-import { decodeEvent, DecodedEvent, ICON_COLORS } from "@/services/eventDecoder";
+import React from "react";
+import { useActivityPagination } from "@/hooks/useActivityPagination";
+import { ICON_COLORS } from "@/services/eventDecoder";
 import {
   ArrowRightLeft,
   Lock,
@@ -46,90 +42,18 @@ const TYPE_FILTERS = [
 ];
 
 export default function ActivityFeedPage() {
-  const [events, setEvents] = useState<DecodedEvent[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [cursor, setCursor] = useState<string | null>(null);
-  const [hasMore, setHasMore] = useState(true);
-  const [searchQuery, setSearchQuery] = useState("");
-  const [typeFilter, setTypeFilter] = useState("all");
-
-  const fetchEvents = useCallback(async (isLoadMore = false) => {
-    if (isLoadMore && loadingMore) return;
-    try {
-      if (isLoadMore) setLoadingMore(true);
-      else setLoading(true);
-
-      const server = getRpcServer();
-      const baseFilters = [
-        { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] },
-        { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] },
-      ];
-
-      let res;
-      if (isLoadMore && cursor) {
-        res = await server.getEvents({ filters: baseFilters, cursor, limit: 40 });
-      } else {
-        const latestLedger = await server.getLatestLedger();
-        res = await server.getEvents({
-          startLedger: Math.max(1, latestLedger.sequence - 5000),
-          filters: baseFilters,
-          limit: 40,
-        });
-      }
-
-      const decodedEvents = res.events
-        .map((evt) => {
-          try {
-            return decodeEvent({
-              id: evt.id,
-              ledger: evt.ledger,
-              ledgerClosedAt: evt.ledgerClosedAt,
-              txHash: evt.txHash,
-              topic: evt.topic as unknown[],
-              value: evt.value as unknown,
-            });
-          } catch {
-            return null;
-          }
-        })
-        .filter((e): e is DecodedEvent => e !== null);
-
-      if (isLoadMore) {
-        setEvents((prev) => {
-          const existingIds = new Set(prev.map((e) => e.id));
-          const newEvents = decodedEvents.filter((e) => !existingIds.has(e.id));
-          return [...prev, ...newEvents];
-        });
-      } else {
-        setEvents(decodedEvents);
-      }
-
-      setHasMore(res.events.length >= 40);
-      setCursor(res.cursor ?? null);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [cursor, loadingMore]);
-
-  useEffect(() => {
-    fetchEvents(false);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const filtered = events.filter((e) => {
-    const query = searchQuery.toLowerCase().trim();
-    const matchesSearch = !query ||
-      e.message.toLowerCase().includes(query) ||
-      e.details.toLowerCase().includes(query) ||
-      e.title.toLowerCase().includes(query) ||
-      e.txHash.toLowerCase().includes(query) ||
-      e.fullTxHash.toLowerCase().includes(query);
-    const matchesType = typeFilter === "all" || e.type === typeFilter;
-    return matchesSearch && matchesType;
-  });
+  const {
+    events,
+    filteredEvents,
+    loading,
+    loadingMore,
+    hasMore,
+    searchQuery,
+    setSearchQuery,
+    typeFilter,
+    setTypeFilter,
+    loadMore,
+  } = useActivityPagination();
 
   return (
     <div className="flex flex-col gap-8 w-full max-w-7xl mx-auto">
@@ -147,7 +71,7 @@ export default function ActivityFeedPage() {
       <div className="bg-white rounded-2xl p-6">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 border-b border-slate-100 pb-4 mb-6">
           <span className="text-xs font-bold uppercase tracking-wider text-slate-400">
-            Ledger Telemetry ({filtered.length} events)
+            Ledger Telemetry ({filteredEvents.length} events)
           </span>
           <div className="flex items-center gap-3">
             <div className="relative flex items-center bg-slate-50 rounded-xl px-3 py-1.5 text-xs text-slate-500 font-semibold focus-within:ring-1 focus-within:ring-slate-300 transition-all">
@@ -177,7 +101,7 @@ export default function ActivityFeedPage() {
             <Loader2 className="w-8 h-8 animate-spin text-accent" />
             <span className="text-xs font-bold uppercase tracking-widest text-slate-400">Connecting to Ledger Stream...</span>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : filteredEvents.length === 0 ? (
           <div className="border border-dashed border-slate-200 rounded-2xl p-16 text-center flex flex-col items-center justify-center gap-3">
             <Clock className="w-8 h-8 text-slate-300" />
             <span className="font-bold text-slate-400 text-xs uppercase tracking-widest">No events found</span>
@@ -188,7 +112,7 @@ export default function ActivityFeedPage() {
         ) : (
           <>
             <div className="flex flex-col divide-y divide-slate-100">
-              {filtered.map((evt) => {
+              {filteredEvents.map((evt) => {
                 const IconComponent = ICON_MAP[evt.icon];
                 const colorClass = ICON_COLORS[evt.color];
                 return (
@@ -220,7 +144,7 @@ export default function ActivityFeedPage() {
             </div>
             {hasMore && (
               <div className="pt-4 mt-2 border-t border-slate-100 flex justify-center">
-                <button onClick={() => fetchEvents(true)} disabled={loadingMore} className="h-9 px-6 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50">
+                <button onClick={loadMore} disabled={loadingMore} className="h-9 px-6 text-xs font-bold text-slate-600 bg-slate-50 hover:bg-slate-100 rounded-xl flex items-center gap-2 transition-colors disabled:opacity-50">
                   {loadingMore ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <ChevronDown className="w-3.5 h-3.5" />}
                   Load More Events
                 </button>
