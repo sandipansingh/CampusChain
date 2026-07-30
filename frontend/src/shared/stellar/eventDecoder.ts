@@ -14,6 +14,7 @@ export interface DecodedEvent {
   color: "blue" | "purple" | "emerald" | "amber" | "indigo" | "cyan" | "orange" | "gray";
   icon: "transfer" | "escrow" | "ticket" | "role" | "university" | "membership" | "faucet" | "system";
   ledgerClosedAt: string;
+  topicNative?: unknown[];
 }
 
 export function shortAddr(addr: string): string {
@@ -72,6 +73,7 @@ export function decodeEvent(evt: {
     timestamp: ts,
     ledger: evt.ledger,
     ledgerClosedAt: evt.ledgerClosedAt,
+    topicNative,
   };
 
   if (eventName === "transfer" || eventName === "mint_purchase") {
@@ -229,6 +231,46 @@ export function decodeEvent(evt: {
     const target = typeof topicNative[2] === "string" ? topicNative[2] : "";
     const code = typeof valueNative === "string" ? valueNative : "";
     return { ...baseEvent, type: "role", title: "Profile Rejected", message: `Rejected for university ${code}`, details: target, color: "orange", icon: "role" };
+  }
+
+  if (eventName === "OrderPlaced") {
+    const id = decodeNative(topicNative[1]) ?? 0;
+    const student = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    const amountI128 = decodeNative(valueNative) ?? 0;
+    const amount = Number(amountI128) / 10_000_000;
+    return {
+      ...baseEvent,
+      type: "system",
+      title: "New Order Placed",
+      message: `Order #${id} placed by ${shortAddr(student)}`,
+      details: `${amount.toFixed(2)} CAMP`,
+      color: "blue",
+      icon: "escrow",
+    };
+  }
+
+  if (eventName === "OrderStatusChanged") {
+    const id = decodeNative(topicNative[1]) ?? 0;
+    const caller = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    let statusText = "Updated";
+    if (valueNative && typeof valueNative === "object" && "name" in valueNative) {
+      statusText = String((valueNative as { name: unknown }).name);
+    } else if (typeof valueNative === "number") {
+      statusText = ["Placed", "Preparing", "ReadyForPickup", "Completed", "Cancelled"][valueNative - 1] ?? "Updated";
+    } else if (typeof valueNative === "string") {
+      statusText = valueNative;
+    }
+    const label = statusText === "ReadyForPickup" ? "Ready for Pickup" : statusText;
+
+    return {
+      ...baseEvent,
+      type: "system",
+      title: "Order Status Update",
+      message: `Order #${id} is now ${label}`,
+      details: statusText,
+      color: label === "Completed" ? "emerald" : label === "Cancelled" ? "orange" : "amber",
+      icon: "system",
+    };
   }
 
   return { ...baseEvent, type: "system", title: eventName || "Contract Event", message: `Ledger ${evt.ledger}`, details: evt.txHash.slice(0, 8), color: "gray", icon: "system" };

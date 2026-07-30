@@ -25,6 +25,8 @@ import {
 import { decodeEvent } from "@/shared/stellar/eventDecoder";
 import { useActivityFeedStore } from "./useActivityFeedStore";
 import { eventMonitor, captureError } from "@/shared/lib/observability";
+import { fetchFoodOrder } from "@/features/food-ordering/service";
+import { FoodOrderStatus, FoodOrderStatusLabels } from "@/features/food-ordering/types";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -79,6 +81,12 @@ function getCacheKeysForEvent(eventName: string): string[][] {
     case "ProfileVerified":
     case "ProfileRejected":
       return [["university-profiles"], ["campus-profile"], ["campus-role"]];
+
+    case "OrderPlaced":
+      return [["food-orders"]];
+
+    case "OrderStatusChanged":
+      return [["food-orders"], ["campus-balance"]];
 
     default:
       return [];
@@ -178,7 +186,8 @@ export function useContractEventStream(address: string | null | undefined) {
         const isPlatformAdmin = address === NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS;
         const myUnivCode = profile?.universityCode?.toUpperCase() ?? "";
 
-        const filteredDecoded = decoded.filter((evt) => {
+        const filteredDecoded: typeof decoded = [];
+        for (const evt of decoded) {
           if (
             evt.eventName === "UniversityRegistered" ||
             evt.eventName === "UniversityApproved" ||
@@ -188,11 +197,14 @@ export function useContractEventStream(address: string | null | undefined) {
             evt.eventName === "ProfileRejected"
           ) {
             if (isPlatformAdmin) {
-              return (
+              if (
                 evt.eventName === "UniversityRegistered" ||
                 evt.eventName === "UniversityApproved" ||
                 evt.eventName === "UniversityRejected"
-              );
+              ) {
+                filteredDecoded.push(evt);
+              }
+              continue;
             }
 
             if (profile?.role === 4) {
@@ -201,20 +213,81 @@ export function useContractEventStream(address: string | null | undefined) {
               // - See new profiles submitted under their university code
               // - See verification completions for their university code
               const eventCode = evt.details.toUpperCase();
-              return eventCode === myUnivCode;
+              if (eventCode === myUnivCode) {
+                filteredDecoded.push(evt);
+              }
+              continue;
             }
 
             // Student/Merchant/Organizer:
             // - See profile approval or rejection matching their own wallet address
             if (evt.eventName === "ProfileVerified" || evt.eventName === "ProfileRejected") {
               const eventTarget = evt.details;
-              return eventTarget.toUpperCase() === address.toUpperCase();
+              if (eventTarget.toUpperCase() === address.toUpperCase()) {
+                filteredDecoded.push(evt);
+              }
+              continue;
             }
-
-            return false;
+            continue;
           }
-          return true; // keep standard transactions / escrows
-        });
+
+          // Food Ordering notifications filtering
+          if (evt.eventName === "OrderPlaced") {
+            try {
+              const orderId = Number(evt.topicNative?.[1]);
+              if (orderId && address) {
+                const order = await fetchFoodOrder(orderId, address);
+                if (order && order.merchant.toLowerCase() === address.toLowerCase()) {
+                  evt.title = "New Incoming Order";
+                  evt.message = `Order #${orderId} was placed.`;
+                  filteredDecoded.push(evt);
+                }
+              }
+            } catch (err) {
+              console.warn("Failed filtering OrderPlaced event", err);
+            }
+            continue;
+          }
+
+          if (evt.eventName === "OrderStatusChanged") {
+            try {
+              const orderId = Number(evt.topicNative?.[1]);
+              if (orderId && address) {
+                const order = await fetchFoodOrder(orderId, address);
+                if (order) {
+                  if (order.student.toLowerCase() === address.toLowerCase()) {
+                    if (order.status === FoodOrderStatus.ReadyForPickup) {
+                      evt.title = "Order Ready!";
+                      evt.message = `Your order #${orderId} is ready for pickup!`;
+                      evt.color = "emerald";
+                    } else if (order.status === FoodOrderStatus.Preparing) {
+                      evt.title = "Preparing Order";
+                      evt.message = `Your order #${orderId} is now preparing.`;
+                      evt.color = "amber";
+                    } else if (order.status === FoodOrderStatus.Cancelled) {
+                      evt.title = "Order Cancelled";
+                      evt.message = `Your order #${orderId} has been cancelled.`;
+                      evt.color = "orange";
+                    } else {
+                      evt.title = "Order Update";
+                      evt.message = `Order #${orderId} status changed to ${FoodOrderStatusLabels[order.status]}.`;
+                    }
+                    filteredDecoded.push(evt);
+                  } else if (order.merchant.toLowerCase() === address.toLowerCase()) {
+                    evt.title = "Order Update";
+                    evt.message = `Order #${orderId} status changed to ${FoodOrderStatusLabels[order.status]}.`;
+                    filteredDecoded.push(evt);
+                  }
+                }
+              }
+            } catch (err) {
+              console.warn("Failed filtering OrderStatusChanged event", err);
+            }
+            continue;
+          }
+
+          filteredDecoded.push(evt);
+        }
 
         if (filteredDecoded.length > 0) {
           // Push filtered events to feed
