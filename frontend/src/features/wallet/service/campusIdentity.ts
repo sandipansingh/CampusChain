@@ -245,3 +245,8 @@ export async function fetchUniversityProfiles(universityCode: string): Promise<U
     return [];
   }
 }
+
+export async function executeSuspendUniversity(caller: string, code: string): Promise<string> {
+  const { signTx } = await import("./wallet");
+  return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "suspend_university", [addressToScVal(caller), stringToScVal(code)], caller, signTx);
+}

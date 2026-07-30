@@ -18,6 +18,7 @@ import {
   executeVerifyProfile,
   executeRejectProfile,
   fetchUniversityProfiles,
+  executeSuspendUniversity,
   type ProfileRegistration,
 } from "../service/campusIdentity";
 
@@ -261,6 +262,17 @@ export function useRejectProfileMutation() {
       executeRejectProfile(caller, targetAddress),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["university-profiles"] });
+    },
+  });
+}
+
+export function useSuspendUniversityMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ caller, code }: { caller: string; code: string }) =>
+      executeSuspendUniversity(caller, code),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["universities"] });
     },
   });
 }
