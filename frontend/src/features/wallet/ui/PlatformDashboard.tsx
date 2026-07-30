@@ -21,16 +21,16 @@ import {
   executeSuspendUniversity,
   fetchUniversities,
 } from "@/features/wallet/service/campusIdentity";
-import { useLedgerEvents } from "@/features/transactions/hooks/useTransactions";
+import { useLedgerEvents } from "@/features/transactions/hooks/useActivityFeed";
 import { Settings as SettingsView } from "./Settings";
-import { ActivityFeedPanel } from "@/shared/ui/ActivityFeedPanel";
-import { useActivityFeedStore } from "@/shared/hooks/useActivityFeedStore";
+import { NotificationPanel } from "@/shared/ui/NotificationPanel";
+import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
 
 export function PlatformDashboard() {
   const { address, disconnect } = useWallet();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isFeedOpen, setIsFeedOpen] = useState(false);
-  const unreadCount = useActivityFeedStore((s) => s.unreadCount);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
   const queryClient = useQueryClient();
 
   useEffect(() => {
@@ -403,7 +403,7 @@ export function PlatformDashboard() {
         </main>
       </div>
 
-      <ActivityFeedPanel isOpen={isFeedOpen} onClose={() => setIsFeedOpen(false)} />
+      <NotificationPanel isOpen={isFeedOpen} onClose={() => setIsFeedOpen(false)} />
     </div>
   );
 }

@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
-import { ActivityFeedPanel } from "@/shared/ui/ActivityFeedPanel";
+import { NotificationPanel } from "@/shared/ui/NotificationPanel";
 import {
   LayoutDashboard,
   Users,
@@ -32,13 +32,13 @@ import {
 } from "@/features/scholarships/hooks/useScholarships";
 import { Settings as SettingsView } from "./Settings";
 
-import { useActivityFeedStore } from "@/shared/hooks/useActivityFeedStore";
+import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
 
 export function UniversityDashboard() {
   const { address, disconnect } = useWallet();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isFeedOpen, setIsFeedOpen] = useState(false);
-  const unreadCount = useActivityFeedStore((s) => s.unreadCount);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
 
   // Scholarship form state
   const [progName, setProgName] = useState("");
@@ -569,7 +569,7 @@ export function UniversityDashboard() {
         </main>
       </div>
 
-      <ActivityFeedPanel isOpen={isFeedOpen} onClose={() => setIsFeedOpen(false)} />
+      <NotificationPanel isOpen={isFeedOpen} onClose={() => setIsFeedOpen(false)} />
     </div>
   );
 }

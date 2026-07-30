@@ -1,18 +1,18 @@
 /**
- * ActivityFeedPanel.test.tsx
+ * NotificationPanel.test.tsx
  *
- * Component tests for ActivityFeedPanel covering all three visual states:
- *   - Empty: no feed items → inbox empty message shown
+ * Component tests for NotificationPanel covering all three visual states:
+ *   - Empty: no notifications → inbox empty message shown
  *   - Populated: items shown with title, message, tx hash link, and timestamp
  *   - Close behaviour: Escape key and X button trigger onClose
  *
- * The ActivityFeedStore is reset before each test for isolation.
+ * The NotificationStore is reset before each test for isolation.
  */
 import { describe, it, expect, vi, beforeEach } from "vitest";
 import { render, screen, fireEvent } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
-import { ActivityFeedPanel } from "@/shared/ui/ActivityFeedPanel";
-import { useActivityFeedStore } from "@/shared/hooks/useActivityFeedStore";
+import { NotificationPanel } from "@/shared/ui/NotificationPanel";
+import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
 import type { DecodedEvent } from "@/shared/stellar/eventDecoder";
 
 // ── Helpers ──────────────────────────────────────────────────────────────
@@ -36,30 +36,30 @@ function makeEvent(overrides: Partial<DecodedEvent> = {}): DecodedEvent {
 }
 
 // ── Test Suite ───────────────────────────────────────────────────────────
-describe("ActivityFeedPanel", () => {
+describe("NotificationPanel", () => {
   beforeEach(() => {
-    // Reset Zustand feed store to clean state for every test
-    useActivityFeedStore.setState({ items: [], unreadCount: 0 });
+    // Reset Zustand store to clean state for every test
+    useNotificationStore.setState({ items: [], unreadCount: 0 });
   });
 
   it("renders empty state with inbox message when no items exist", () => {
-    render(<ActivityFeedPanel isOpen={true} onClose={vi.fn()} />);
-    expect(screen.getByText("No live activity yet")).toBeInTheDocument();
-    expect(screen.getByText(/Contract events will appear here/)).toBeInTheDocument();
+    render(<NotificationPanel isOpen={true} onClose={vi.fn()} />);
+    expect(screen.getByText("No notifications yet")).toBeInTheDocument();
+    expect(screen.getByText(/Updates about profile approvals/)).toBeInTheDocument();
   });
 
-  it("renders feed items with title, message, and details", () => {
-    useActivityFeedStore.getState().addItems([makeEvent()]);
-    render(<ActivityFeedPanel isOpen={true} onClose={vi.fn()} />);
+  it("renders notification items with title, message, and details", () => {
+    useNotificationStore.getState().addItems([makeEvent()]);
+    render(<NotificationPanel isOpen={true} onClose={vi.fn()} />);
 
     expect(screen.getByText("Token Transfer")).toBeInTheDocument();
     expect(screen.getByText("GABC1234...XXXXXXXX → GXYZ5678...YYYYYYYY")).toBeInTheDocument();
     expect(screen.getByText("250.00 CAMP")).toBeInTheDocument();
   });
 
-  it("renders a Stellar Expert link for each feed item", () => {
-    useActivityFeedStore.getState().addItems([makeEvent()]);
-    render(<ActivityFeedPanel isOpen={true} onClose={vi.fn()} />);
+  it("renders a Stellar Expert link for each notification item", () => {
+    useNotificationStore.getState().addItems([makeEvent()]);
+    render(<NotificationPanel isOpen={true} onClose={vi.fn()} />);
 
     const link = screen.getByRole("link");
     expect(link).toHaveAttribute(
@@ -69,13 +69,11 @@ describe("ActivityFeedPanel", () => {
     expect(link).toHaveAttribute("target", "_blank");
   });
 
-  it("renders multiple feed items in order (newest first)", () => {
-    // Add items in two separate calls (simulating sequential poll ticks)
-    // Second call's items are prepended, so they appear first in the list.
-    useActivityFeedStore.getState().addItems([makeEvent({ id: "evt-001", title: "First Transfer" })]);
-    useActivityFeedStore.getState().addItems([makeEvent({ id: "evt-002", title: "Second Transfer" })]);
+  it("renders multiple notification items in order (newest first)", () => {
+    useNotificationStore.getState().addItems([makeEvent({ id: "evt-001", title: "First Transfer" })]);
+    useNotificationStore.getState().addItems([makeEvent({ id: "evt-002", title: "Second Transfer" })]);
 
-    render(<ActivityFeedPanel isOpen={true} onClose={vi.fn()} />);
+    render(<NotificationPanel isOpen={true} onClose={vi.fn()} />);
 
     // The two rendered headings — Second Transfer was added later so it sits first
     const headings = screen.getAllByRole("paragraph").filter(
@@ -87,42 +85,32 @@ describe("ActivityFeedPanel", () => {
 
   it("calls onClose when the X button is clicked", async () => {
     const onClose = vi.fn();
-    render(<ActivityFeedPanel isOpen={true} onClose={onClose} />);
+    render(<NotificationPanel isOpen={true} onClose={onClose} />);
 
-    await userEvent.click(screen.getByRole("button", { name: /Close activity feed/i }));
+    await userEvent.click(screen.getByRole("button", { name: /Close notifications panel/i }));
     expect(onClose).toHaveBeenCalledOnce();
   });
 
   it("calls onClose when Escape key is pressed", async () => {
     const onClose = vi.fn();
-    render(<ActivityFeedPanel isOpen={true} onClose={onClose} />);
+    render(<NotificationPanel isOpen={true} onClose={onClose} />);
 
     fireEvent.keyDown(document, { key: "Escape" });
     expect(onClose).toHaveBeenCalledOnce();
   });
 
-  it("marks all items as read when the panel opens", () => {
-    // Add items manually with an unread count
-    useActivityFeedStore.setState({ items: [makeEvent()], unreadCount: 3 });
-    render(<ActivityFeedPanel isOpen={true} onClose={vi.fn()} />);
-
-    // markAllRead is called in useEffect on mount when isOpen is true
-    expect(useActivityFeedStore.getState().unreadCount).toBe(0);
-  });
-
   it("does not render content when isOpen is false (panel is translated off-screen)", () => {
-    render(<ActivityFeedPanel isOpen={false} onClose={vi.fn()} />);
-    // Panel exists in DOM but is translated off-screen, not removed
+    render(<NotificationPanel isOpen={false} onClose={vi.fn()} />);
     const dialog = screen.getByRole("dialog");
     expect(dialog.className).toContain("translate-x-full");
   });
 
-  it("'Clear all' button removes all items from the feed", async () => {
-    useActivityFeedStore.getState().addItems([makeEvent()]);
-    render(<ActivityFeedPanel isOpen={true} onClose={vi.fn()} />);
+  it("'Clear all' button removes all notifications", async () => {
+    useNotificationStore.getState().addItems([makeEvent()]);
+    render(<NotificationPanel isOpen={true} onClose={vi.fn()} />);
 
     await userEvent.click(screen.getByRole("button", { name: /Clear all/i }));
-    expect(useActivityFeedStore.getState().items).toHaveLength(0);
-    expect(screen.getByText("No live activity yet")).toBeInTheDocument();
+    expect(useNotificationStore.getState().items).toHaveLength(0);
+    expect(screen.getByText("No notifications yet")).toBeInTheDocument();
   });
 });

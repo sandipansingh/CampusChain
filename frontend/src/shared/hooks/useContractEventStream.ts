@@ -5,7 +5,7 @@
  * only NEW events are fetched each tick (not a full re-scan). When events
  * arrive they are:
  *   1. Decoded via eventDecoder.ts
- *   2. Pushed into the global ActivityFeedStore
+ *   2. Pushed into the global NotificationStore
  *   3. Mapped to React Query cache keys that are surgically invalidated
  *
  * Soroban RPC has no WebSocket event stream — cursor-based polling at 4-second
@@ -22,60 +22,27 @@ import {
   NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
   NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS,
 } from "@/shared/stellar/client";
-import { decodeEvent } from "@/shared/stellar/eventDecoder";
-import { useActivityFeedStore } from "./useActivityFeedStore";
+import { decodeEvent, shortAddr } from "@/shared/stellar/eventDecoder";
+import { useNotificationStore } from "./useNotificationStore";
 import { eventMonitor, captureError } from "@/shared/lib/observability";
 import { fetchFoodOrder } from "@/features/food-ordering/service";
 import { FoodOrderStatus, FoodOrderStatusLabels } from "@/features/food-ordering/types";
+import { fetchUserProfile } from "@/features/wallet/service/campusIdentity";
 
 const POLL_INTERVAL_MS = 4000;
 
-/** Maps a decoded event name to the React Query keys that should be invalidated. */
 function getCacheKeysForEvent(eventName: string): string[][] {
   switch (eventName) {
     case "transfer":
-    case "mint":
-    case "burn":
     case "mint_purchase":
-    case "faucet":
-    case "faucet_claimed":
-    case "purchase_camp":
-      return [["campus-balance"]];
-
-    case "escrow_created":
-    case "escrow_released":
-    case "escrow_refunded":
-      return [["campus-escrow"], ["marketplace-listings"]];
-
-    case "item_listed":
-    case "item_updated":
-    case "item_sold":
-      return [["marketplace-listings"], ["marketplace-listing"]];
-
-    case "ticket_bought":
-    case "ticket_redeemed":
-    case "event_created":
-      return [["campus-events"]];
-
-    case "scholarship_applied":
-    case "scholarship_reviewed":
-    case "scholarship_disbursed":
-      return [["campus-scholarships"], ["campus-balance"]];
-
-    case "reward_redeemed":
-    case "redemption_fulfilled":
-    case "reward_created":
-      return [["campus-balance"]];
-
-    case "role_updated":
-    case "role_change_approved":
-    case "role_change_denied":
-      return [["campus-user-role"]];
+    case "burn":
+      return [["campus-balance"], ["ledger-events"]];
 
     case "UniversityRegistered":
     case "UniversityApproved":
     case "UniversityRejected":
-      return [["universities"], ["campus-university"]];
+    case "UniversitySuspended":
+      return [["universities"], ["ledger-events"]];
 
     case "ProfileSubmittedForVerification":
     case "ProfileVerified":
@@ -97,12 +64,10 @@ import { useCampusProfile } from "@/features/wallet/hooks/useWallet";
 
 export function useContractEventStream(address: string | null | undefined) {
   const queryClient = useQueryClient();
-  const addItems = useActivityFeedStore((s) => s.addItems);
+  const addItems = useNotificationStore((s) => s.addItems);
   const { data: profile } = useCampusProfile(address ?? null);
 
   // Track the highest ledger sequence we have already processed.
-  // Initialized to 0 — first fetch will anchor to (latestLedger - 60) so we
-  // don't flood the feed with stale history on connect.
   const lastLedgerRef = useRef<number>(0);
   const isRunningRef = useRef<boolean>(false);
 
@@ -182,60 +147,82 @@ export function useContractEventStream(address: string | null | undefined) {
 
         if (decoded.length === 0) return;
 
-        // Filter events client-side based on user context before pushing to notifications bell
+        // Filter events client-side based on user context to yield PERSONAL notifications only
         const isPlatformAdmin = address === NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS;
         const myUnivCode = profile?.universityCode?.toUpperCase() ?? "";
 
         const filteredDecoded: typeof decoded = [];
         for (const evt of decoded) {
-          if (
-            evt.eventName === "UniversityRegistered" ||
-            evt.eventName === "UniversityApproved" ||
-            evt.eventName === "UniversityRejected" ||
-            evt.eventName === "ProfileSubmittedForVerification" ||
-            evt.eventName === "ProfileVerified" ||
-            evt.eventName === "ProfileRejected"
-          ) {
-            if (isPlatformAdmin) {
-              if (
-                evt.eventName === "UniversityRegistered" ||
-                evt.eventName === "UniversityApproved" ||
-                evt.eventName === "UniversityRejected"
-              ) {
-                filteredDecoded.push(evt);
-              }
-              continue;
-            }
-
-            if (profile?.role === 4) {
-              // University Admin:
-              // - See approval/rejection for their own university code
-              // - See new profiles submitted under their university code
-              // - See verification completions for their university code
-              const eventCode = evt.details.toUpperCase();
-              if (eventCode === myUnivCode) {
-                filteredDecoded.push(evt);
-              }
-              continue;
-            }
-
-            // Student/Merchant/Organizer:
-            // - See profile approval or rejection matching their own wallet address
-            if (evt.eventName === "ProfileVerified" || evt.eventName === "ProfileRejected") {
-              const eventTarget = evt.details;
-              if (eventTarget.toUpperCase() === address.toUpperCase()) {
-                filteredDecoded.push(evt);
-              }
-              continue;
+          // 1. Platform Admin personal notifications (University Claims Queue)
+          if (isPlatformAdmin) {
+            if (evt.eventName === "UniversityRegistered") {
+              evt.title = "University Registration Claim";
+              evt.message = `New university registered: ${evt.details}`;
+              filteredDecoded.push(evt);
             }
             continue;
           }
 
-          // Food Ordering notifications filtering
+          // 2. University Admin personal notifications (New Verification Requests)
+          if (profile?.role === 4) {
+            if (evt.eventName === "ProfileSubmittedForVerification") {
+              const eventCode = evt.details.toUpperCase();
+              if (eventCode === myUnivCode) {
+                try {
+                  const applicantAddress = typeof evt.topicNative?.[1] === "string" ? evt.topicNative[1] : "";
+                  const applicantProfile = await fetchUserProfile(applicantAddress);
+                  const applicantName = applicantProfile?.fullName || shortAddr(applicantAddress);
+                  evt.title = "Verification Request";
+                  evt.message = `New verification request from ${applicantName}`;
+                  filteredDecoded.push(evt);
+                } catch (err) {
+                  console.warn("Failed fetching applicant profile for notification", err);
+                  evt.title = "Verification Request";
+                  evt.message = `New verification request from ${shortAddr(evt.topicNative?.[1] as string)}`;
+                  filteredDecoded.push(evt);
+                }
+              }
+            }
+            continue;
+          }
+
+          // 3. User Identity personal notifications (Student/Merchant/Organizer Profile Verification status)
+          if (evt.eventName === "ProfileVerified" || evt.eventName === "ProfileRejected") {
+            const eventTarget = evt.details;
+            if (eventTarget.toUpperCase() === address.toUpperCase()) {
+              evt.title = evt.eventName === "ProfileVerified" ? "Profile Verified" : "Profile Rejected";
+              evt.message = evt.eventName === "ProfileVerified"
+                ? "Your profile has been verified"
+                : "Your profile was rejected";
+              filteredDecoded.push(evt);
+            }
+            continue;
+          }
+
+          // 4. Token Transfer personal notifications (CAMP sent/received)
+          if (evt.eventName === "transfer" || evt.eventName === "mint_purchase") {
+            const from = typeof evt.topicNative?.[1] === "string" ? evt.topicNative[1] : "";
+            const to = typeof evt.topicNative?.[2] === "string" ? evt.topicNative[2] : "";
+
+            if (to.toLowerCase() === address.toLowerCase()) {
+              evt.title = "CAMP Received";
+              evt.message = `You received ${evt.details} from ${shortAddr(from)}`;
+              evt.color = "emerald";
+              filteredDecoded.push(evt);
+            } else if (from.toLowerCase() === address.toLowerCase()) {
+              evt.title = "CAMP Sent";
+              evt.message = `You successfully sent ${evt.details} to ${shortAddr(to)}`;
+              evt.color = "blue";
+              filteredDecoded.push(evt);
+            }
+            continue;
+          }
+
+          // 5. Food Ordering personal notifications (Student Order Tracking & Merchant Canteen management)
           if (evt.eventName === "OrderPlaced") {
             try {
               const orderId = Number(evt.topicNative?.[1]);
-              if (orderId && address) {
+              if (orderId) {
                 const order = await fetchFoodOrder(orderId, address);
                 if (order && order.merchant.toLowerCase() === address.toLowerCase()) {
                   evt.title = "New Incoming Order";
@@ -252,7 +239,7 @@ export function useContractEventStream(address: string | null | undefined) {
           if (evt.eventName === "OrderStatusChanged") {
             try {
               const orderId = Number(evt.topicNative?.[1]);
-              if (orderId && address) {
+              if (orderId) {
                 const order = await fetchFoodOrder(orderId, address);
                 if (order) {
                   if (order.student.toLowerCase() === address.toLowerCase()) {
@@ -285,12 +272,10 @@ export function useContractEventStream(address: string | null | undefined) {
             }
             continue;
           }
-
-          filteredDecoded.push(evt);
         }
 
         if (filteredDecoded.length > 0) {
-          // Push filtered events to feed
+          // Push filtered events to personal notification store
           addItems(filteredDecoded);
         }
 
@@ -320,8 +305,7 @@ export function useContractEventStream(address: string | null | undefined) {
           queryClient.invalidateQueries({ queryKey });
         }
       } catch (err: unknown) {
-        // Log poll failures — network blips, rate limits, etc.
-        // Do not re-throw: the next interval tick will retry automatically.
+        // Log poll failures
         captureError(err, { action: "event_stream_poll", contract: "soroban-rpc", walletAddress: address ?? undefined });
       } finally {
         isRunningRef.current = false;
