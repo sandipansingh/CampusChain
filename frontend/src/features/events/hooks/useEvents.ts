@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchEvent,
+  fetchEvents,
   fetchTicket,
   executeCreateEvent,
   executeBuyTicket,
@@ -21,6 +22,10 @@ export function useEventDetails(eventId: number | null, address?: string) {
     },
     enabled: eventId !== null,
   });
+}
+
+export function useEvents(address?: string) {
+  return useQuery({ queryKey: ["campus-events", address], queryFn: () => fetchEvents(0, 50, address) });
 }
 
 export function useTicketDetails(ticketId: number | null, address?: string) {
@@ -73,7 +78,9 @@ export function useBuyTicketMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-event", variables.eventId] });
+      queryClient.invalidateQueries({ queryKey: ["campus-events"] });
       queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.buyer] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
     },
   });
 }

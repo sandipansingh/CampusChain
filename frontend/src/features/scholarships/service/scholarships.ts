@@ -30,6 +30,21 @@ export async function fetchScholarshipProgram(id: number, address?: string) {
   };
 }
 
+type RawProgram = { id: bigint; name: string; amount: bigint; sponsor: string; min_gpa: number; active: boolean };
+type RawApplication = { id: bigint; program_id: bigint; applicant: string; gpa: number; status: number };
+const parseProgram = (program: RawProgram) => ({ id: Number(program.id), name: String(program.name), amount: Number(program.amount) / 10_000_000, sponsor: String(program.sponsor), min_gpa: Number(program.min_gpa), active: Boolean(program.active) });
+const parseApplication = (application: RawApplication) => ({ id: Number(application.id), program_id: Number(application.program_id), applicant: String(application.applicant), gpa: Number(application.gpa), status: Number(application.status) });
+
+export async function fetchScholarshipPrograms(startAfter = 0, limit = 50, address?: string) {
+  const res = await readContract(NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, "list_scholarship_programs", [u64ToScVal(startAfter), u32ToScVal(limit)], address);
+  return Array.isArray(res) ? (res as RawProgram[]).map(parseProgram) : [];
+}
+
+export async function fetchScholarshipApplications(startAfter = 0, limit = 50, address?: string) {
+  const res = await readContract(NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, "list_scholarship_applications", [u64ToScVal(startAfter), u32ToScVal(limit)], address);
+  return Array.isArray(res) ? (res as RawApplication[]).map(parseApplication) : [];
+}
+
 export async function fetchScholarshipApplication(id: number, address?: string) {
   const res = (await readContract(
     NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,

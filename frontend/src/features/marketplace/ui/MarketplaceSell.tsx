@@ -4,14 +4,13 @@ import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { Dropdown } from "@/shared/ui/Dropdown";
-import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useCreateListingMutation } from "@/features/marketplace/hooks/useMarketplace";
 import {
   ArrowLeft,
   CheckCircle2,
 } from "lucide-react";
 
-type CategoryType = "textbooks" | "electronics" | "furniture" | "clothing" | "other";
+type CategoryType = "textbooks" | "electronics" | "notes" | "hostel" | "other";
 type ConditionType = "new" | "like-new" | "used";
 
 interface MarketplaceSellProps {
@@ -31,9 +30,6 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
   const [description, setDescription] = useState("");
   const [escrowEnabled, setEscrowEnabled] = useState(true);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
-
-  // Price conversion (mock 1 CAMP = 0.11 XLM)
-  const conversionXlm = priceCamp ? (parseFloat(priceCamp) * 0.11).toFixed(2) : "0.00";
 
   const createListingMutation = useCreateListingMutation();
 
@@ -56,11 +52,11 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
 
     // Map Category to contract number
     const categoryMap: Record<CategoryType, number> = {
-      textbooks: 0,
-      electronics: 1,
-      furniture: 2,
-      clothing: 3,
-      other: 4,
+      textbooks: 1,
+      electronics: 2,
+      notes: 3,
+      hostel: 4,
+      other: 5,
     };
 
     setIsSubmitting(true);
@@ -109,7 +105,7 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
           onClick={onBack}
           className="inline-flex items-center gap-2 text-muted-foreground hover:text-foreground text-sm font-semibold transition-colors group cursor-pointer"
         >
-          <ArrowLeft className="h-4 w-4 group-hover:-translate-x-0.5 transition-transform" />
+          <ArrowLeft className="h-4 w-4" />
           <span>Back to Marketplace</span>
         </button>
       </div>
@@ -194,8 +190,8 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
                       { value: "", label: "Select category" },
                       { value: "textbooks", label: "Textbooks" },
                       { value: "electronics", label: "Electronics" },
-                      { value: "furniture", label: "Dorm Furniture" },
-                      { value: "clothing", label: "Clothing" },
+                      { value: "notes", label: "Course Notes" },
+                      { value: "hostel", label: "Hostel" },
                       { value: "other", label: "Other" },
                     ]}
                     value={category}
@@ -248,9 +244,6 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
                   />
                 </div>
               )}
-              <p className="text-xs text-muted-foreground mt-1.5 pl-1">
-                ~ {conversionXlm} XLM
-              </p>
             </div>
 
             {/* Description */}
@@ -291,7 +284,7 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full h-12 mt-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/95 flex items-center justify-center gap-2 cursor-pointer transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
+            className="w-full h-12 mt-4 bg-primary text-primary-foreground font-semibold rounded-lg hover:bg-primary/95 flex items-center justify-center gap-2 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
           >
             <span>{isSubmitting ? "Publishing..." : "Submit Listing"}</span>
           </button>

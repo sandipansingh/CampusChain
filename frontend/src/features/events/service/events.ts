@@ -27,6 +27,16 @@ export async function fetchEvent(eventId: number, address?: string) {
   };
 }
 
+type RawEvent = { id: bigint; host: string; price: bigint; capacity: number; tickets_sold: number };
+function parseEvent(res: RawEvent) {
+  return { id: Number(res.id), host: String(res.host), price: Number(res.price) / 10_000_000, capacity: Number(res.capacity), tickets_sold: Number(res.tickets_sold) };
+}
+
+export async function fetchEvents(startAfter = 0, limit = 50, address?: string) {
+  const res = await readContract(NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, "list_events", [u64ToScVal(startAfter), u32ToScVal(limit)], address);
+  return Array.isArray(res) ? (res as RawEvent[]).map(parseEvent) : [];
+}
+
 export async function fetchTicket(ticketId: number, address?: string) {
   const res = (await readContract(
     NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,

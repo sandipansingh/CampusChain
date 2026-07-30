@@ -1,6 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchScholarshipProgram,
+  fetchScholarshipPrograms,
+  fetchScholarshipApplications,
   fetchScholarshipApplication,
   executeCreateScholarshipProgram,
   executeApplyForScholarship,
@@ -38,6 +40,14 @@ export function useScholarshipApplication(applicationId: number | null, address?
     },
     enabled: applicationId !== null,
   });
+}
+
+export function useScholarshipPrograms(address?: string) {
+  return useQuery({ queryKey: ["scholarship-programs", address], queryFn: () => fetchScholarshipPrograms(0, 50, address) });
+}
+
+export function useScholarshipApplications(address?: string) {
+  return useQuery({ queryKey: ["scholarship-applications", address], queryFn: () => fetchScholarshipApplications(0, 50, address) });
 }
 
 export function useCreateScholarshipProgramMutation() {

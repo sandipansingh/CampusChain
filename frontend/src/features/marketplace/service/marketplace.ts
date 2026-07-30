@@ -32,6 +32,42 @@ export async function fetchListing(id: number, address?: string) {
   };
 }
 
+type RawListing = { id: bigint; seller: string; title: string; description: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
+
+function parseListing(res: RawListing) {
+  return {
+    id: Number(res.id),
+    seller: String(res.seller),
+    title: String(res.title),
+    description: String(res.description),
+    price: Number(res.price) / 10_000_000,
+    category: Number(res.category),
+    status: Number(res.status),
+    escrow_enabled: Boolean(res.escrow_enabled),
+  };
+}
+
+export async function fetchListings(startAfter = 0, limit = 50, address?: string) {
+  const res = await readContract(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "list_listings",
+    [u64ToScVal(startAfter), u32ToScVal(limit)],
+    address
+  );
+  if (!Array.isArray(res)) return [];
+  return (res as RawListing[]).map(parseListing);
+}
+
+export async function fetchListingEscrow(listingId: number, address?: string): Promise<number | null> {
+  const res = await readContract(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "get_listing_escrow",
+    [u64ToScVal(listingId)],
+    address
+  );
+  return res === null || res === undefined ? null : Number(res);
+}
+
 export async function executeCreateListing(
   seller: string,
   title: string,

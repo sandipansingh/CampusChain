@@ -3,6 +3,7 @@ import {
   invokeContractMethod,
   addressToScVal,
   i128ToScVal,
+  u32ToScVal,
   u64ToScVal,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
 } from "@/shared/stellar/client";
@@ -24,6 +25,20 @@ export async function fetchEscrow(escrowId: number, address?: string) {
     amount: Number(res.amount) / 10_000_000,
     status: Number(res.status),
   };
+}
+
+export async function fetchEscrows(startAfter = 0, limit = 50, address?: string) {
+  const res = await readContract(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "list_escrows",
+    [u64ToScVal(startAfter), u32ToScVal(limit)],
+    address
+  ) as unknown[];
+  if (!Array.isArray(res)) return [];
+  return res.map((entry) => {
+    const escrow = entry as { id: bigint; buyer: string; seller: string; amount: bigint; status: number };
+    return { id: Number(escrow.id), buyer: String(escrow.buyer), seller: String(escrow.seller), amount: Number(escrow.amount) / 10_000_000, status: Number(escrow.status) };
+  });
 }
 
 export async function executeCreateEscrow(buyer: string, seller: string, amount: number): Promise<string> {

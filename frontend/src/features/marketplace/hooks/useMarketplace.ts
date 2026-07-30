@@ -1,12 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchEscrow,
+  fetchEscrows,
   executeCreateEscrow,
   executeReleaseEscrow,
   executeRefundEscrow,
 } from "../service/escrow";
 import {
   fetchListing,
+  fetchListings,
+  fetchListingEscrow,
   executeCreateListing,
   executeUpdateListing,
   executeBuyListing,
@@ -28,6 +31,10 @@ export function useEscrowAgreement(escrowId: number | null, address?: string) {
   });
 }
 
+export function useEscrows(address?: string) {
+  return useQuery({ queryKey: ["campus-escrows", address], queryFn: () => fetchEscrows(0, 50, address) });
+}
+
 export function useMarketplaceListing(listingId: number | null, address?: string) {
   return useQuery({
     queryKey: ["marketplace-listing", listingId, address],
@@ -40,6 +47,21 @@ export function useMarketplaceListing(listingId: number | null, address?: string
         return null;
       }
     },
+    enabled: listingId !== null,
+  });
+}
+
+export function useMarketplaceListings(address?: string) {
+  return useQuery({
+    queryKey: ["marketplace-listings", address],
+    queryFn: () => fetchListings(0, 50, address),
+  });
+}
+
+export function useListingEscrowId(listingId: number | null, address?: string) {
+  return useQuery({
+    queryKey: ["marketplace-listing-escrow", listingId, address],
+    queryFn: () => listingId === null ? null : fetchListingEscrow(listingId, address),
     enabled: listingId !== null,
   });
 }
@@ -101,7 +123,10 @@ export function useBuyListingMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["marketplace-listing", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["marketplace-listing-escrow", variables.id] });
+      queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
       queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.buyer] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
     },
   });
 }
@@ -140,7 +165,9 @@ export function useReleaseEscrowMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-escrow", variables.escrowId] });
+      queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
       queryClient.invalidateQueries({ queryKey: ["campus-balance"] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
     },
   });
 }
@@ -159,7 +186,9 @@ export function useRefundEscrowMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-escrow", variables.escrowId] });
+      queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
       queryClient.invalidateQueries({ queryKey: ["campus-balance"] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
     },
   });
 }

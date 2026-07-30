@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   fetchUtilityReward,
+  fetchUtilityRewards,
   executeCreateUtilityReward,
   executeRedeemReward,
   executeClaimFaucet,
@@ -22,6 +23,10 @@ export function useUtilityReward(id: number | null, address?: string) {
     },
     enabled: id !== null,
   });
+}
+
+export function useUtilityRewards(address?: string) {
+  return useQuery({ queryKey: ["utility-rewards", address], queryFn: () => fetchUtilityRewards(0, 50, address) });
 }
 
 export function useCreateUtilityRewardMutation() {
@@ -54,7 +59,9 @@ export function useRedeemRewardMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["utility-reward", variables.rewardId] });
+      queryClient.invalidateQueries({ queryKey: ["utility-rewards"] });
       queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.student] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
     },
   });
 }
@@ -68,6 +75,7 @@ export function useClaimFaucetMutation() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
       queryClient.invalidateQueries({ queryKey: ["has-claimed-faucet", variables.recipient] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
     },
   });
 }
@@ -96,6 +104,7 @@ export function useBuyCampTokensMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
     },
   });
 }
