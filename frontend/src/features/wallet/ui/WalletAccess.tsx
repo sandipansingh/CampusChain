@@ -61,7 +61,7 @@ export function WalletAccess({
   if (
     isLoadingProfile ||
     (profile?.role === 4 && isLoadingUniv) ||
-    redirectExistingProfile
+    (redirectExistingProfile && (profile || isPlatformAdmin))
   ) {
     return <LoadingProfile />;
   }
