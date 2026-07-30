@@ -24,8 +24,35 @@ export function useEventDetails(eventId: number | null, address?: string) {
   });
 }
 
+import { useCampusProfile } from "@/features/wallet/hooks/useWallet";
+import { fetchUserProfile } from "@/features/wallet/service/campusIdentity";
+
 export function useEvents(address?: string) {
-  return useQuery({ queryKey: ["campus-events", address], queryFn: () => fetchEvents(0, 50, address) });
+  const { data: profile } = useCampusProfile(address ?? null);
+  const myUnivCode = profile?.universityCode?.toUpperCase() ?? "";
+
+  return useQuery({
+    queryKey: ["campus-events", address, myUnivCode],
+    queryFn: async () => {
+      const events = await fetchEvents(0, 50, address);
+      if (!address) return events;
+      if (!myUnivCode) return []; // if current user has no approved university profile, show empty events
+
+      const filtered = [];
+      for (const item of events) {
+        try {
+          const hostProfile = await fetchUserProfile(item.host);
+          if (hostProfile && hostProfile.universityCode?.toUpperCase() === myUnivCode) {
+            filtered.push(item);
+          }
+        } catch {
+          // ignore profile fetch issues
+        }
+      }
+      return filtered;
+    },
+    enabled: address === undefined ? true : !!profile,
+  });
 }
 
 export function useTicketDetails(ticketId: number | null, address?: string) {
