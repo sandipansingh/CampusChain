@@ -12,10 +12,10 @@ import {
 } from "../service/campusToken";
 import {
   fetchUserProfile,
+  fetchUniversity,
   executeRegisterProfile,
-  executeSetRole as executeSetIdentityRole,
-  executeSetVerified,
-  executeUpdateProfile,
+  executeRegisterUniversity,
+  type ProfileRegistration,
 } from "../service/campusIdentity";
 
 export function useCampusBalance(address: string | null) {
@@ -182,21 +182,32 @@ export function useCampusProfile(address: string | null) {
   });
 }
 
+export function useCampusUniversity(code: string | null, address: string | null) {
+  return useQuery({
+    queryKey: ["campus-university", code],
+    queryFn: async () => {
+      if (!code) return null;
+      return fetchUniversity(code, address ?? undefined);
+    },
+    enabled: !!code,
+  });
+}
+
 export function useRegisterProfileMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
       address,
       fullName,
-      universityId,
-      department,
+      universityCode,
+      registration,
     }: {
       address: string;
       fullName: string;
-      universityId: string;
-      department: string;
+      universityCode: string;
+      registration: ProfileRegistration;
     }) => {
-      return executeRegisterProfile(address, fullName, universityId, department);
+      return executeRegisterProfile(address, fullName, universityCode, registration);
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.address] });
@@ -205,64 +216,14 @@ export function useRegisterProfileMutation() {
   });
 }
 
-export function useSetIdentityRoleMutation() {
+export function useRegisterUniversityMutation() {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: async ({
-      admin,
-      user,
-      role,
-    }: {
-      admin: string;
-      user: string;
-      role: number;
-    }) => {
-      return executeSetIdentityRole(admin, user, role);
-    },
+    mutationFn: async ({ admin, code, name, address, title }: { admin: string; code: string; name: string; address: string; title: string }) =>
+      executeRegisterUniversity(admin, code, name, address, title),
     onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.user] });
-      queryClient.invalidateQueries({ queryKey: ["campus-role", variables.user] });
-    },
-  });
-}
-
-export function useSetVerifiedMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      admin,
-      user,
-      verified,
-    }: {
-      admin: string;
-      user: string;
-      verified: boolean;
-    }) => {
-      return executeSetVerified(admin, user, verified);
-    },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.user] });
-    },
-  });
-}
-
-export function useUpdateProfileMutation() {
-  const queryClient = useQueryClient();
-  return useMutation({
-    mutationFn: async ({
-      address,
-      fullName,
-      universityId,
-      department,
-    }: {
-      address: string;
-      fullName: string;
-      universityId: string;
-      department: string;
-    }) => executeUpdateProfile(address, fullName, universityId, department),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.address] });
-      queryClient.invalidateQueries({ queryKey: ["campus-role", variables.address] });
+      queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.admin] });
+      queryClient.invalidateQueries({ queryKey: ["universities"] });
     },
   });
 }
