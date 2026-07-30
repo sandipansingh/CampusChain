@@ -1,6 +1,6 @@
 {
   "generators": {
-    "address": 7,
+    "address": 5,
     "nonce": 0
   },
   "auth": [
@@ -39,7 +39,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "UNI-A"
+                  "string": "APPROVED"
                 },
                 {
                   "string": "Example University"
@@ -70,7 +70,38 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                 },
                 {
-                  "string": "UNI-B"
+                  "string": "PENDING"
+                },
+                {
+                  "string": "Example University"
+                },
+                {
+                  "string": "1 University Avenue"
+                },
+                {
+                  "string": "Registrar"
+                }
+              ]
+            }
+          },
+          "sub_invocations": []
+        }
+      ]
+    ],
+    [
+      [
+        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM",
+        {
+          "function": {
+            "contract_fn": {
+              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+              "function_name": "register_university",
+              "args": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                },
+                {
+                  "string": "REJECTED"
                 },
                 {
                   "string": "Example University"
@@ -101,7 +132,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
                 },
                 {
-                  "string": "UNI-A"
+                  "string": "APPROVED"
                 }
               ]
             }
@@ -117,203 +148,13 @@
           "function": {
             "contract_fn": {
               "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-              "function_name": "approve_university",
+              "function_name": "reject_university",
               "args": [
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
                 },
                 {
-                  "string": "UNI-B"
-                }
-              ]
-            }
-          },
-          "sub_invocations": []
-        }
-      ]
-    ],
-    [
-      [
-        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM",
-        {
-          "function": {
-            "contract_fn": {
-              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-              "function_name": "register_profile",
-              "args": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                },
-                {
-                  "string": "Student A"
-                },
-                {
-                  "string": "UNI-A"
-                },
-                {
-                  "u32": 1
-                },
-                {
-                  "vec": [
-                    {
-                      "symbol": "Student"
-                    },
-                    {
-                      "map": [
-                        {
-                          "key": {
-                            "symbol": "department"
-                          },
-                          "val": {
-                            "string": "Engineering"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "graduation_year"
-                          },
-                          "val": {
-                            "u32": 2027
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "program"
-                          },
-                          "val": {
-                            "string": "Computer Science"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "student_identifier_hash"
-                          },
-                          "val": {
-                            "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          "sub_invocations": []
-        }
-      ]
-    ],
-    [
-      [
-        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
-        {
-          "function": {
-            "contract_fn": {
-              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-              "function_name": "register_profile",
-              "args": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-                },
-                {
-                  "string": "Student To Reject"
-                },
-                {
-                  "string": "UNI-A"
-                },
-                {
-                  "u32": 1
-                },
-                {
-                  "vec": [
-                    {
-                      "symbol": "Student"
-                    },
-                    {
-                      "map": [
-                        {
-                          "key": {
-                            "symbol": "department"
-                          },
-                          "val": {
-                            "string": "Engineering"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "graduation_year"
-                          },
-                          "val": {
-                            "u32": 2027
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "program"
-                          },
-                          "val": {
-                            "string": "Computer Science"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "student_identifier_hash"
-                          },
-                          "val": {
-                            "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          },
-          "sub_invocations": []
-        }
-      ]
-    ],
-    [],
-    [],
-    [
-      [
-        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-        {
-          "function": {
-            "contract_fn": {
-              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-              "function_name": "verify_profile",
-              "args": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
-                },
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                }
-              ]
-            }
-          },
-          "sub_invocations": []
-        }
-      ]
-    ],
-    [],
-    [],
-    [
-      [
-        "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-        {
-          "function": {
-            "contract_fn": {
-              "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-              "function_name": "reject_profile",
-              "args": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
-                },
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                  "string": "REJECTED"
                 }
               ]
             }
@@ -406,7 +247,7 @@
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
             "key": {
               "ledger_key_nonce": {
-                "nonce": 4837995959683129791
+                "nonce": 4270020994084947596
               }
             },
             "durability": "temporary"
@@ -421,7 +262,7 @@
                 "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM",
                 "key": {
                   "ledger_key_nonce": {
-                    "nonce": 4837995959683129791
+                    "nonce": 4270020994084947596
                   }
                 },
                 "durability": "temporary",
@@ -653,7 +494,7 @@
                                   "symbol": "owned_university_code"
                                 },
                                 "val": {
-                                  "string": "UNI-A"
+                                  "string": "APPROVED"
                                 }
                               },
                               {
@@ -690,7 +531,7 @@
                         "symbol": "university_code"
                       },
                       "val": {
-                        "string": "UNI-A"
+                        "string": "APPROVED"
                       }
                     },
                     {
@@ -787,7 +628,7 @@
                                   "symbol": "owned_university_code"
                                 },
                                 "val": {
-                                  "string": "UNI-B"
+                                  "string": "PENDING"
                                 }
                               },
                               {
@@ -824,7 +665,7 @@
                         "symbol": "university_code"
                       },
                       "val": {
-                        "string": "UNI-B"
+                        "string": "PENDING"
                       }
                     },
                     {
@@ -912,40 +753,24 @@
                       "val": {
                         "vec": [
                           {
-                            "symbol": "Student"
+                            "symbol": "UniversityAdmin"
                           },
                           {
                             "map": [
                               {
                                 "key": {
-                                  "symbol": "department"
+                                  "symbol": "owned_university_code"
                                 },
                                 "val": {
-                                  "string": "Engineering"
+                                  "string": "REJECTED"
                                 }
                               },
                               {
                                 "key": {
-                                  "symbol": "graduation_year"
+                                  "symbol": "title"
                                 },
                                 "val": {
-                                  "u32": 2027
-                                }
-                              },
-                              {
-                                "key": {
-                                  "symbol": "program"
-                                },
-                                "val": {
-                                  "string": "Computer Science"
-                                }
-                              },
-                              {
-                                "key": {
-                                  "symbol": "student_identifier_hash"
-                                },
-                                "val": {
-                                  "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                                  "string": "Registrar"
                                 }
                               }
                             ]
@@ -958,7 +783,7 @@
                         "symbol": "full_name"
                       },
                       "val": {
-                        "string": "Student A"
+                        "string": "Example University"
                       }
                     },
                     {
@@ -966,7 +791,7 @@
                         "symbol": "role"
                       },
                       "val": {
-                        "u32": 1
+                        "u32": 4
                       }
                     },
                     {
@@ -974,7 +799,7 @@
                         "symbol": "university_code"
                       },
                       "val": {
-                        "string": "UNI-A"
+                        "string": "REJECTED"
                       }
                     },
                     {
@@ -1009,160 +834,10 @@
             "key": {
               "vec": [
                 {
-                  "symbol": "Profile"
-                },
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-                }
-              ]
-            },
-            "durability": "persistent"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-                "key": {
-                  "vec": [
-                    {
-                      "symbol": "Profile"
-                    },
-                    {
-                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-                    }
-                  ]
-                },
-                "durability": "persistent",
-                "val": {
-                  "map": [
-                    {
-                      "key": {
-                        "symbol": "address"
-                      },
-                      "val": {
-                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "created_at"
-                      },
-                      "val": {
-                        "u64": 0
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "details"
-                      },
-                      "val": {
-                        "vec": [
-                          {
-                            "symbol": "Student"
-                          },
-                          {
-                            "map": [
-                              {
-                                "key": {
-                                  "symbol": "department"
-                                },
-                                "val": {
-                                  "string": "Engineering"
-                                }
-                              },
-                              {
-                                "key": {
-                                  "symbol": "graduation_year"
-                                },
-                                "val": {
-                                  "u32": 2027
-                                }
-                              },
-                              {
-                                "key": {
-                                  "symbol": "program"
-                                },
-                                "val": {
-                                  "string": "Computer Science"
-                                }
-                              },
-                              {
-                                "key": {
-                                  "symbol": "student_identifier_hash"
-                                },
-                                "val": {
-                                  "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
-                                }
-                              }
-                            ]
-                          }
-                        ]
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "full_name"
-                      },
-                      "val": {
-                        "string": "Student To Reject"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "role"
-                      },
-                      "val": {
-                        "u32": 1
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "university_code"
-                      },
-                      "val": {
-                        "string": "UNI-A"
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "updated_at"
-                      },
-                      "val": {
-                        "u64": 0
-                      }
-                    },
-                    {
-                      "key": {
-                        "symbol": "verification_status"
-                      },
-                      "val": {
-                        "u32": 3
-                      }
-                    }
-                  ]
-                }
-              }
-            },
-            "ext": "v0"
-          },
-          4095
-        ]
-      ],
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
-            "key": {
-              "vec": [
-                {
                   "symbol": "UniversityByCode"
                 },
                 {
-                  "string": "UNI-A"
+                  "string": "APPROVED"
                 }
               ]
             },
@@ -1182,7 +857,7 @@
                       "symbol": "UniversityByCode"
                     },
                     {
-                      "string": "UNI-A"
+                      "string": "APPROVED"
                     }
                   ]
                 },
@@ -1218,7 +893,7 @@
                         "symbol": "code"
                       },
                       "val": {
-                        "string": "UNI-A"
+                        "string": "APPROVED"
                       }
                     },
                     {
@@ -1264,7 +939,7 @@
                   "symbol": "UniversityByCode"
                 },
                 {
-                  "string": "UNI-B"
+                  "string": "PENDING"
                 }
               ]
             },
@@ -1284,7 +959,7 @@
                       "symbol": "UniversityByCode"
                     },
                     {
-                      "string": "UNI-B"
+                      "string": "PENDING"
                     }
                   ]
                 },
@@ -1312,7 +987,7 @@
                         "symbol": "approval_status"
                       },
                       "val": {
-                        "u32": 2
+                        "u32": 1
                       }
                     },
                     {
@@ -1320,7 +995,109 @@
                         "symbol": "code"
                       },
                       "val": {
-                        "string": "UNI-B"
+                        "string": "PENDING"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "created_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "name"
+                      },
+                      "val": {
+                        "string": "Example University"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "updated_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    }
+                  ]
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          4095
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+            "key": {
+              "vec": [
+                {
+                  "symbol": "UniversityByCode"
+                },
+                {
+                  "string": "REJECTED"
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "UniversityByCode"
+                    },
+                    {
+                      "string": "REJECTED"
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "address"
+                      },
+                      "val": {
+                        "string": "1 University Avenue"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "admin_address"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "approval_status"
+                      },
+                      "val": {
+                        "u32": 3
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "code"
+                      },
+                      "val": {
+                        "string": "REJECTED"
                       }
                     },
                     {
@@ -1392,7 +1169,7 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "string": "UNI-A"
+                  "string": "APPROVED"
                 }
               }
             },
@@ -1437,7 +1214,52 @@
                 },
                 "durability": "persistent",
                 "val": {
-                  "string": "UNI-B"
+                  "string": "PENDING"
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          4095
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+            "key": {
+              "vec": [
+                {
+                  "symbol": "UniversityCodeByAdmin"
+                },
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "UniversityCodeByAdmin"
+                    },
+                    {
+                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "string": "REJECTED"
                 }
               }
             },
@@ -1478,10 +1300,13 @@
                 "val": {
                   "vec": [
                     {
-                      "string": "UNI-A"
+                      "string": "APPROVED"
                     },
                     {
-                      "string": "UNI-B"
+                      "string": "PENDING"
+                    },
+                    {
+                      "string": "REJECTED"
                     }
                   ]
                 }
@@ -1522,72 +1347,6 @@
             "ext": "v0"
           },
           4095
-        ]
-      ],
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-            "key": {
-              "ledger_key_nonce": {
-                "nonce": 1194852393571756375
-              }
-            },
-            "durability": "temporary"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-                "key": {
-                  "ledger_key_nonce": {
-                    "nonce": 1194852393571756375
-                  }
-                },
-                "durability": "temporary",
-                "val": "void"
-              }
-            },
-            "ext": "v0"
-          },
-          6311999
-        ]
-      ],
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-            "key": {
-              "ledger_key_nonce": {
-                "nonce": 3126073502131104533
-              }
-            },
-            "durability": "temporary"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-                "key": {
-                  "ledger_key_nonce": {
-                    "nonce": 3126073502131104533
-                  }
-                },
-                "durability": "temporary",
-                "val": "void"
-              }
-            },
-            "ext": "v0"
-          },
-          6311999
         ]
       ],
       [
@@ -1662,7 +1421,7 @@
             "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM",
             "key": {
               "ledger_key_nonce": {
-                "nonce": 4270020994084947596
+                "nonce": 4837995959683129791
               }
             },
             "durability": "temporary"
@@ -1677,40 +1436,7 @@
                 "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM",
                 "key": {
                   "ledger_key_nonce": {
-                    "nonce": 4270020994084947596
-                  }
-                },
-                "durability": "temporary",
-                "val": "void"
-              }
-            },
-            "ext": "v0"
-          },
-          6311999
-        ]
-      ],
-      [
-        {
-          "contract_data": {
-            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
-            "key": {
-              "ledger_key_nonce": {
-                "nonce": 8370022561469687789
-              }
-            },
-            "durability": "temporary"
-          }
-        },
-        [
-          {
-            "last_modified_ledger_seq": 0,
-            "data": {
-              "contract_data": {
-                "ext": "v0",
-                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4",
-                "key": {
-                  "ledger_key_nonce": {
-                    "nonce": 8370022561469687789
+                    "nonce": 4837995959683129791
                   }
                 },
                 "durability": "temporary",
@@ -1824,7 +1550,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "string": "UNI-A"
+                  "string": "APPROVED"
                 },
                 {
                   "string": "Example University"
@@ -1888,7 +1614,7 @@
                     "symbol": "code"
                   },
                   "val": {
-                    "string": "UNI-A"
+                    "string": "APPROVED"
                   }
                 },
                 {
@@ -1967,7 +1693,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                 },
                 {
-                  "string": "UNI-B"
+                  "string": "PENDING"
                 },
                 {
                   "string": "Example University"
@@ -2031,7 +1757,150 @@
                     "symbol": "code"
                   },
                   "val": {
-                    "string": "UNI-B"
+                    "string": "PENDING"
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "created_at"
+                  },
+                  "val": {
+                    "u64": 0
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "name"
+                  },
+                  "val": {
+                    "string": "Example University"
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "updated_at"
+                  },
+                  "val": {
+                    "u64": 0
+                  }
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_return"
+              },
+              {
+                "symbol": "register_university"
+              }
+            ],
+            "data": "void"
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": null,
+        "type_": "diagnostic",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "fn_call"
+              },
+              {
+                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
+              },
+              {
+                "symbol": "register_university"
+              }
+            ],
+            "data": {
+              "vec": [
+                {
+                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                },
+                {
+                  "string": "REJECTED"
+                },
+                {
+                  "string": "Example University"
+                },
+                {
+                  "string": "1 University Avenue"
+                },
+                {
+                  "string": "Registrar"
+                }
+              ]
+            }
+          }
+        }
+      },
+      "failed_call": false
+    },
+    {
+      "event": {
+        "ext": "v0",
+        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
+        "type_": "contract",
+        "body": {
+          "v0": {
+            "topics": [
+              {
+                "symbol": "UniversityRegistered"
+              },
+              {
+                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+              }
+            ],
+            "data": {
+              "map": [
+                {
+                  "key": {
+                    "symbol": "address"
+                  },
+                  "val": {
+                    "string": "1 University Avenue"
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "admin_address"
+                  },
+                  "val": {
+                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "approval_status"
+                  },
+                  "val": {
+                    "u32": 1
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "code"
+                  },
+                  "val": {
+                    "string": "REJECTED"
                   }
                 },
                 {
@@ -2110,7 +1979,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
                 },
                 {
-                  "string": "UNI-A"
+                  "string": "APPROVED"
                 }
               ]
             }
@@ -2135,7 +2004,7 @@
               }
             ],
             "data": {
-              "string": "UNI-A"
+              "string": "APPROVED"
             }
           }
         }
@@ -2178,7 +2047,7 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
               },
               {
-                "symbol": "approve_university"
+                "symbol": "reject_university"
               }
             ],
             "data": {
@@ -2187,7 +2056,7 @@
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
                 },
                 {
-                  "string": "UNI-B"
+                  "string": "REJECTED"
                 }
               ]
             }
@@ -2205,14 +2074,14 @@
           "v0": {
             "topics": [
               {
-                "symbol": "UniversityApproved"
+                "symbol": "UniversityRejected"
               },
               {
                 "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
               }
             ],
             "data": {
-              "string": "UNI-B"
+              "string": "REJECTED"
             }
           }
         }
@@ -2231,7 +2100,7 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "approve_university"
+                "symbol": "reject_university"
               }
             ],
             "data": "void"
@@ -2255,109 +2124,7 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
               },
               {
-                "symbol": "register_profile"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                },
-                {
-                  "string": "Student A"
-                },
-                {
-                  "string": "UNI-A"
-                },
-                {
-                  "u32": 1
-                },
-                {
-                  "vec": [
-                    {
-                      "symbol": "Student"
-                    },
-                    {
-                      "map": [
-                        {
-                          "key": {
-                            "symbol": "department"
-                          },
-                          "val": {
-                            "string": "Engineering"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "graduation_year"
-                          },
-                          "val": {
-                            "u32": 2027
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "program"
-                          },
-                          "val": {
-                            "string": "Computer Science"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "student_identifier_hash"
-                          },
-                          "val": {
-                            "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "contract",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "ProfileSubmittedForVerification"
-              },
-              {
-                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-              }
-            ],
-            "data": {
-              "string": "UNI-A"
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "register_profile"
+                "symbol": "list_universities"
               }
             ],
             "data": "void"
@@ -2369,111 +2136,6 @@
     {
       "event": {
         "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
-              },
-              {
-                "symbol": "register_profile"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-                },
-                {
-                  "string": "Student To Reject"
-                },
-                {
-                  "string": "UNI-A"
-                },
-                {
-                  "u32": 1
-                },
-                {
-                  "vec": [
-                    {
-                      "symbol": "Student"
-                    },
-                    {
-                      "map": [
-                        {
-                          "key": {
-                            "symbol": "department"
-                          },
-                          "val": {
-                            "string": "Engineering"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "graduation_year"
-                          },
-                          "val": {
-                            "u32": 2027
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "program"
-                          },
-                          "val": {
-                            "string": "Computer Science"
-                          }
-                        },
-                        {
-                          "key": {
-                            "symbol": "student_identifier_hash"
-                          },
-                          "val": {
-                            "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
-                          }
-                        }
-                      ]
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "contract",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "ProfileSubmittedForVerification"
-              },
-              {
-                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-              }
-            ],
-            "data": {
-              "string": "UNI-A"
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
         "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
         "type_": "diagnostic",
         "body": {
@@ -2483,850 +2145,190 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "register_profile"
-              }
-            ],
-            "data": "void"
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
-              },
-              {
-                "symbol": "verify_profile"
+                "symbol": "list_universities"
               }
             ],
             "data": {
               "vec": [
                 {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
-                },
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "verify_profile"
-              }
-            ],
-            "data": {
-              "error": {
-                "contract": 3
-              }
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 3
-                }
-              }
-            ],
-            "data": {
-              "string": "escalating Ok(ScErrorType::Contract) frame-exit to Err"
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 3
-                }
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "string": "contract try_call failed"
-                },
-                {
-                  "symbol": "verify_profile"
-                },
-                {
-                  "vec": [
+                  "map": [
                     {
-                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
-                    },
-                    {
-                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
-              },
-              {
-                "symbol": "verify_profile"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
-                },
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "verify_profile"
-              }
-            ],
-            "data": {
-              "error": {
-                "contract": 4
-              }
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 4
-                }
-              }
-            ],
-            "data": {
-              "string": "escalating Ok(ScErrorType::Contract) frame-exit to Err"
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 4
-                }
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "string": "contract try_call failed"
-                },
-                {
-                  "symbol": "verify_profile"
-                },
-                {
-                  "vec": [
-                    {
-                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
-                    },
-                    {
-                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                    }
-                  ]
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
-              },
-              {
-                "symbol": "verify_profile"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
-                },
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "contract",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "ProfileVerified"
-              },
-              {
-                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
-              },
-              {
-                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-              }
-            ],
-            "data": {
-              "string": "UNI-A"
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "verify_profile"
-              }
-            ],
-            "data": "void"
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
-              },
-              {
-                "symbol": "get_profile"
-              }
-            ],
-            "data": {
-              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "get_profile"
-              }
-            ],
-            "data": {
-              "map": [
-                {
-                  "key": {
-                    "symbol": "address"
-                  },
-                  "val": {
-                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "created_at"
-                  },
-                  "val": {
-                    "u64": 0
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "details"
-                  },
-                  "val": {
-                    "vec": [
-                      {
-                        "symbol": "Student"
+                      "key": {
+                        "symbol": "address"
                       },
-                      {
-                        "map": [
-                          {
-                            "key": {
-                              "symbol": "department"
-                            },
-                            "val": {
-                              "string": "Engineering"
-                            }
-                          },
-                          {
-                            "key": {
-                              "symbol": "graduation_year"
-                            },
-                            "val": {
-                              "u32": 2027
-                            }
-                          },
-                          {
-                            "key": {
-                              "symbol": "program"
-                            },
-                            "val": {
-                              "string": "Computer Science"
-                            }
-                          },
-                          {
-                            "key": {
-                              "symbol": "student_identifier_hash"
-                            },
-                            "val": {
-                              "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
-                            }
-                          }
-                        ]
+                      "val": {
+                        "string": "1 University Avenue"
                       }
-                    ]
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "full_name"
-                  },
-                  "val": {
-                    "string": "Student A"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "role"
-                  },
-                  "val": {
-                    "u32": 1
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "university_code"
-                  },
-                  "val": {
-                    "string": "UNI-A"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "updated_at"
-                  },
-                  "val": {
-                    "u64": 0
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "verification_status"
-                  },
-                  "val": {
-                    "u32": 2
-                  }
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
-              },
-              {
-                "symbol": "reject_profile"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
-                },
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "reject_profile"
-              }
-            ],
-            "data": {
-              "error": {
-                "contract": 3
-              }
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 3
-                }
-              }
-            ],
-            "data": {
-              "string": "escalating Ok(ScErrorType::Contract) frame-exit to Err"
-            }
-          }
-        }
-      },
-      "failed_call": true
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "error"
-              },
-              {
-                "error": {
-                  "contract": 3
-                }
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "string": "contract try_call failed"
-                },
-                {
-                  "symbol": "reject_profile"
-                },
-                {
-                  "vec": [
-                    {
-                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
                     },
                     {
-                      "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
+                      "key": {
+                        "symbol": "admin_address"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "approval_status"
+                      },
+                      "val": {
+                        "u32": 2
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "code"
+                      },
+                      "val": {
+                        "string": "APPROVED"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "created_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "name"
+                      },
+                      "val": {
+                        "string": "Example University"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "updated_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
                     }
                   ]
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
-              },
-              {
-                "symbol": "reject_profile"
-              }
-            ],
-            "data": {
-              "vec": [
-                {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
                 },
                 {
-                  "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-                }
-              ]
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "contract",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "ProfileRejected"
-              },
-              {
-                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M"
-              },
-              {
-                "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-              }
-            ],
-            "data": {
-              "string": "UNI-A"
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "reject_profile"
-              }
-            ],
-            "data": "void"
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": null,
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_call"
-              },
-              {
-                "bytes": "0000000000000000000000000000000000000000000000000000000000000002"
-              },
-              {
-                "symbol": "get_profile"
-              }
-            ],
-            "data": {
-              "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-            }
-          }
-        }
-      },
-      "failed_call": false
-    },
-    {
-      "event": {
-        "ext": "v0",
-        "contract_id": "0000000000000000000000000000000000000000000000000000000000000002",
-        "type_": "diagnostic",
-        "body": {
-          "v0": {
-            "topics": [
-              {
-                "symbol": "fn_return"
-              },
-              {
-                "symbol": "get_profile"
-              }
-            ],
-            "data": {
-              "map": [
-                {
-                  "key": {
-                    "symbol": "address"
-                  },
-                  "val": {
-                    "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAMDR4"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "created_at"
-                  },
-                  "val": {
-                    "u64": 0
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "details"
-                  },
-                  "val": {
-                    "vec": [
-                      {
-                        "symbol": "Student"
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "address"
                       },
-                      {
-                        "map": [
-                          {
-                            "key": {
-                              "symbol": "department"
-                            },
-                            "val": {
-                              "string": "Engineering"
-                            }
-                          },
-                          {
-                            "key": {
-                              "symbol": "graduation_year"
-                            },
-                            "val": {
-                              "u32": 2027
-                            }
-                          },
-                          {
-                            "key": {
-                              "symbol": "program"
-                            },
-                            "val": {
-                              "string": "Computer Science"
-                            }
-                          },
-                          {
-                            "key": {
-                              "symbol": "student_identifier_hash"
-                            },
-                            "val": {
-                              "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
-                            }
-                          }
-                        ]
+                      "val": {
+                        "string": "1 University Avenue"
                       }
-                    ]
-                  }
+                    },
+                    {
+                      "key": {
+                        "symbol": "admin_address"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAITA4"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "approval_status"
+                      },
+                      "val": {
+                        "u32": 1
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "code"
+                      },
+                      "val": {
+                        "string": "PENDING"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "created_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "name"
+                      },
+                      "val": {
+                        "string": "Example University"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "updated_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    }
+                  ]
                 },
                 {
-                  "key": {
-                    "symbol": "full_name"
-                  },
-                  "val": {
-                    "string": "Student To Reject"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "role"
-                  },
-                  "val": {
-                    "u32": 1
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "university_code"
-                  },
-                  "val": {
-                    "string": "UNI-A"
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "updated_at"
-                  },
-                  "val": {
-                    "u64": 0
-                  }
-                },
-                {
-                  "key": {
-                    "symbol": "verification_status"
-                  },
-                  "val": {
-                    "u32": 3
-                  }
+                  "map": [
+                    {
+                      "key": {
+                        "symbol": "address"
+                      },
+                      "val": {
+                        "string": "1 University Avenue"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "admin_address"
+                      },
+                      "val": {
+                        "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAK3IM"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "approval_status"
+                      },
+                      "val": {
+                        "u32": 3
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "code"
+                      },
+                      "val": {
+                        "string": "REJECTED"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "created_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "name"
+                      },
+                      "val": {
+                        "string": "Example University"
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "updated_at"
+                      },
+                      "val": {
+                        "u64": 0
+                      }
+                    }
+                  ]
                 }
               ]
             }

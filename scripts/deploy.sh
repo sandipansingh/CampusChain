@@ -81,7 +81,7 @@ stellar contract invoke \
     -- \
     initialize \
     --platform_admin "$PLATFORM_ADMIN_ADDRESS" \
-    --full_name "CampusChain Platform Admin"
+    --platform_admin_name "CampusChain Platform Admin"
 
 # ── Deploy CampusToken ──
 echo "Installing CampusToken WASM..."

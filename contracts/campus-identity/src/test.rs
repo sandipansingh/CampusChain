@@ -72,6 +72,39 @@ fn university_codes_are_reserved_while_pending() {
 }
 
 #[test]
+fn list_universities_returns_all_statuses_in_registration_order() {
+    let env = Env::default();
+    let (client, platform_admin) = initialized_identity(&env);
+    let approved_admin = Address::generate(&env);
+    let pending_admin = Address::generate(&env);
+    let rejected_admin = Address::generate(&env);
+
+    claim_university(&client, &env, &approved_admin, "APPROVED");
+    claim_university(&client, &env, &pending_admin, "PENDING");
+    claim_university(&client, &env, &rejected_admin, "REJECTED");
+    client.approve_university(&platform_admin, &text(&env, "APPROVED"));
+    client.reject_university(&platform_admin, &text(&env, "REJECTED"));
+
+    let universities = client.list_universities();
+    assert_eq!(universities.len(), 3);
+    assert_eq!(universities.get(0).unwrap().code, text(&env, "APPROVED"));
+    assert_eq!(
+        universities.get(0).unwrap().approval_status,
+        UniversityApprovalStatus::Approved
+    );
+    assert_eq!(universities.get(1).unwrap().code, text(&env, "PENDING"));
+    assert_eq!(
+        universities.get(1).unwrap().approval_status,
+        UniversityApprovalStatus::PendingApproval
+    );
+    assert_eq!(universities.get(2).unwrap().code, text(&env, "REJECTED"));
+    assert_eq!(
+        universities.get(2).unwrap().approval_status,
+        UniversityApprovalStatus::Rejected
+    );
+}
+
+#[test]
 fn only_platform_admin_can_approve_or_reject_universities() {
     let env = Env::default();
     let (client, platform_admin) = initialized_identity(&env);

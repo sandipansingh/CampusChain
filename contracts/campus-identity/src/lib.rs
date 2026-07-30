@@ -145,6 +145,10 @@ pub enum DataKey {
     Profile(Address),
     UniversityByCode(String),
     UniversityCodeByAdmin(Address),
+    /// Simple registry enumeration for the current testnet-scale UI. This is
+    /// intentionally not paginated; introduce a bounded index before a large
+    /// production registry makes a full response too expensive.
+    UniversityCodes,
 }
 
 const LEDGER_THRESHOLD_INSTANCE: u32 = 1_000;
@@ -282,13 +286,13 @@ pub struct CampusIdentity;
 #[contractimpl]
 impl CampusIdentity {
     /// Initializes the immutable Platform Admin and its sole, non-university profile.
-    pub fn initialize(env: Env, platform_admin: Address, full_name: String) -> Result<(), Error> {
+    pub fn initialize(env: Env, platform_admin: Address, platform_admin_name: String) -> Result<(), Error> {
         let admin_key = DataKey::PlatformAdmin;
         if env.storage().persistent().has(&admin_key) {
             return Err(Error::AlreadyInitialized);
         }
         platform_admin.require_auth();
-        if full_name.len() == 0 {
+        if platform_admin_name.len() == 0 {
             return Err(Error::InvalidInput);
         }
 
@@ -299,7 +303,7 @@ impl CampusIdentity {
             &profile_key,
             &Profile {
                 address: platform_admin.clone(),
-                full_name,
+                full_name: platform_admin_name,
                 university_code: None,
                 role: UserRole::PlatformAdmin,
                 verification_status: VerificationStatus::Verified,
@@ -340,6 +344,7 @@ impl CampusIdentity {
         let profile_key = DataKey::Profile(admin.clone());
         let university_key = DataKey::UniversityByCode(code.clone());
         let owner_key = DataKey::UniversityCodeByAdmin(admin.clone());
+        let university_codes_key = DataKey::UniversityCodes;
         if env.storage().persistent().has(&profile_key) {
             return Err(Error::ProfileAlreadyExists);
         }
@@ -377,9 +382,19 @@ impl CampusIdentity {
         env.storage().persistent().set(&profile_key, &profile);
         env.storage().persistent().set(&university_key, &university);
         env.storage().persistent().set(&owner_key, &code);
+        let mut university_codes: Vec<String> = env
+            .storage()
+            .persistent()
+            .get(&university_codes_key)
+            .unwrap_or(Vec::new(&env));
+        university_codes.push_back(code.clone());
+        env.storage()
+            .persistent()
+            .set(&university_codes_key, &university_codes);
         extend_persistent(&env, &profile_key);
         extend_persistent(&env, &university_key);
         extend_persistent(&env, &owner_key);
+        extend_persistent(&env, &university_codes_key);
         extend_instance(&env);
         env.events().publish(
             (Symbol::new(&env, "UniversityRegistered"), admin),
@@ -547,6 +562,29 @@ impl CampusIdentity {
 
     pub fn get_university(env: Env, code: String) -> Result<University, Error> {
         get_university_internal(&env, &code)
+    }
+
+    /// Returns every registered university so clients can filter by approval
+    /// status. Suitable for the current testnet registry only; this is an
+    /// unbounded read which will grow in gas costs and response size as more
+    /// universities register. Introduce pagination or a bounded index before
+    /// deploying to production to avoid resource limit exhaustion.
+    pub fn list_universities(env: Env) -> Vec<University> {
+        let codes_key = DataKey::UniversityCodes;
+        let codes: Vec<String> = env
+            .storage()
+            .persistent()
+            .get(&codes_key)
+            .unwrap_or(Vec::new(&env));
+        let mut universities = Vec::new(&env);
+        for code in codes.iter() {
+            if let Ok(university) = get_university_internal(&env, &code) {
+                universities.push_back(university);
+            }
+        }
+        extend_persistent(&env, &codes_key);
+        extend_instance(&env);
+        universities
     }
 
     /// Returns false for Platform Admin or profiles without a university. It does not

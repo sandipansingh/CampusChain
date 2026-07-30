@@ -8,9 +8,9 @@ This document is the Phase 0 deliverable only. No application code, contracts, d
 
 - Official Stellar documentation index and the linked dapp, transaction, authorization, contract testing, and security guidance at `https://developers.stellar.org/llms.txt` (reviewed 2026-07-30).
 - Deployed Testnet contract interfaces, fetched read-only with Stellar CLI:
-  - `CampusIdentity`: `CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E`
-  - `CampusToken`: `CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7`
-  - `CampusService`: `CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257`
+  - `CampusIdentity`: `CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q`
+  - `CampusToken`: `CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2`
+  - `CampusService`: `CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL`
 - Local contract source/ABI, `frontend/BUSINESS_LOGIC.md`, root `DEPLOYMENT.md`, `docs/DEPLOYMENT.md`, and the frontend route/component/service graph.
 
 The checked deployed interfaces match the local ABI for the functions listed below. The narrative documents are not fully authoritative: for example, `BUSINESS_LOGIC.md` describes an Identity `admin()` function that does not exist in the deployed Identity ABI and describes several obsolete route paths. Implementation must use the deployed ABI and current Rust source as the source of truth, then correct the documentation.
@@ -149,8 +149,8 @@ The Phase 1 Testnet deployment and seeding pass uses the following verified cont
 
 | Contract | Testnet address |
 | --- | --- |
-| CampusIdentity | `CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E` |
-| CampusToken | `CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7` |
-| CampusService | `CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257` |
+| CampusIdentity | `CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q` |
+| CampusToken | `CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2` |
+| CampusService | `CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL` |
 
 The Service contract is wired to the Identity contract above.  The deployment, all ten profiles, marketplace listings, rewards, scholarship program/application, paid event ticket, CAMP payment, escrow purchase, and escrow release were verified with confirmed Testnet transactions. `DEMO_ACCOUNTS.md` contains the public account and transaction evidence.
