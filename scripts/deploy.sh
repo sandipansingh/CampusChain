@@ -63,7 +63,8 @@ run_stellar_cmd() {
 
 echo "Step 1: Compiling and optimizing contracts..."
 # Compile Identity and Token first
-stellar contract build --package campus-identity --package campus-token --optimize
+stellar contract build --package campus-identity --optimize
+stellar contract build --package campus-token --optimize
 
 # Find where the WASMs are built (handle both wasm32v1-none and wasm32-unknown-unknown paths)
 WASM_DIR="target/wasm32v1-none/release"
