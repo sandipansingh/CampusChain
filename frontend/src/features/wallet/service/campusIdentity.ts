@@ -5,7 +5,7 @@ import {
   stringToScVal,
   NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
 } from "@/shared/stellar/client";
-import { xdr, nativeToScVal } from "@stellar/stellar-sdk";
+import { nativeToScVal } from "@stellar/stellar-sdk";
 
 export interface UserProfile {
   address: string;
@@ -35,15 +35,6 @@ function parseRole(roleVal: unknown): number {
   if (name === "Merchant" || name === "2") return 2;
   if (name === "Admin" || name === "4") return 4;
   return 1;
-}
-
-export function roleToScVal(role: number): xdr.ScVal {
-  let roleName = "Student";
-  if (role === 2) roleName = "Merchant";
-  if (role === 4) roleName = "Admin";
-  return xdr.ScVal.scvVec([
-    xdr.ScVal.scvSymbol(roleName)
-  ]);
 }
 
 export async function fetchUserProfile(address: string): Promise<UserProfile | null> {
@@ -102,11 +93,11 @@ export async function executeSetRole(admin: string, targetAddress: string, role:
   const { signTx } = await import("./wallet");
   return invokeContractMethod(
     NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
-    "set_role",
+    "set_role_value",
     [
       addressToScVal(admin),
       addressToScVal(targetAddress),
-      roleToScVal(role),
+      nativeToScVal(role),
     ],
     admin,
     signTx
@@ -124,6 +115,27 @@ export async function executeSetVerified(admin: string, targetAddress: string, v
       nativeToScVal(verified),
     ],
     admin,
+    signTx
+  );
+}
+
+export async function executeUpdateProfile(
+  address: string,
+  fullName: string,
+  universityId: string,
+  department: string
+): Promise<string> {
+  const { signTx } = await import("./wallet");
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
+    "update_profile",
+    [
+      addressToScVal(address),
+      stringToScVal(fullName),
+      stringToScVal(universityId),
+      stringToScVal(department),
+    ],
+    address,
     signTx
   );
 }

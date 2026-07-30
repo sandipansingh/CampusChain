@@ -33,7 +33,6 @@ export function Login({ showOnboarding = false }: LoginProps) {
   const [fullName, setFullName] = useState("");
   const [universityId, setUniversityId] = useState("");
   const [department, setDepartment] = useState("");
-  const [email, setEmail] = useState("");
   const [acceptTerms, setAcceptTerms] = useState(false);
   const [copied, setCopied] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
@@ -267,24 +266,6 @@ export function Login({ showOnboarding = false }: LoginProps) {
                       value={department}
                       onChange={(e) => setDepartment(e.target.value)}
                       placeholder="e.g. Computer Science"
-                      className="w-full bg-white border border-zinc-200 rounded-lg px-4 py-3 text-body-md text-zinc-950 focus:outline-none focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 transition-colors placeholder:text-zinc-400"
-                    />
-                  </div>
-
-                  {/* Email (Optional) */}
-                  <div className="flex flex-col gap-1.5">
-                    <div className="flex justify-between items-baseline">
-                      <label className="text-sm font-semibold text-zinc-950" htmlFor="email">
-                        Email Address
-                      </label>
-                      <span className="text-xs text-zinc-400">Optional</span>
-                    </div>
-                    <input
-                      id="email"
-                      type="email"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      placeholder="jane.doe@university.edu"
                       className="w-full bg-white border border-zinc-200 rounded-lg px-4 py-3 text-body-md text-zinc-950 focus:outline-none focus:border-zinc-950 focus:ring-1 focus:ring-zinc-950 transition-colors placeholder:text-zinc-400"
                     />
                   </div>

@@ -1,293 +1,128 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
+import { Check, Copy, Settings as SettingsIcon, User } from "lucide-react";
 import { useWallet } from "@/shared/stellar/useWallet";
-import { useWalletStore, NetworkType } from "@/features/wallet/state/useWalletStore";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { Dropdown } from "@/shared/ui/Dropdown";
 import {
-  Mail,
-  Copy,
-  Check,
-  ShieldCheck,
-  Smartphone,
-  EyeOff,
-  User,
-  AlertCircle,
-  Settings as SettingsIcon,
-} from "lucide-react";
+  useCampusProfile,
+  useUpdateProfileMutation,
+} from "@/features/wallet/hooks/useWallet";
+import { NetworkType, useWalletStore } from "@/features/wallet/state/useWalletStore";
 
-type SettingsState = "success" | "loading" | "empty";
-type SettingsTab = "profile" | "network" | "security" | "notifications";
+const roleLabel: Record<number, string> = {
+  1: "Student",
+  2: "Merchant",
+  3: "Club organizer",
+  4: "Administrator",
+};
 
 export function Settings() {
   const { address } = useWallet();
-  const [settingsState, setSettingsState] = useState<SettingsState>("success");
-  const [activeTab, setActiveTab] = useState<SettingsTab>("profile");
-
+  const { data: profile, isLoading, isError, error, refetch } = useCampusProfile(address);
+  const updateProfile = useUpdateProfileMutation();
   const network = useWalletStore((state) => state.network);
   const networkPassphrase = useWalletStore((state) => state.networkPassphrase);
   const switchNetwork = useWalletStore((state) => state.switchNetwork);
-
-  // Wallet copy state
   const [copied, setCopied] = useState(false);
-  const [showSecret, setShowSecret] = useState(false);
+  const [fullName, setFullName] = useState("");
+  const [universityId, setUniversityId] = useState("");
+  const [department, setDepartment] = useState("");
 
-  // Security Toggles
-  const [biometric, setBiometric] = useState(true);
-  const [transactionPin, setTransactionPin] = useState(false);
+  useEffect(() => {
+    if (!profile) return;
+    setFullName(profile.fullName);
+    setUniversityId(profile.universityId);
+    setDepartment(profile.department);
+  }, [profile]);
 
-  // Notification Toggles
-  const [notifPayments, setNotifPayments] = useState(true);
-  const [notifMarket, setNotifMarket] = useState(true);
-
-  const handleCopy = () => {
+  const handleCopy = async () => {
     if (!address) return;
-    navigator.clipboard.writeText(address);
+    await navigator.clipboard.writeText(address);
     setCopied(true);
-    setTimeout(() => setCopied(false), 2000);
+    window.setTimeout(() => setCopied(false), 2_000);
   };
 
-  const tabs: { value: SettingsTab; label: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }[] = [
-    { value: "profile", label: "Profile", icon: User },
-    { value: "network", label: "Stellar Network", icon: SettingsIcon },
-    { value: "security", label: "Security & Keys", icon: ShieldCheck },
-    { value: "notifications", label: "Notifications", icon: BellIcon },
-  ];
+  const submitProfile = (event: React.FormEvent) => {
+    event.preventDefault();
+    if (!address) return;
+    updateProfile.mutate({ address, fullName: fullName.trim(), universityId: universityId.trim(), department: department.trim() });
+  };
 
   return (
     <div className="w-full max-w-4xl mx-auto space-y-6">
-      {/* Tab Selector Buttons */}
-      <div className="flex gap-2 overflow-x-auto pb-1 border-b border-border">
-        {tabs.map((t) => {
-          const TabIcon = t.icon;
-          return (
-            <button
-              key={t.value}
-              onClick={() => setActiveTab(t.value)}
-              className={`px-4 py-2 text-xs font-semibold whitespace-nowrap transition-all border-b-2 -mb-[2px] flex items-center gap-1.5 cursor-pointer ${
-                activeTab === t.value
-                  ? "border-primary text-foreground font-bold"
-                  : "border-transparent text-muted-foreground hover:text-foreground"
-              }`}
-            >
-              <TabIcon className="h-4 w-4" />
-              <span>{t.label}</span>
+      <section className="bg-card border border-border rounded-xl p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-6">
+          <User className="h-4 w-4" />
+          <div>
+            <h3 className="text-base font-bold">On-chain profile</h3>
+            <p className="text-xs text-muted-foreground mt-0.5">Fields are stored in the CampusIdentity contract.</p>
+          </div>
+        </div>
+
+        {isLoading ? (
+          <div className="space-y-4">
+            <Skeleton className="h-11 w-full rounded-lg" />
+            <Skeleton className="h-11 w-full rounded-lg" />
+            <Skeleton className="h-11 w-full rounded-lg" />
+          </div>
+        ) : isError ? (
+          <div className="border border-destructive/30 bg-destructive/5 rounded-lg p-4 text-sm">
+            <p className="font-semibold">Could not load your on-chain profile.</p>
+            <p className="text-xs text-muted-foreground mt-1 break-words">{error instanceof Error ? error.message : "Please retry the contract read."}</p>
+            <button onClick={() => refetch()} className="mt-3 text-xs font-semibold underline underline-offset-4">Retry</button>
+          </div>
+        ) : !profile ? (
+          <div className="border border-dashed border-border rounded-lg p-6 text-sm text-muted-foreground">No profile is registered for this connected wallet.</div>
+        ) : (
+          <form onSubmit={submitProfile} className="space-y-4">
+            <ProfileInput label="Full name" value={fullName} onChange={setFullName} />
+            <ProfileInput label="University ID" value={universityId} onChange={setUniversityId} />
+            <ProfileInput label="Department" value={department} onChange={setDepartment} />
+            <dl className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2 text-xs">
+              <InfoField label="Role" value={roleLabel[profile.role] ?? `Role ${profile.role}`} />
+              <InfoField label="Verification" value={profile.verified ? "Verified" : "Not verified"} />
+              <div className="sm:col-span-2">
+                <dt className="font-bold uppercase tracking-wider text-muted-foreground mb-1.5">Wallet address</dt>
+                <dd className="flex items-center gap-2 bg-muted/40 p-2 rounded-lg border border-border min-w-0">
+                  <span className="flex-1 text-xs text-muted-foreground font-mono truncate select-all" title={address ?? undefined}>{address}</span>
+                  <button type="button" onClick={handleCopy} className="p-1.5 bg-card border border-border rounded-md shrink-0" aria-label="Copy wallet address">
+                    {copied ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                  </button>
+                </dd>
+              </div>
+            </dl>
+            {updateProfile.isError && <p className="text-xs text-destructive">{updateProfile.error instanceof Error ? updateProfile.error.message : "Profile update failed."}</p>}
+            {updateProfile.isSuccess && <p className="text-xs text-emerald-700">Profile confirmed on Testnet.</p>}
+            <button type="submit" disabled={updateProfile.isPending || !fullName.trim() || !universityId.trim() || !department.trim()} className="h-11 px-4 bg-primary text-primary-foreground rounded-lg text-sm font-semibold disabled:opacity-50">
+              {updateProfile.isPending ? "Saving profile" : "Save on-chain profile"}
             </button>
-          );
-        })}
-      </div>
-
-      {/* Main card panel */}
-      <div className="bg-card border border-border rounded-xl p-6 shadow-sm min-h-[400px]">
-        {activeTab === "profile" && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-base font-bold text-foreground">Profile Settings</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Manage your campus identifier details.</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Associated Address
-                </label>
-                <div className="flex items-center gap-2 bg-muted/40 p-2 rounded-lg border border-border">
-                  <span className="flex-1 text-xs text-muted-foreground font-mono truncate select-all">
-                    {address || "Not connected"}
-                  </span>
-                  {address && (
-                    <button
-                      onClick={handleCopy}
-                      className="p-1.5 bg-card border border-border rounded-md text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
-                    >
-                      {copied ? <Check className="h-3.5 w-3.5 text-emerald-600" /> : <CopyIcon className="h-3.5 w-3.5" />}
-                    </button>
-                  )}
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5" htmlFor="email">
-                  Campus Email Address
-                </label>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground/60" />
-                  <input
-                    id="email"
-                    type="email"
-                    defaultValue="student@university.edu"
-                    className="w-full h-11 pl-9 pr-4 bg-card border border-border rounded-lg text-sm focus:outline-none"
-                    readOnly
-                  />
-                </div>
-              </div>
-            </div>
-          </div>
+          </form>
         )}
+      </section>
 
-        {activeTab === "network" && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-base font-bold text-foreground">Stellar Network Configuration</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Manage RPC networks, nodes, and passphrases.</p>
-            </div>
-
-            <div className="space-y-4">
-              <div>
-                <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5">
-                  Select Active Network
-                </label>
-                <Dropdown<NetworkType>
-                  options={[
-                    { value: "testnet", label: "Stellar Testnet" },
-                    { value: "public", label: "Stellar Public Global" },
-                    { value: "standalone", label: "Standalone Local RPC" },
-                  ]}
-                  value={network}
-                  onChange={(val) => switchNetwork(val)}
-                />
-              </div>
-
-              <div className="p-4 bg-muted/30 border border-border rounded-xl space-y-2 text-xs">
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">Network Passphrase:</span>
-                  <span className="font-bold font-mono">{networkPassphrase || "Test SDF Network ; September 2015"}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-muted-foreground">RPC URL:</span>
-                  <span className="font-mono text-muted-foreground truncate max-w-[200px] md:max-w-none">
-                    {network === "testnet" ? "https://soroban-testnet.stellar.org" : "https://horizon.stellar.org"}
-                  </span>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "security" && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-base font-bold text-foreground">Security Preferences</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Configure transaction confirmation safety.</p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-2 border-b border-border/60">
-                <div className="flex items-center gap-3">
-                  <Smartphone className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Biometric Signatures</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Confirm transaction signatures with Face/Touch ID.</p>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={biometric}
-                  onChange={(e) => setBiometric(e.target.checked)}
-                  className="w-4 h-4 text-primary focus:ring-primary rounded cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center justify-between py-2 border-b border-border/60">
-                <div className="flex items-center gap-3">
-                  <EyeOff className="h-5 w-5 text-muted-foreground" />
-                  <div>
-                    <p className="text-xs font-bold text-foreground">Require Pin Code</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">Ask for validation PIN before invoking smart contracts.</p>
-                  </div>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={transactionPin}
-                  onChange={(e) => setTransactionPin(e.target.checked)}
-                  className="w-4 h-4 text-primary focus:ring-primary rounded cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-
-        {activeTab === "notifications" && (
-          <div className="space-y-6">
-            <div>
-              <h3 className="text-base font-bold text-foreground">Notification Settings</h3>
-              <p className="text-xs text-muted-foreground mt-0.5">Control payment checkout receipt alerts.</p>
-            </div>
-
-            <div className="space-y-4">
-              <div className="flex items-center justify-between py-2 border-b border-border/60">
-                <div>
-                  <p className="text-xs font-bold text-foreground">Payment Invoices</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Get alert notifications for peer-to-peer transfers.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifPayments}
-                  onChange={(e) => setNotifPayments(e.target.checked)}
-                  className="w-4 h-4 text-primary focus:ring-primary rounded cursor-pointer"
-                />
-              </div>
-
-              <div className="flex items-center justify-between py-2 border-b border-border/60">
-                <div>
-                  <p className="text-xs font-bold text-foreground">Marketplace Sales</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">Receive notifications when your listings sell.</p>
-                </div>
-                <input
-                  type="checkbox"
-                  checked={notifMarket}
-                  onChange={(e) => setNotifMarket(e.target.checked)}
-                  className="w-4 h-4 text-primary focus:ring-primary rounded cursor-pointer"
-                />
-              </div>
-            </div>
-          </div>
-        )}
-      </div>
+      <section className="bg-card border border-border rounded-xl p-6 shadow-sm">
+        <div className="flex items-center gap-2 mb-5"><SettingsIcon className="h-4 w-4" /><h3 className="text-base font-bold">Network</h3></div>
+        <div className="space-y-4">
+          <Dropdown<NetworkType> options={[{ value: "testnet", label: "Stellar Testnet" }, { value: "public", label: "Stellar Public Network" }, { value: "standalone", label: "Standalone local network" }]} value={network} onChange={switchNetwork} />
+          <dl className="text-xs space-y-2 bg-muted/30 border border-border rounded-lg p-4">
+            <InfoField label="Passphrase" value={networkPassphrase ?? "Unavailable"} />
+            <InfoField label="Soroban RPC" value={network === "testnet" ? "https://soroban-testnet.stellar.org" : network === "public" ? "https://soroban.stellar.org" : "Configured local RPC"} />
+          </dl>
+        </div>
+      </section>
     </div>
   );
 }
 
-// Sub-icons overrides
-function BellIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <path d="M6 8a6 6 0 0 1 12 0c0 7 3 9 3 9H3s3-2 3-9" />
-      <path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" />
-    </svg>
-  );
+function ProfileInput({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
+  const id = label.toLowerCase().replaceAll(" ", "-");
+  return <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground" htmlFor={id}>{label}<input id={id} value={value} onChange={(event) => onChange(event.target.value)} required className="mt-1.5 w-full h-11 px-3 bg-card border border-border rounded-lg text-sm font-normal text-foreground normal-case tracking-normal focus:outline-none focus:ring-1 focus:ring-foreground" /></label>;
 }
 
-function CopyIcon(props: React.SVGProps<SVGSVGElement>) {
-  return (
-    <svg
-      xmlns="http://www.w3.org/2000/svg"
-      width="24"
-      height="24"
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      strokeWidth="2"
-      strokeLinecap="round"
-      strokeLinejoin="round"
-      {...props}
-    >
-      <rect width="14" height="14" x="8" y="8" rx="2" ry="2" />
-      <path d="M4 16c-1.1 0-2-.9-2-2V4c0-1.1.9-2 2-2h10c1.1 0 2 .9 2 2" />
-    </svg>
-  );
+function InfoField({ label, value }: { label: string; value: string }) {
+  return <div><dt className="font-bold uppercase tracking-wider text-muted-foreground">{label}</dt><dd className="mt-1 text-foreground break-words" title={value}>{value}</dd></div>;
 }
 
 export default Settings;

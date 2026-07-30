@@ -3,7 +3,6 @@
 import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
-import { Dropdown } from "@/shared/ui/Dropdown";
 import { ActivityFeedPanel } from "@/shared/ui/ActivityFeedPanel";
 import { useActivityFeedStore } from "@/shared/hooks/useActivityFeedStore";
 import {
@@ -22,13 +21,13 @@ import {
   Send,
   Landmark,
   Store,
-  TrendingDown,
+  User,
   CalendarCheck,
   ShieldAlert,
 } from "lucide-react";
 
 // Import hooks
-import { useCampusBalance, useCampusUserRole } from "@/features/wallet/hooks/useWallet";
+import { useCampusBalance, useCampusProfile, useCampusUserRole } from "@/features/wallet/hooks/useWallet";
 import { useLedgerEvents } from "@/features/transactions/hooks/useTransactions";
 
 // Import sub-screens
@@ -45,11 +44,8 @@ import { TransactionHistory } from "@/features/transactions/ui/TransactionHistor
 import { MerchantDashboard } from "@/features/transactions/ui/MerchantDashboard";
 import { AdminDashboard } from "@/features/transactions/ui/AdminDashboard";
 
-type UIState = "success" | "loading" | "empty";
-
 export function WalletDashboard() {
   const { address, disconnect } = useWallet();
-  const [uiState, setUiState] = useState<UIState>("success");
 
   // Navigation active state
   const [activeTab, setActiveTab] = useState<string>("dashboard");
@@ -65,6 +61,7 @@ export function WalletDashboard() {
   // Fetch real on-chain details
   const { data: campBalance, isLoading: isBalanceLoading } = useCampusBalance(address);
   const { data: userRole } = useCampusUserRole(address);
+  const { data: profile } = useCampusProfile(address);
   const { data: ledgerEvents, isLoading: isEventsLoading } = useLedgerEvents();
 
   // Navigation items for the sidebar (desktop)
@@ -139,17 +136,6 @@ export function WalletDashboard() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <div className="w-28">
-              <Dropdown<UIState>
-                options={[
-                  { value: "success", label: "Success" },
-                  { value: "loading", label: "Loading" },
-                  { value: "empty", label: "Empty" },
-                ]}
-                value={uiState}
-                onChange={(val) => setUiState(val)}
-              />
-            </div>
             <button
               onClick={() => setIsFeedOpen(true)}
               className="p-2 text-foreground relative cursor-pointer"
@@ -162,9 +148,7 @@ export function WalletDashboard() {
                 </span>
               )}
             </button>
-            <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
-              JD
-            </div>
+            <ProfileAvatar profileName={profile?.fullName} address={address} />
           </div>
         </div>
 
@@ -173,7 +157,7 @@ export function WalletDashboard() {
           
           {/* Wallet Balance Card */}
           <div className="lg:col-span-8 bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[260px]">
-            {isBalanceLoading || uiState === "loading" ? (
+            {isBalanceLoading ? (
               <div className="space-y-4 w-full">
                 <Skeleton className="h-4 w-28" />
                 <Skeleton className="h-10 w-48" />
@@ -186,7 +170,7 @@ export function WalletDashboard() {
                 </p>
                 <div className="flex items-baseline gap-2">
                   <span className="text-3xl md:text-4xl font-bold tracking-tight">
-                    {uiState === "empty" ? "0.00" : (campBalance !== undefined ? campBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "1,245.50")}
+                    {campBalance !== undefined ? campBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
                   </span>
                   <span className="text-lg text-muted-foreground font-medium">CAMP</span>
                 </div>
@@ -194,7 +178,7 @@ export function WalletDashboard() {
                 <div className="mt-4 flex flex-wrap gap-2">
                   <div className="px-3 py-1 rounded-full bg-muted text-xs font-medium border border-border">
                     <span className="font-bold text-foreground">
-                      {uiState === "empty" ? "0" : "Stellar Testnet"}
+                      Stellar Testnet
                     </span>{" "}
                     Network Connected
                   </div>
@@ -254,7 +238,7 @@ export function WalletDashboard() {
               label: "Role Permission",
               value: userRole === 4 ? "Administrator" : userRole === 2 ? "Merchant" : "Student / Member",
               emptyVal: "Student",
-              icon: TrendingDown,
+              icon: User,
             },
             {
               label: "CAMP Balance",
@@ -275,7 +259,7 @@ export function WalletDashboard() {
                 key={stat.label}
                 className="bg-card rounded-xl p-4 border border-border shadow-sm flex items-center justify-between"
               >
-                {isBalanceLoading || uiState === "loading" ? (
+                {isBalanceLoading ? (
                   <div className="space-y-2 flex-1">
                     <Skeleton className="h-3 w-28" />
                     <Skeleton className="h-6 w-20" />
@@ -283,9 +267,7 @@ export function WalletDashboard() {
                 ) : (
                   <div>
                     <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
-                    <p className="text-sm font-bold">
-                      {uiState === "empty" ? stat.emptyVal : stat.value}
-                    </p>
+                    <p className="text-sm font-bold">{stat.value}</p>
                   </div>
                 )}
                 <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
@@ -308,7 +290,7 @@ export function WalletDashboard() {
             </button>
           </div>
 
-          {isEventsLoading || uiState === "loading" ? (
+          {isEventsLoading ? (
             <div className="divide-y divide-border">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="p-4 flex items-center justify-between">
@@ -323,7 +305,7 @@ export function WalletDashboard() {
                 </div>
               ))}
             </div>
-          ) : uiState === "empty" || !ledgerEvents || ledgerEvents.length === 0 ? (
+          ) : !ledgerEvents || ledgerEvents.length === 0 ? (
             <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
               <Receipt className="h-10 w-10 text-muted-foreground/50" />
               <p className="text-sm font-semibold text-muted-foreground">
@@ -390,8 +372,8 @@ export function WalletDashboard() {
                 }}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left cursor-pointer ${
                   isActive
-                    ? "bg-secondary text-secondary-foreground font-bold border-r-4 border-primary"
-                    : "text-muted-foreground hover:text-foreground hover:bg-secondary/40 font-medium"
+                    ? "text-foreground font-bold border-l-2 border-foreground rounded-none"
+                    : "text-muted-foreground hover:text-foreground font-medium"
                 }`}
               >
                 <Icon className="h-4 w-4" />
@@ -406,8 +388,8 @@ export function WalletDashboard() {
             onClick={() => setActiveTab("settings")}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-all cursor-pointer ${
               activeTab === "settings"
-                ? "bg-secondary text-secondary-foreground font-bold border-r-4 border-primary"
-                : "text-muted-foreground hover:text-foreground hover:bg-secondary/40 font-medium"
+                ? "text-foreground font-bold border-l-2 border-foreground rounded-none"
+                : "text-muted-foreground hover:text-foreground font-medium"
             }`}
           >
             <Settings className="h-4 w-4" />
@@ -423,18 +405,6 @@ export function WalletDashboard() {
           <h2 className="text-lg md:text-xl font-bold capitalize">{activeTab}</h2>
           
           <div className="flex items-center gap-3 md:gap-6">
-            <div className="hidden sm:block w-40">
-              <Dropdown<UIState>
-                options={[
-                  { value: "success", label: "State: Success" },
-                  { value: "loading", label: "State: Loading" },
-                  { value: "empty", label: "State: Empty" },
-                ]}
-                value={uiState}
-                onChange={(val) => setUiState(val)}
-              />
-            </div>
-
             <button
               onClick={() => setIsFeedOpen(true)}
               className="text-muted-foreground hover:text-foreground p-2 rounded-full hover:bg-muted transition-colors relative cursor-pointer"
@@ -449,9 +419,7 @@ export function WalletDashboard() {
             </button>
 
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold select-none cursor-pointer">
-                JD
-              </div>
+              <ProfileAvatar profileName={profile?.fullName} address={address} />
               <button
                 onClick={disconnect}
                 className="text-xs text-muted-foreground hover:text-destructive transition-colors font-medium cursor-pointer"
@@ -492,7 +460,7 @@ export function WalletDashboard() {
                   setShowSellForm(false);
                 }}
                 className={`flex flex-col items-center justify-center w-16 py-2.5 transition-all cursor-pointer ${
-                  isActive ? "text-foreground font-bold scale-105" : "text-muted-foreground hover:text-foreground"
+                  isActive ? "text-foreground font-bold" : "text-muted-foreground hover:text-foreground"
                 }`}
               >
                 <Icon className="h-5 w-5 mb-0.5" />
@@ -506,3 +474,10 @@ export function WalletDashboard() {
   );
 }
 export default WalletDashboard;
+
+function ProfileAvatar({ profileName, address }: { profileName?: string; address: string | null }) {
+  const initials = profileName?.trim().split(/\s+/).filter(Boolean).slice(0, 2).map((name) => name[0]).join("").toUpperCase()
+    || (address ? `${address.slice(0, 2)}${address.slice(-2)}` : "?");
+  const title = profileName || address || "Wallet not connected";
+  return <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold select-none shrink-0" title={title} aria-label={title}>{initials}</div>;
+}

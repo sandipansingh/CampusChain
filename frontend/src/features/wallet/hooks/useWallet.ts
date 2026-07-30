@@ -15,6 +15,7 @@ import {
   executeRegisterProfile,
   executeSetRole as executeSetIdentityRole,
   executeSetVerified,
+  executeUpdateProfile,
 } from "../service/campusIdentity";
 
 export function useCampusBalance(address: string | null) {
@@ -22,12 +23,7 @@ export function useCampusBalance(address: string | null) {
     queryKey: ["campus-balance", address],
     queryFn: async () => {
       if (!address) return 0;
-      try {
-        return await fetchBalance(address);
-      } catch (err) {
-        console.warn("Failed to fetch on-chain balance, using default fallback", err);
-        return 1000.0;
-      }
+      return fetchBalance(address);
     },
     enabled: !!address,
   });
@@ -38,13 +34,8 @@ export function useCampusUserRole(address: string | null) {
     queryKey: ["campus-role", address],
     queryFn: async () => {
       if (!address) return 0;
-      try {
-        const profile = await fetchUserProfile(address);
-        return profile ? profile.role : 1; // Default to Student (1) if no profile
-      } catch (err) {
-        console.warn("Failed to fetch on-chain user role, using default fallback", err);
-        return 1; // Default to Student
-      }
+      const profile = await fetchUserProfile(address);
+      return profile?.role ?? null;
     },
     enabled: !!address,
   });
@@ -54,17 +45,7 @@ export function useCampusTokenMetadata() {
   return useQuery({
     queryKey: ["campus-token-metadata"],
     queryFn: async () => {
-      try {
-        return await fetchTokenMetadata();
-      } catch (err) {
-        console.warn("Failed to fetch on-chain token metadata, using default fallback", err);
-        return {
-          name: "CampusChain Token",
-          symbol: "CAMP",
-          decimals: 7,
-          totalSupply: 1000000,
-        };
-      }
+      return fetchTokenMetadata();
     },
   });
 }
@@ -261,6 +242,27 @@ export function useSetVerifiedMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.user] });
+    },
+  });
+}
+
+export function useUpdateProfileMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      address,
+      fullName,
+      universityId,
+      department,
+    }: {
+      address: string;
+      fullName: string;
+      universityId: string;
+      department: string;
+    }) => executeUpdateProfile(address, fullName, universityId, department),
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.address] });
+      queryClient.invalidateQueries({ queryKey: ["campus-role", variables.address] });
     },
   });
 }
