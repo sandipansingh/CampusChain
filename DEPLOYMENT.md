@@ -79,10 +79,11 @@ Contract deployment, initialization, and environment synchronization are fully a
 
 To deploy all contracts to Testnet and auto-update configuration files:
 
-1. **Configure your Admin Key** in Stellar CLI:
+1. **Generate your Admin Key** in Stellar CLI (this automatically creates and funds a new testnet account):
    ```bash
-   stellar keys add --secret-key S_ADMIN_SECRET_KEY campuschain-admin
+   stellar keys generate campuschain-admin --network testnet
    ```
+   *(Alternative: If you already have a secret key from Freighter, you can import it instead: `stellar keys add --secret-key S_SECRET_KEY campuschain-admin`)*
 
 2. **Execute the deployment script**:
    ```bash
