@@ -141,6 +141,17 @@ export function UniversityDashboard() {
     );
   };
 
+  useEffect(() => {
+    const handleNavigate = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setActiveTab(customEvent.detail);
+      }
+    };
+    window.addEventListener("campuschain:navigate", handleNavigate);
+    return () => window.removeEventListener("campuschain:navigate", handleNavigate);
+  }, []);
+
   const renderRequests = () => {
     return (
       <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
@@ -152,35 +163,83 @@ export function UniversityDashboard() {
           <p className="text-sm text-muted-foreground py-6 text-center">No pending verification requests.</p>
         ) : (
           <div className="space-y-3">
-            {pendingRequests.map((r) => (
-              <div key={r.address} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-lg gap-4">
-                <div>
-                  <div className="flex items-center gap-2">
-                    <p className="font-semibold text-sm">{r.fullName}</p>
-                    <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
-                      {r.role === 1 ? "Student" : r.role === 2 ? "Merchant" : "Organizer"}
-                    </span>
+            {pendingRequests.map((r) => {
+              const isVerifyPending = verifyProfile.isPending && verifyProfile.variables?.targetAddress === r.address;
+              const isRejectPending = rejectProfile.isPending && rejectProfile.variables?.targetAddress === r.address;
+              const hasVerifyError = verifyProfile.isError && verifyProfile.variables?.targetAddress === r.address;
+              const hasRejectError = rejectProfile.isError && rejectProfile.variables?.targetAddress === r.address;
+
+              return (
+                <div key={r.address} className="flex flex-col p-4 border border-border rounded-lg gap-3 bg-muted/10">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <div className="flex items-center gap-2">
+                        <p className="font-semibold text-sm">{r.fullName}</p>
+                        <span className="px-2 py-0.5 rounded-full bg-primary/10 text-primary text-[10px] font-bold">
+                          {r.role === 1 ? "Student" : r.role === 2 ? "Merchant" : "Organizer"}
+                        </span>
+                      </div>
+                      <p className="text-xs text-muted-foreground font-mono mt-1">{r.address}</p>
+                      
+                      {/* Role-Specific Metadata */}
+                      {r.role === 1 && (
+                        <p className="text-xs text-muted-foreground mt-1 bg-muted/30 p-1.5 rounded font-medium">
+                          🎓 Dept: {String(r.details?.department || "N/A")} | Program: {String(r.details?.program || "N/A")} | Class: {String(r.details?.graduationYear || "N/A")}
+                        </p>
+                      )}
+                      {r.role === 2 && (
+                        <p className="text-xs text-muted-foreground mt-1 bg-muted/30 p-1.5 rounded font-medium">
+                          🏪 Business: {String(r.details?.businessName || "N/A")} | Description: {String(r.details?.businessDescription || "N/A")}
+                        </p>
+                      )}
+                      {r.role === 3 && (
+                        <p className="text-xs text-muted-foreground mt-1 bg-muted/30 p-1.5 rounded font-medium">
+                          📣 Organization: {String(r.details?.organizationName || "N/A")} | Desc: {String(r.details?.organizationDescription || "N/A")}
+                        </p>
+                      )}
+                      
+                      <p className="text-[10px] text-muted-foreground mt-1.5">Submitted: {new Date(Number(r.createdAt) * 1000).toLocaleString()}</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        disabled={verifyProfile.isPending || rejectProfile.isPending}
+                        onClick={() => verifyProfile.mutate({ caller: address!, targetAddress: r.address })}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer h-9 transition-colors"
+                      >
+                        {isVerifyPending ? (
+                          <span className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="size-3.5" />
+                        )}
+                        {isVerifyPending ? "Verifying..." : "Verify"}
+                      </button>
+                      <button
+                        disabled={verifyProfile.isPending || rejectProfile.isPending}
+                        onClick={() => rejectProfile.mutate({ caller: address!, targetAddress: r.address })}
+                        className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer h-9 transition-colors"
+                      >
+                        {isRejectPending ? (
+                          <span className="h-3 w-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <XCircle className="size-3.5" />
+                        )}
+                        {isRejectPending ? "Rejecting..." : "Reject"}
+                      </button>
+                    </div>
                   </div>
-                  <p className="text-xs text-muted-foreground font-mono mt-1">{r.address}</p>
+                  {hasVerifyError && (
+                    <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
+                      Error: {verifyProfile.error instanceof Error ? verifyProfile.error.message : "Verification transaction failed"}
+                    </p>
+                  )}
+                  {hasRejectError && (
+                    <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
+                      Error: {rejectProfile.error instanceof Error ? rejectProfile.error.message : "Rejection transaction failed"}
+                    </p>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    disabled={verifyProfile.isPending}
-                    onClick={() => verifyProfile.mutate({ caller: address!, targetAddress: r.address })}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <CheckCircle2 className="size-3.5" /> Verify
-                  </button>
-                  <button
-                    disabled={rejectProfile.isPending}
-                    onClick={() => rejectProfile.mutate({ caller: address!, targetAddress: r.address })}
-                    className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 disabled:opacity-50"
-                  >
-                    <XCircle className="size-3.5" /> Reject
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
