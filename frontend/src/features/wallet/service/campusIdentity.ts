@@ -5,7 +5,6 @@ import {
   stringToScVal,
   NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
 } from "@/shared/stellar/client";
-import { signTx } from "./wallet";
 import { xdr, nativeToScVal } from "@stellar/stellar-sdk";
 
 export interface UserProfile {
@@ -84,6 +83,7 @@ export async function executeRegisterProfile(
   universityId: string,
   department: string
 ): Promise<string> {
+  const { signTx } = await import("./wallet");
   return invokeContractMethod(
     NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
     "register_profile",
@@ -99,6 +99,7 @@ export async function executeRegisterProfile(
 }
 
 export async function executeSetRole(admin: string, targetAddress: string, role: number): Promise<string> {
+  const { signTx } = await import("./wallet");
   return invokeContractMethod(
     NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
     "set_role",
@@ -113,6 +114,7 @@ export async function executeSetRole(admin: string, targetAddress: string, role:
 }
 
 export async function executeSetVerified(admin: string, targetAddress: string, verified: boolean): Promise<string> {
+  const { signTx } = await import("./wallet");
   return invokeContractMethod(
     NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
     "set_verified",
