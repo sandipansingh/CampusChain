@@ -1,9 +1,16 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
+import { useWallet } from "@/shared/stellar/useWallet";
 
 export function Providers({ children }: { children: React.ReactNode }) {
+  const { initialize } = useWallet();
+
+  useEffect(() => {
+    initialize();
+  }, [initialize]);
+
   const [queryClient] = useState(
     () =>
       new QueryClient({
