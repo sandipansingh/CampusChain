@@ -38,3 +38,35 @@ Maya Patel is a verified Food/Canteen merchant at NIT. The canonical CampusServi
 - `#2` Filter Coffee — 15 CAMP, published in [`54502809…`](https://stellar.expert/explorer/testnet/tx/54502809ff90d6ad8c2be9880030fffbc3d50e77791561e1ca072918a75bdef4)
 
 Only verified NIT students can place orders from these items. Testnet balances and Friendbot funding are ephemeral; public addresses and this on-chain state are safe to share.
+
+---
+
+## Onboarding & Verification Evaluation Flow
+
+To evaluate the full two-tier approval workflow as a judge, follow these sequential steps on the live interface or local environment:
+
+### Step 1: Onboard a New University
+1. Click **Connect Wallet** and select a new fresh key (not registered yet).
+2. Complete the **University Registration** form:
+   - Enter a unique university code (e.g. `IITD`).
+   - Enter University Name (e.g. `Indian Institute of Technology Delhi`).
+   - Submit the transaction. The code claim and admin profile are created in `PendingApproval` state on-chain.
+
+### Step 2: Approve the University (Platform Admin)
+1. Switch your connected wallet to the **Platform Admin** address (`GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ`).
+2. Navigate to the **Approval Queue** tab.
+3. Locate the pending registration request for `IITD` and click **Approve**. This invokes the on-chain `approve_university("IITD")` transaction.
+4. Once verified, the university is officially active on-chain.
+
+### Step 3: Register a User (Student/Merchant)
+1. Switch to another fresh wallet key.
+2. Select the role as **Student** or **Merchant**, and select the approved university `IITD` from the dropdown list.
+3. Submit the registration profile form. The profile begins in the `Pending` verification status.
+4. The user dashboard shows a locked state indicating verification is pending.
+
+### Step 4: Verify the User Profile (University Admin)
+1. Switch your connected wallet to the **University Admin** key used to register `IITD` in Step 1.
+2. Navigate to the **Verification Requests** tab.
+3. Locate the pending student/merchant request and click **Verify Profile** to submit the `verify_profile` transaction on-chain.
+4. The student/merchant's dashboard will unlock automatically in real-time, allowing them to make immediate CAMP purchases and place canteen orders!
+

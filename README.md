@@ -39,7 +39,7 @@ graph TD
     subgraph Browser["Browser (Next.js 15 App Router)"]
         UI["UI Components\n(Tailwind + Lucide icons)"]
         RQ["TanStack React Query\n(server state / cache)"]
-        ZS["Zustand stores\n(wallet / tx status / activity feed)"]
+        ZS["Zustand stores\n(wallet / tx status / notifications)"]
         SWK["StellarWalletsKit\n(Freighter, xBull, Albedo, WalletConnect…)"]
         OBS["Observability Layer\n(logger / captureError / txMonitor)"]
     end
@@ -53,8 +53,9 @@ graph TD
     subgraph Stellar["Stellar Network (Testnet)"]
         RPC["Soroban RPC\nhttps://soroban-testnet.stellar.org"]
         HORIZON["Horizon API\nhttps://horizon-testnet.stellar.org\n(native XLM payments only)"]
-        CT["CampusToken contract\nCDGMOVTF…XQXJP"]
-        CS["CampusService contract\nCDTJ56RP…YSSM"]
+        CI["CampusIdentity contract\nCBSP6PGVKP3OHV7CH..."]
+        CT["CampusToken contract\nCCNX6UK6XNBXG63I..."]
+        CS["CampusService contract\nCATHDHIUADXXENVYN..."]
     end
 
     UI --> RQ
@@ -68,11 +69,59 @@ graph TD
     EVENTS -->|"getEvents poll"| RPC
     EVENTS --> DECODER
     DECODER --> ZS
+    RPC --> CI
     RPC --> CT
     RPC --> CS
     CS -->|"cross-contract call"| CT
+    CS -->|"verify role/profile"| CI
+    CT -->|"verify role/profile"| CI
     OBS -.->|"structured log"| CLIENT
     OBS -.->|"structured log"| EVENTS
+```
+
+### 2.1 Role Hierarchy & Scoping Model
+
+CampusChain establishes a clear separation of concerns across 5 roles, with Platform Admin acting as the global system bootstrap, University Admins managing scoped campuses, and students/merchants/organizers executing within their university boundary.
+
+```mermaid
+graph TD
+    PA["Platform Admin (Role 5)\n(Global Super-Admin, Immutably Seeded)"]
+    UA["University Admin (Role 4)\n(University Scoped, approved by Platform Admin)"]
+    ST["Student (Role 1)\n(Scoped to University, approved by University Admin)"]
+    ME["Merchant (Role 2)\n(Scoped to University, approved by University Admin)"]
+    EO["Event Organizer (Role 3)\n(Scoped to University, approved by University Admin)"]
+
+    PA -->|"Approves University Registry Claim"| UA
+    UA -->|"Approves & Verifies Profile"| ST
+    UA -->|"Approves & Verifies Profile"| ME
+    UA -->|"Approves & Verifies Profile"| EO
+```
+
+### 2.2 University Scoping & Inter-Contract Verification
+
+To guarantee that assets, event tickets, and canteens remain isolated within each university boundary, `CampusService` invokes `CampusIdentity` on-chain to check that both active profiles share the same uppercase `university_code` before executing transactions.
+
+```mermaid
+sequenceDiagram
+    participant User as Student Wallet
+    participant CS as CampusService (Escrow/Marketplace)
+    participant CI as CampusIdentity (University Registry)
+
+    User->>CS: buy_listing(listing_id)
+    rect rgb(240, 240, 240)
+        Note over CS,CI: On-Chain Scope Assertions
+        CS->>CI: assert_active_profile(buyer)
+        CI-->>CS: Profile (university_code=NIT, status=Verified)
+        CS->>CI: assert_active_profile(seller)
+        CI-->>CS: Profile (university_code=NIT, status=Verified)
+    end
+    
+    alt Same University (Code Matches)
+        CS->>CS: Process CAMP Transfer & Lock Escrow
+        CS-->>User: Success (Escrow Created)
+    else Cross-University (Code Mismatch)
+        CS-->>User: Revert (CrossUniversityActionBlocked)
+    end
 ```
 
 > **Key routing rule**: Contract calls go via **Soroban RPC** (`prepareTransaction` + `sendTransaction`). Native XLM payments go via **Horizon** (`loadAccount` + `submitTransaction`). These cannot be mixed in the same transaction envelope.
@@ -202,6 +251,64 @@ graph TD
 | `purchase_camp` | `buy_camp_tokens()` |
 | `faucet` | `claim_faucet()` |
 
+### 3.4 Roles & Verification
+
+To establish a secure, decentralized campus ecosystem, CampusChain operates a hierarchical Role-Based Access Control (RBAC) and verification system managed directly on-chain within `CampusIdentity`.
+
+#### The 5 System Roles
+
+1. **Platform Admin (Role 5)**: The global super-admin. Possesses the exclusive privilege to approve, reject, or suspend universities.
+2. **University Admin (Role 4)**: The administrator for a specific university. Manages profile verifications for Students, Merchants, and Event Organizers scoped to their university code, and controls scholarship programs.
+3. **Student (Role 1)**: Scoped to a verified university. Can purchase items on the marketplace, buy event tickets, apply for scholarships, and place food orders at canteens.
+4. **Merchant (Role 2)**: Scoped to a verified university. Can create marketplace listings, publish canteen menus, and receive CAMP token payments.
+5. **Event Organizer (Role 3)**: Scoped to a verified university. Can create events, configure ticket prices/capacities, and track attendance.
+
+#### Immutable Platform Admin Bootstrap
+
+The Platform Admin address is bootstrapped immutably at the time of contract deployment. 
+- During `initialize(platform_admin: Address)` execution on `CampusIdentity`, the admin address is stored once in persistent storage (`DataKey::PlatformAdmin`).
+- There is **no transfer function** or `set_platform_admin` function anywhere in the contract.
+- The `upgrade` function is omitted from `CampusIdentity`, ensuring that the compiled verification logic cannot be modified via in-place contract upgrades. The Platform Admin is permanently bound to the deployment key.
+
+#### Two-Tier Approval Model
+
+```
+[Platform Admin]
+       │
+       ▼ (Tier 1: Approve University Registry claim)
+[University Admin]
+       │
+       ▼ (Tier 2: Verify individual user profiles)
+[Student / Merchant / Event Organizer]
+```
+
+- **Tier 1 (University Registry Approval)**: When a new university admin registers, their university code is claimed and placed in a `PendingApproval` state. The Platform Admin must invoke `approve_university(code)` to activate the university.
+- **Tier 2 (User Profile Verification)**: When students or merchants register under an approved university code, their profile is created in a `Pending` state. The university's own University Admin must review and call `verify_profile(user)` to unlock their profile. Until verified, users are blocked on-chain from initiating trades, ticketing, or ordering.
+
+#### Architectural Rationale
+
+This model utilizes **delegated trust** to scale campus verification platform-wide:
+- **No Platform Overhead**: The global Platform Admin does not verify individual students. They trust the university registrars (University Admins) to manage their respective campuses.
+- **On-Chain Sovereignty**: Verification actions are on-chain, signed transactions, leaving a transparent audit trail of which administrator verified which student.
+
+---
+
+### 3.5 University Scoping
+
+A core tenet of the CampusChain design is **cross-university isolation** (university scoping), ensuring that transactions, assets, canteens, and tickets are strictly bounded within each campus.
+
+#### Defense-in-Depth Enforcement
+
+1. **On-Chain Isolation (Identity Contract)**:
+   - Before completing any financial trade, ticket transfer, or food ordering payout, `CampusService` invokes `CampusIdentity.assert_active_profile(address)` to fetch the user's `university_code` and `VerificationStatus`.
+   - The contract asserts that both the buyer and seller share the exact same uppercase `university_code` and are both `Verified`.
+   - If the codes mismatch, the transaction is immediately reverted at the virtual machine layer, throwing a `CrossUniversityActionBlocked` error.
+
+2. **UI-Layer Scoping**:
+   - The Next.js frontend filters listings, events, and canteens at the query layer based on the connected user's profile `university_code`. Users never see canteens or items from other universities.
+   - Scan & Pay QR parsers validate the merchant's university code pre-submission. If a user scans a QR code from a merchant belonging to a different university, the UI halts checkout and displays a clear warning: *"This merchant is not part of your university"*.
+   - Direct address-to-address transfers auto-complete and search only within the user's same university directory.
+
 ---
 
 ## 4. Inter-Contract Communication
@@ -302,6 +409,28 @@ sequenceDiagram
 | CI/CD | GitHub Actions (pr-checks + deploy) |
 | Hosting | Vercel (frontend) |
 | Observability | Custom structured logger + `captureError` + `txMonitor` + `eventMonitor` |
+
+### 5.1 Campus Food Ordering
+
+CampusChain includes a comprehensive Canteen Canteen/Food Ordering system integrated directly with the university scoped identity checks and payment flows.
+
+#### 1. Menu Management (Merchant Dashboard)
+- Verified canteen merchants can manage their menus on-chain by publishing new items (setting dish title, category, description, and price in CAMP tokens).
+- Merchants can adjust item pricing and toggle availability (activating/deactivating a dish).
+- In addition to menu administration, merchants have a live incoming orders queue which updates in real-time through on-chain event streams as new orders are placed.
+
+#### 2. Student Ordering View
+- Students can browse active canteen canteens registered within their university boundary.
+- An interactive storefront view lists all available items. Students can adjust quantities using responsive steppers and review their selection in a persistent shopping cart panel.
+- The shopping cart displays item breakdowns, subtotal, network fees (1 CAMP flat), and grand totals in both CAMP and equivalent XLM.
+
+#### 3. Order Checkout & Tracking Lifecycle
+- **Sequential Checkout**: When checking out, the frontend coordinates order placement by submitting sequential transaction envelopes for each item in the cart.
+- **Real-Time Status Tracking**: Upon placing an order, students are routed to a live tracking screen that monitors order milestones using an event-driven vertical stepper:
+  ```
+  [Placed] ──> [Preparing] ──> [Ready for Pickup] ──> [Completed]
+  ```
+- **Cancellation & Refunds**: Before a merchant begins order preparation (status *Placed*), the student can cancel the order on-chain to trigger an automatic contract-level refund.
 
 ---
 
@@ -469,13 +598,15 @@ For upgrade-only (WASM change, same contract ID):
 
 ### Access Control Model
 
-CampusChain uses a two-layer RBAC:
+CampusChain uses a multi-layered, role-based security architecture:
 
-1. **Soroban `require_auth()`** — every state-changing call verifies the transaction was signed by the expected address. The Soroban host rejects any call that fails auth, before any application logic runs.
+1. **Soroban `require_auth()`** — Every state-changing call verifies the transaction was signed by the expected address. The Soroban host rejects any call that fails authentication before any application logic runs.
 
-2. **Role registry in CampusToken** — role elevation (Guest → Student → Merchant/Club/Admin) requires super-admin signature. Role ID ≤ 1 is self-assignable; role ID ≥ 2 requires admin.
+2. **Role registry in CampusToken** — Role elevation (Guest → Student → Merchant/Club/Admin) requires super-admin signature. Role ID ≤ 1 is self-assignable; role ID ≥ 2 requires admin.
 
 3. **Cross-contract caller verification** — `mint_purchase` in CampusToken checks that the caller is the registered `ServiceContract` address before minting. A rogue caller cannot mint CAMP.
+
+4. **Platform Admin Immutability** — The Platform Admin address is locked permanently in persistent contract storage during `initialize()`. No transaction can alter, overwrite, or transfer the Platform Admin role, and because `CampusIdentity` lacks upgrade entry points, this security property cannot be bypassed.
 
 ### Admin Key Handling
 
@@ -491,7 +622,7 @@ CampusChain uses a two-layer RBAC:
 
 ### Upgrade Safety
 
-- Both contracts expose an `upgrade(new_wasm_hash: BytesN<32>)` function gated by `admin.require_auth()`.
+- Only `CampusToken` and `CampusService` contracts expose an `upgrade(new_wasm_hash: BytesN<32>)` function gated by `admin.require_auth()`. `CampusIdentity` is completely non-upgradeable to guarantee that Platform Admin access control rules cannot be bypassed.
 - WASM upgrades do not change the contract address — state persists across upgrades.
 - The upgrade workflow (`./deploy/upgrade.sh`) requires the admin key to be present in the local shell environment; it cannot be triggered from CI.
 
@@ -547,56 +678,47 @@ CampusChain uses a two-layer RBAC:
 | **CampusIdentity** | `CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q) |
 | **CampusToken** (CAMP) | `CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2) |
 | **CampusService** | `CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL) |
-| **Native XLM SAC** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) |
-
-### Admin Account
-
-| Item | Value |
-|---|---|
-| **Identity** | `campuschain-phase1-admin` |
-| **Public Address** | `GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ` |
-| **Explorer** | [StellarExpert ↗](https://stellar.expert/explorer/testnet/account/GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ) |
 
 #### CampusIdentity
 
 | Action | Transaction Hash | Explorer |
 |---|---|---|
-| WASM Upload | `31879a9aff3e285662250bf9d7681531fa26a9b29c13f4692256c5b0846e72da` | [View ↗](https://stellar.expert/explorer/testnet/tx/31879a9aff3e285662250bf9d7681531fa26a9b29c13f4692256c5b0846e72da) |
-| Contract Instantiate | `925aecc01a4a9b79bb13dec6f417c1abaeac9cf73a1c525189b76edbc5479fe3` | [View ↗](https://stellar.expert/explorer/testnet/tx/925aecc01a4a9b79bb13dec6f417c1abaeac9cf73a1c525189b76edbc5479fe3) |
-| `initialize()` | `48a93e71208bb0e8b82b7ac5feec41427e6fa87dbb3528d285bea41ad9cdcaca` | [View ↗](https://stellar.expert/explorer/testnet/tx/48a93e71208bb0e8b82b7ac5feec41427e6fa87dbb3528d285bea41ad9cdcaca) |
+| WASM Upload | `c70e70bb8cacf414df9a2f43d31237a5ce0c06da985277efcac17a965c5076af` | [View ↗](https://stellar.expert/explorer/testnet/tx/c70e70bb8cacf414df9a2f43d31237a5ce0c06da985277efcac17a965c5076af) |
+| Contract Instantiate | `5c63922c7288f61b31d416c0bd6d90f98540495ffe8183bbcd488c35aa3af3dc` | [View ↗](https://stellar.expert/explorer/testnet/tx/5c63922c7288f61b31d416c0bd6d90f98540495ffe8183bbcd488c35aa3af3dc) |
+| `initialize()` | `2d486a0f68b18bd38b6fbfcb56f8038f5ec505c520e93f9505146ff539f5f740` | [View ↗](https://stellar.expert/explorer/testnet/tx/2d486a0f68b18bd38b6fbfcb56f8038f5ec505c520e93f9505146ff539f5f740) |
 
 #### CampusToken
 
 | Action | Transaction Hash | Explorer |
 |---|---|---|
-| WASM Upload | `021d3e2547f36ce5012e395eec0683bf868e33e1691e2d13eaabd7d11a56bad3` | [View ↗](https://stellar.expert/explorer/testnet/tx/021d3e2547f36ce5012e395eec0683bf868e33e1691e2d13eaabd7d11a56bad3) |
-| Contract Instantiate | `01b27783400d9bd3fc17772dca40dad4b589af593efd71da61f1b2e3684c6258` | [View ↗](https://stellar.expert/explorer/testnet/tx/01b27783400d9bd3fc17772dca40dad4b589af593efd71da61f1b2e3684c6258) |
-| `initialize()` | `4cb97e4fed885d2eb6665be97c3252dd6f1ffa39308c40496a605fc8340c45f2` | [View ↗](https://stellar.expert/explorer/testnet/tx/4cb97e4fed885d2eb6665be97c3252dd6f1ffa39308c40496a605fc8340c45f2) |
-| `set_service_contract()` | `fee67281e8a837159d5d63d201a073da222b37e2b1a4a2e682502e81d891e6bf` | [View ↗](https://stellar.expert/explorer/testnet/tx/fee67281e8a837159d5d63d201a073da222b37e2b1a4a2e682502e81d891e6bf) |
+| WASM Upload | `c37439b75879fd883dd651c02671ee5c7b045f0b999942137e502851093f1f74` | [View ↗](https://stellar.expert/explorer/testnet/tx/c37439b75879fd883dd651c02671ee5c7b045f0b999942137e502851093f1f74) |
+| Contract Instantiate | `ec665d6406dbdbee325ab57b83615df88e8ce8dc2215bb1ca65dd535daf11150` | [View ↗](https://stellar.expert/explorer/testnet/tx/ec665d6406dbdbee325ab57b83615df88e8ce8dc2215bb1ca65dd535daf11150) |
+| `initialize()` | `724d059daaef98122ada22e472f618e7635113dd0c3307e6e8d6967572db7b10` | [View ↗](https://stellar.expert/explorer/testnet/tx/724d059daaef98122ada22e472f618e7635113dd0c3307e6e8d6967572db7b10) |
 
 #### CampusService
 
 | Action | Transaction Hash | Explorer |
 |---|---|---|
-| WASM Upload | `0cc33d1a16043d4ef7ff650fe04306068ce89e3cd32e15ee897f39d8459b8bf9` | [View ↗](https://stellar.expert/explorer/testnet/tx/0cc33d1a16043d4ef7ff650fe04306068ce89e3cd32e15ee897f39d8459b8bf9) |
-| Contract Instantiate | `b6f49f1accc9add096000581b860e8d01e5f02869c41dd97f5ad21a0f23e4187` | [View ↗](https://stellar.expert/explorer/testnet/tx/b6f49f1accc9add096000581b860e8d01e5f02869c41dd97f5ad21a0f23e4187) |
-| `initialize()` | `404c3f44c99b7f6b7cd8d06d5a9ba041b88b52d1f93b7e97bc0c081923b6ffc7` | [View ↗](https://stellar.expert/explorer/testnet/tx/404c3f44c99b7f6b7cd8d06d5a9ba041b88b52d1f93b7e97bc0c081923b6ffc7) |
-| `set_native_token()` | `51c3f39fd216f458cbd31c889c166cef23da232c274711c7635a9355cf42f058` | [View ↗](https://stellar.expert/explorer/testnet/tx/51c3f39fd216f458cbd31c889c166cef23da232c274711c7635a9355cf42f058) |
-| `set_identity_contract()` | `d88bd65790d4a72d16870b277b668753af54e417cf124a2457551e5fe82f9c3e` | [View ↗](https://stellar.expert/explorer/testnet/tx/d88bd65790d4a72d16870b277b668753af54e417cf124a2457551e5fe82f9c3e) |
+| WASM Upload | `67ad28e49911fb7eb0eee2bcf07479e97b5d995ff0cf22af0d8329e3671dcf06` | [View ↗](https://stellar.expert/explorer/testnet/tx/67ad28e49911fb7eb0eee2bcf07479e97b5d995ff0cf22af0d8329e3671dcf06) |
+| Contract Instantiate | `c919035f65f72d9015740a178c02b85a3aa72facdaf1cc03a41ddc9d0c9c3767` | [View ↗](https://stellar.expert/explorer/testnet/tx/c919035f65f72d9015740a178c02b85a3aa72facdaf1cc03a41ddc9d0c9c3767) |
+| `initialize()` | `138ed001e04bcf8e5448031966f23e781e24d84b2efbc3914b1dd40a631901ab` | [View ↗](https://stellar.expert/explorer/testnet/tx/138ed001e04bcf8e5448031966f23e781e24d84b2efbc3914b1dd40a631901ab) |
 
 ### WASM Hashes
 
 | Contract | WASM Hash |
 |---|---|
-| CampusIdentity | `827b1a6d568ef124d72311a603a5ccfdcfe2ee6e87b5ac7f7af892fcde261351` |
-| CampusToken | `25b4ab1ea6331f976e7eac727251420b3ea00236cb1e4d1ba621afe0bf933e98` |
-| CampusService | `6116b96e6bdbd09112d51a9b1a13576d584c0e3a027236beae619fdaee08466f` |
+| CampusIdentity | `277d0f9d5c9c89e5682644519ddf23165736fbdf8a5ad3d9c45b9f9201c10f37` |
+| CampusToken | `947105425fb113cbeb20ed057c97a855af8f2a4677e739e61c9ef160fbf7ee08` |
+| CampusService | `7f7b3fc4b42ea26070f639f762dfbf66868b2d8bad34665ee239d2cab33cd331` |
 
 ---
 
-## 11. Demo
+## 11. Demo & Evaluation Accounts
 
-> Replace these placeholders when a live environment is available.
+To evaluate the full university-scoped onboarding, verification, and commerce flows, please refer to [DEMO_ACCOUNTS.md](DEMO_ACCOUNTS.md). It outlines pre-funded testnet accounts for NIT and IITM campuses across all five roles:
+- **Platform Admin**: Super-admin console for reviewing university registry claims.
+- **University Admin**: Profile dashboards for Nit (Aarav Shah) and IITM (Priya Nair) to approve/reject onboarding requests.
+- **Student, Merchant & Event Organizer Profiles**: Pre-created and verified accounts to test immediate payments, canteens, canteens checkout, and ticket redemptions.
 
 | Resource | Link |
 |---|---|
