@@ -20,14 +20,26 @@ if [ -z "$CAMPUSCHAIN_ADMIN_KEY" ]; then
 fi
 ADMIN_KEY="$CAMPUSCHAIN_ADMIN_KEY"
 
+if [ -z "$NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS" ]; then
+    echo "ERROR: NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS must be set to the immutable Platform Admin address."
+    exit 1
+fi
+PLATFORM_ADMIN_ADDRESS="$NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS"
+
 # Check if stellar CLI is installed
 if ! command -v stellar &> /dev/null; then
     echo "ERROR: 'stellar' CLI is not installed. Please install it first."
     exit 1
 fi
 
-echo "Step 1: Compiling Soroban Contracts..."
-cargo build --target wasm32-unknown-unknown --release
+echo "Step 1: Compiling Soroban Contracts and refreshing inter-contract interfaces..."
+# CampusToken imports Identity, and CampusService imports both. Build in dependency
+# order so contractimport! always consumes the current ABI rather than a stale WASM.
+cargo build -p campus-identity --target wasm32-unknown-unknown --release
+cp target/wasm32-unknown-unknown/release/campus_identity.wasm contracts/campus-service/wasm/campus_identity.wasm
+cargo build -p campus-token --target wasm32-unknown-unknown --release
+cp target/wasm32-unknown-unknown/release/campus_token.wasm contracts/campus-service/wasm/campus_token.wasm
+cargo build -p campus-service --target wasm32-unknown-unknown --release
 
 echo "Step 2: Optimizing WASM targets..."
 stellar contract optimize --wasm target/wasm32-unknown-unknown/release/campus_identity.wasm
@@ -41,6 +53,10 @@ cp target/wasm32-unknown-unknown/release/campus_token.optimized.wasm contracts/c
 echo "Step 3: Deploying Contracts to Network: $NETWORK..."
 ADMIN_ADDRESS=$(stellar keys address "$ADMIN_KEY")
 echo "Admin Address: $ADMIN_ADDRESS"
+if [ "$ADMIN_ADDRESS" != "$PLATFORM_ADMIN_ADDRESS" ]; then
+    echo "ERROR: CAMPUSCHAIN_ADMIN_KEY address does not match NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS."
+    exit 1
+fi
 
 # ── Deploy CampusIdentity ──
 echo "Installing CampusIdentity WASM..."
@@ -64,10 +80,8 @@ stellar contract invoke \
     --network "$NETWORK" \
     -- \
     initialize \
-    --admin "$ADMIN_ADDRESS" \
-    --full_name "University Admin" \
-    --university_id "ADMIN" \
-    --department "Administration"
+    --platform_admin "$PLATFORM_ADMIN_ADDRESS" \
+    --full_name "CampusChain Platform Admin"
 
 # ── Deploy CampusToken ──
 echo "Installing CampusToken WASM..."
@@ -84,18 +98,6 @@ TOKEN_CONTRACT_ID=$(stellar contract deploy \
     --network "$NETWORK")
 echo "CampusToken Contract ID: $TOKEN_CONTRACT_ID"
 
-echo "Initializing CampusToken..."
-stellar contract invoke \
-    --id "$TOKEN_CONTRACT_ID" \
-    --source-account "$ADMIN_KEY" \
-    --network "$NETWORK" \
-    -- \
-    initialize \
-    --admin "$ADMIN_ADDRESS" \
-    --decimals 7 \
-    --name "CampusChain Token" \
-    --symbol "CAMP"
-
 # ── Deploy CampusService ──
 echo "Installing CampusService WASM..."
 SERVICE_WASM_HASH=$(stellar contract install \
@@ -111,6 +113,22 @@ SERVICE_CONTRACT_ID=$(stellar contract deploy \
     --network "$NETWORK")
 echo "CampusService Contract ID: $SERVICE_CONTRACT_ID"
 
+# Both contracts store immutable cross-contract addresses during initialization.
+# Deploy first, then initialize in dependency order: Identity -> Token -> Service.
+echo "Initializing CampusToken..."
+stellar contract invoke \
+    --id "$TOKEN_CONTRACT_ID" \
+    --source-account "$ADMIN_KEY" \
+    --network "$NETWORK" \
+    -- \
+    initialize \
+    --platform_admin "$PLATFORM_ADMIN_ADDRESS" \
+    --identity_contract "$IDENTITY_CONTRACT_ID" \
+    --service_contract "$SERVICE_CONTRACT_ID" \
+    --decimals 7 \
+    --name "CampusChain Token" \
+    --symbol "CAMP"
+
 echo "Initializing CampusService..."
 stellar contract invoke \
     --id "$SERVICE_CONTRACT_ID" \
@@ -118,39 +136,10 @@ stellar contract invoke \
     --network "$NETWORK" \
     -- \
     initialize \
-    --admin "$ADMIN_ADDRESS" \
-    --token_contract "$TOKEN_CONTRACT_ID"
-
-# ── Wire Inter-Contract Connections ──
-echo "Wiring CampusToken service contract link..."
-stellar contract invoke \
-    --id "$TOKEN_CONTRACT_ID" \
-    --source-account "$ADMIN_KEY" \
-    --network "$NETWORK" \
-    -- \
-    set_service_contract \
-    --admin "$ADMIN_ADDRESS" \
-    --service_contract "$SERVICE_CONTRACT_ID"
-
-echo "Wiring CampusService identity contract link..."
-stellar contract invoke \
-    --id "$SERVICE_CONTRACT_ID" \
-    --source-account "$ADMIN_KEY" \
-    --network "$NETWORK" \
-    -- \
-    set_identity_contract \
-    --admin "$ADMIN_ADDRESS" \
-    --identity_contract "$IDENTITY_CONTRACT_ID"
-
-echo "Wiring CampusService native token link..."
-stellar contract invoke \
-    --id "$SERVICE_CONTRACT_ID" \
-    --source-account "$ADMIN_KEY" \
-    --network "$NETWORK" \
-    -- \
-    set_native_token \
-    --admin "$ADMIN_ADDRESS" \
-    --native_token "$NATIVE_TOKEN"
+    --platform_admin "$PLATFORM_ADMIN_ADDRESS" \
+    --token_contract "$TOKEN_CONTRACT_ID" \
+    --identity_contract "$IDENTITY_CONTRACT_ID" \
+    --native_token_contract "$NATIVE_TOKEN"
 
 echo "========================================================="
 echo " DEPLOYMENT COMPLETED SUCCESSFULLY"
