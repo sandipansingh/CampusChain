@@ -4,7 +4,6 @@ import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { ActivityFeedPanel } from "@/shared/ui/ActivityFeedPanel";
-import { useActivityFeedStore } from "@/shared/hooks/useActivityFeedStore";
 import {
   LayoutDashboard,
   Users,
@@ -31,7 +30,6 @@ import {
   useReviewScholarshipApplicationMutation,
   useDisburseScholarshipMutation,
 } from "@/features/scholarships/hooks/useScholarships";
-import { useLedgerEvents } from "@/features/transactions/hooks/useTransactions";
 import { Settings as SettingsView } from "./Settings";
 
 export function UniversityDashboard() {

@@ -13,28 +13,43 @@ import {
   Coins,
 } from "lucide-react";
 
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
-  useApproveUniversityMutation,
-  useRejectUniversityMutation,
-  useSuspendUniversityMutation,
-  useCampusProfile,
-  useCampusUniversities,
-} from "@/features/wallet/hooks/useWallet";
+  executeApproveUniversity,
+  executeRejectUniversity,
+  executeSuspendUniversity,
+  fetchUniversities,
+} from "@/features/wallet/service/campusIdentity";
 import { useLedgerEvents } from "@/features/transactions/hooks/useTransactions";
 import { Settings as SettingsView } from "./Settings";
 
 export function PlatformDashboard() {
   const { address, disconnect } = useWallet();
   const [activeTab, setActiveTab] = useState<string>("overview");
+  const queryClient = useQueryClient();
 
   // Fetch data
-  const universitiesQuery = useCampusUniversities(address ?? undefined);
+  const universitiesQuery = useQuery({
+    queryKey: ["universities"],
+    queryFn: () => fetchUniversities(address ?? undefined),
+    refetchInterval: 20000,
+  });
   const ledgerEventsQuery = useLedgerEvents();
 
   // Mutations
-  const approveUniv = useApproveUniversityMutation();
-  const rejectUniv = useRejectUniversityMutation();
-  const suspendUniv = useSuspendUniversityMutation();
+  const approveUniv = useMutation({
+    mutationFn: (code: string) => executeApproveUniversity(address!, code),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["universities"] }),
+  });
+  const rejectUniv = useMutation({
+    mutationFn: (code: string) => executeRejectUniversity(address!, code),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["universities"] }),
+  });
+  const suspendUniv = useMutation({
+    mutationFn: ({ caller, code }: { caller: string; code: string }) =>
+      executeSuspendUniversity(caller, code),
+    onSuccess: () => queryClient.invalidateQueries({ queryKey: ["universities"] }),
+  });
 
   const universities = universitiesQuery.data ?? [];
   const pendingUniversities = universities.filter((u) => u.approvalStatus === 1);
