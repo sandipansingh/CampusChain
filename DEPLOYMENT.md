@@ -86,9 +86,7 @@ To deploy all contracts to Testnet and auto-update configuration files:
 
 2. **Execute the deployment script**:
    ```bash
-   CAMPUSCHAIN_ADMIN_KEY=campuschain-admin \
-   NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ \
-   ./deploy/testnet.sh
+   CAMPUSCHAIN_ADMIN_KEY=campuschain-admin ./deploy/testnet.sh
    ```
 
 ### What `./deploy/testnet.sh` does automatically:
