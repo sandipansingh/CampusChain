@@ -81,7 +81,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         ref={panelRef}
         role="dialog"
         aria-label="Notifications"
-        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-card border-l border-border shadow-2xl z-50 flex flex-col transition-transform duration-300 ease-in-out ${
+        className={`fixed top-0 right-0 h-full w-full max-w-sm bg-card border-l border-border shadow-2xl z-50 flex flex-col overflow-hidden transition-transform duration-300 ease-in-out ${
           isOpen ? "translate-x-0" : "translate-x-full"
         }`}
       >
@@ -121,7 +121,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
         </div>
 
         {/* Feed List */}
-        <div className="flex-1 overflow-y-auto divide-y divide-border/60">
+        <div className="flex-1 overflow-y-auto overflow-x-hidden divide-y divide-border/60">
           {items.length === 0 ? (
             <div className="flex flex-col items-center justify-center h-full gap-4 p-8 text-center">
               <div className="w-14 h-14 rounded-full bg-muted flex items-center justify-center">
