@@ -13,18 +13,18 @@ RPC_URL="https://soroban-testnet.stellar.org"
 PASSPHRASE="Test SDF Network ; September 2015"
 NATIVE_TOKEN="CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC"
 
-if [ -z "$CAMPUSCHAIN_ADMIN_KEY" ]; then
-    echo "Usage: CAMPUSCHAIN_ADMIN_KEY=<secret_key_or_name> ./scripts/deploy.sh"
-    echo "  Or export CAMPUSCHAIN_ADMIN_KEY in your shell profile."
-    exit 1
-fi
-ADMIN_KEY="$CAMPUSCHAIN_ADMIN_KEY"
+# Default admin key alias to campuschain-admin if not set
+ADMIN_KEY="${CAMPUSCHAIN_ADMIN_KEY:-campuschain-admin}"
 
-if [ -z "$NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS" ]; then
-    echo "ERROR: NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS must be set to the immutable Platform Admin address."
+# Automatically derive the admin address from the key alias
+if ! ADMIN_ADDRESS_DERIVED=$(stellar keys address "$ADMIN_KEY" 2>/dev/null); then
+    echo "ERROR: Could not get address for key alias '$ADMIN_KEY'."
+    echo "Please ensure the key is generated/added first: stellar keys generate $ADMIN_KEY --network testnet"
     exit 1
 fi
-PLATFORM_ADMIN_ADDRESS="$NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS"
+
+# Set the platform admin address (defaulting to the derived address if not overridden)
+PLATFORM_ADMIN_ADDRESS="${NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS:-$ADMIN_ADDRESS_DERIVED}"
 
 # Check if stellar CLI is installed
 if ! command -v stellar &> /dev/null; then

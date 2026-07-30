@@ -6,7 +6,7 @@ echo " CAMPUSCHAIN - LOCAL DEPLOYMENT SCRIPT"
 echo "========================================="
 
 NETWORK="local"
-IDENTITY="CAMPUSCHAIN_LOCAL"
+IDENTITY="campuschain-local"
 
 if ! command -v stellar &> /dev/null; then
     echo "ERROR: 'stellar' CLI is not installed."

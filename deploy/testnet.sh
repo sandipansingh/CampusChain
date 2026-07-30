@@ -5,30 +5,29 @@ echo "========================================="
 echo " CAMPUSCHAIN - TESTNET CONTRACT DEPLOYMENT"
 echo "========================================="
 
-NETWORK="testnet"
 REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 cd "$REPO_ROOT"
 
-if [ -z "${CAMPUSCHAIN_ADMIN_KEY:-}" ]; then
-    echo "Usage: CAMPUSCHAIN_ADMIN_KEY=<key-alias-or-secret> NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=<G...> ./deploy/testnet.sh"
-    exit 1
-fi
-if [ -z "${NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS:-}" ]; then
-    echo "ERROR: NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS must identify the immutable Platform Admin."
-    exit 1
-fi
 if ! command -v stellar >/dev/null 2>&1; then
     echo "ERROR: 'stellar' CLI is not installed."
     exit 1
 fi
 
-ADMIN_ADDRESS=$(stellar keys address "$CAMPUSCHAIN_ADMIN_KEY")
-if [ "$ADMIN_ADDRESS" != "$NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS" ]; then
-    echo "ERROR: deploy signer does not match NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS."
+# Default admin key alias to campuschain-admin if not set
+export CAMPUSCHAIN_ADMIN_KEY="${CAMPUSCHAIN_ADMIN_KEY:-campuschain-admin}"
+
+# Automatically derive the admin address from the key alias
+if ! ADMIN_ADDRESS=$(stellar keys address "$CAMPUSCHAIN_ADMIN_KEY" 2>/dev/null); then
+    echo "ERROR: Could not get address for key alias '$CAMPUSCHAIN_ADMIN_KEY'."
+    echo "Please ensure the key is generated/added first: stellar keys generate $CAMPUSCHAIN_ADMIN_KEY --network testnet"
     exit 1
 fi
 
-echo "Platform Admin: $ADMIN_ADDRESS"
+# Set the platform admin address (defaulting to the derived address if not overridden)
+export NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS="${NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS:-$ADMIN_ADDRESS}"
+
+echo "Using Admin Key Alias:  $CAMPUSCHAIN_ADMIN_KEY"
+echo "Platform Admin Address: $NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS"
 echo "Building, deploying, and initializing Identity -> Token -> Service..."
 
 # scripts/deploy.sh is the canonical testnet pipeline. It builds imported WASM

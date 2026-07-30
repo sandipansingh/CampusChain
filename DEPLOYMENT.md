@@ -23,7 +23,7 @@ Used by the local deployment and upgrade shell scripts. Create this file from `.
 ```bash
 # Admin keypair alias or secret key used by deploy scripts
 # NEVER commit a real S... key.
-CAMPUSCHAIN_ADMIN_KEY=deployer
+CAMPUSCHAIN_ADMIN_KEY=campuschain-admin
 
 # Stellar CLI network configuration
 STELLAR_NETWORK=testnet
@@ -68,7 +68,7 @@ For local development without Stellar Testnet, run a standalone network:
 3. **Initialize the contracts**:
    At the end of `./deploy/local.sh`, it prints the contract IDs. Use them to initialize the contracts:
    ```bash
-   ./deploy/init.sh <TOKEN_ID> <SERVICE_ID> <IDENTITY_ID> CAMPUSCHAIN_LOCAL local
+   ./deploy/init.sh <TOKEN_ID> <SERVICE_ID> <IDENTITY_ID> campuschain-local local
    ```
 
 ---
@@ -81,12 +81,12 @@ To deploy all contracts to Testnet and auto-update configuration files:
 
 1. **Configure your Admin Key** in Stellar CLI:
    ```bash
-   stellar keys add --secret-key S_ADMIN_SECRET_KEY deployer
+   stellar keys add --secret-key S_ADMIN_SECRET_KEY campuschain-admin
    ```
 
 2. **Execute the deployment script**:
    ```bash
-   CAMPUSCHAIN_ADMIN_KEY=deployer \
+   CAMPUSCHAIN_ADMIN_KEY=campuschain-admin \
    NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ \
    ./deploy/testnet.sh
    ```
@@ -125,10 +125,10 @@ This is the current active deployment state updated by the deploy script:
    ```
 2. **Install the new WASM on Testnet**:
    ```bash
-   stellar contract install --wasm target/wasm32-unknown-unknown/release/campus_token.wasm --source deployer --network testnet
+   stellar contract install --wasm target/wasm32-unknown-unknown/release/campus_token.wasm --source campuschain-admin --network testnet
    ```
    *This outputs the new 32-byte Wasm Hash.*
 3. **Execute the upgrade**:
    ```bash
-   ./deploy/upgrade.sh <CONTRACT_ID> <NEW_WASM_PATH> deployer testnet
+   ./deploy/upgrade.sh <CONTRACT_ID> <NEW_WASM_PATH> campuschain-admin testnet
    ```
