@@ -15,6 +15,9 @@ import {
   fetchUniversity,
   executeRegisterProfile,
   executeRegisterUniversity,
+  executeVerifyProfile,
+  executeRejectProfile,
+  fetchUniversityProfiles,
   type ProfileRegistration,
 } from "../service/campusIdentity";
 
@@ -224,6 +227,40 @@ export function useRegisterUniversityMutation() {
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-profile", variables.admin] });
       queryClient.invalidateQueries({ queryKey: ["universities"] });
+    },
+  });
+}
+
+export function useUniversityProfiles(universityCode: string | null) {
+  return useQuery({
+    queryKey: ["university-profiles", universityCode],
+    queryFn: async () => {
+      if (!universityCode) return [];
+      return fetchUniversityProfiles(universityCode);
+    },
+    enabled: !!universityCode,
+    refetchInterval: 15000,
+  });
+}
+
+export function useVerifyProfileMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ caller, targetAddress }: { caller: string; targetAddress: string }) =>
+      executeVerifyProfile(caller, targetAddress),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["university-profiles"] });
+    },
+  });
+}
+
+export function useRejectProfileMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ caller, targetAddress }: { caller: string; targetAddress: string }) =>
+      executeRejectProfile(caller, targetAddress),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["university-profiles"] });
     },
   });
 }

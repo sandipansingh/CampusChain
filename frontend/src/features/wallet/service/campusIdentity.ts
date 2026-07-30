@@ -1,11 +1,12 @@
 import {
   addressToScVal,
+  getRpcServer,
   invokeContractMethod,
   NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
   readContract,
   stringToScVal,
 } from "@/shared/stellar/client";
-import { nativeToScVal, xdr } from "@stellar/stellar-sdk";
+import { nativeToScVal, scValToNative, xdr } from "@stellar/stellar-sdk";
 
 export const UserRole = {
   Student: 1,
@@ -180,4 +181,67 @@ export async function executeApproveUniversity(caller: string, code: string): Pr
 export async function executeRejectUniversity(caller: string, code: string): Promise<string> {
   const { signTx } = await import("./wallet");
   return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "reject_university", [addressToScVal(caller), stringToScVal(code)], caller, signTx);
+}
+
+export async function executeVerifyProfile(caller: string, targetAddress: string): Promise<string> {
+  const { signTx } = await import("./wallet");
+  return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "verify_profile", [addressToScVal(caller), addressToScVal(targetAddress)], caller, signTx);
+}
+
+export async function executeRejectProfile(caller: string, targetAddress: string): Promise<string> {
+  const { signTx } = await import("./wallet");
+  return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "reject_profile", [addressToScVal(caller), addressToScVal(targetAddress)], caller, signTx);
+}
+
+export async function fetchUniversityProfiles(universityCode: string): Promise<UserProfile[]> {
+  try {
+    const server = getRpcServer();
+    const latestLedger = await server.getLatestLedger();
+    const startLedger = Math.max(1, latestLedger.sequence - 15000); // Look back 15k ledgers for events
+
+    const res = await server.getEvents({
+      startLedger,
+      filters: [
+        {
+          type: "contract",
+          contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID],
+        },
+      ],
+      limit: 100,
+    });
+
+    const addresses = new Set<string>();
+
+    for (const evt of res.events) {
+      try {
+        const topicNative = evt.topic.map((t) => scValToNative(evt.value ? t : t));
+        const eventName = typeof topicNative[0] === "string" ? topicNative[0] : String(topicNative[0] || "");
+        if (eventName === "ProfileSubmittedForVerification") {
+          const address = topicNative[1];
+          if (typeof address === "string") {
+            addresses.add(address);
+          }
+        }
+      } catch (e) {
+        // ignore parsing issues
+      }
+    }
+
+    const profiles: UserProfile[] = [];
+    for (const addr of addresses) {
+      try {
+        const profile = await fetchUserProfile(addr);
+        if (profile && profile.universityCode?.toUpperCase() === universityCode.toUpperCase()) {
+          profiles.push(profile);
+        }
+      } catch (e) {
+        // ignore profile fetch issues
+      }
+    }
+
+    return profiles;
+  } catch (error) {
+    console.error("fetchUniversityProfiles failed", error);
+    return [];
+  }
 }
