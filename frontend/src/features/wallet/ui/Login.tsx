@@ -6,7 +6,6 @@ import { useRegisterProfileMutation } from "@/features/wallet/hooks/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import {
   Wallet,
-  ChevronRight,
   Lock,
   Copy,
   Check,
@@ -152,52 +151,16 @@ export function Login({ showOnboarding = false }: LoginProps) {
             {/* Content states */}
             {isLoading ? (
               <div className="w-full flex flex-col gap-3">
-                <Skeleton className="h-[74px] w-full rounded-lg" />
-                <Skeleton className="h-[74px] w-full rounded-lg" />
-                <Skeleton className="h-[74px] w-full rounded-lg" />
+                <Skeleton className="h-[56px] w-full rounded-lg" />
               </div>
             ) : (
               <div className="w-full flex flex-col gap-3">
-                {/* Freighter Option */}
                 <button
                   onClick={handleConnect}
-                  className="w-full bg-white border border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50 transition-all p-4 rounded-lg flex items-center justify-between group cursor-pointer"
+                  className="w-full bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-4 px-6 flex items-center justify-center gap-2 transition-colors cursor-pointer"
                 >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-900 font-bold text-sm">
-                      F
-                    </div>
-                    <span className="text-base font-semibold text-zinc-950">Freighter</span>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-zinc-400 group-hover:text-zinc-950 transition-colors" />
-                </button>
-
-                {/* xBull Option */}
-                <button
-                  onClick={handleConnect}
-                  className="w-full bg-white border border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50 transition-all p-4 rounded-lg flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-900 font-bold text-sm">
-                      X
-                    </div>
-                    <span className="text-base font-semibold text-zinc-950">xBull</span>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-zinc-400 group-hover:text-zinc-950 transition-colors" />
-                </button>
-
-                {/* Albedo Option */}
-                <button
-                  onClick={handleConnect}
-                  className="w-full bg-white border border-zinc-200 hover:border-zinc-950 hover:bg-zinc-50 transition-all p-4 rounded-lg flex items-center justify-between group cursor-pointer"
-                >
-                  <div className="flex items-center gap-4">
-                    <div className="w-10 h-10 bg-zinc-100 rounded-full flex items-center justify-center text-zinc-900 font-bold text-sm">
-                      A
-                    </div>
-                    <span className="text-base font-semibold text-zinc-950">Albedo</span>
-                  </div>
-                  <ChevronRight className="h-5 w-5 text-zinc-400 group-hover:text-zinc-950 transition-colors" />
+                  <span>Connect Stellar Wallet</span>
+                  <ArrowRight className="h-4.5 w-4.5" />
                 </button>
               </div>
             )}
