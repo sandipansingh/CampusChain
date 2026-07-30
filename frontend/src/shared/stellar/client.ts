@@ -226,3 +226,29 @@ export function u32ToScVal(value: number): xdr.ScVal {
 export function u64ToScVal(value: number): xdr.ScVal {
   return nativeToScVal(value, { type: "u64" });
 }
+
+export async function getEventsSafe(
+  server: rpc.Server,
+  options: {
+    startLedger?: number;
+    cursor?: string;
+    filters: unknown[];
+    limit?: number;
+  }
+): Promise<unknown> {
+  try {
+    return await server.getEvents(options as never);
+  } catch (err: unknown) {
+    const msg = err instanceof Error ? err.message : String(err);
+    const match = msg.match(/oldest ledger\s*\(?(\d+)\)?/i);
+    if (match && match[1]) {
+      const oldestLedger = Number(match[1]);
+      return await server.getEvents({
+        ...options,
+        startLedger: oldestLedger,
+      } as never);
+    }
+    throw err;
+  }
+}
+

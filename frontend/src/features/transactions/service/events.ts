@@ -2,6 +2,7 @@ import {
   getRpcServer,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+  getEventsSafe,
 } from "@/shared/stellar/client";
 import { decodeEvent, DecodedEvent } from "@/shared/stellar/eventDecoder";
 import { scValToNative } from "@stellar/stellar-sdk";
@@ -20,8 +21,8 @@ export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
   const latestLedger = await server.getLatestLedger();
   const startLedger = Math.max(1, latestLedger.sequence - 2000);
 
-  const [sRes, tRes] = await Promise.all([
-    server.getEvents({
+  const [sRes, tRes] = (await Promise.all([
+    getEventsSafe(server, {
       startLedger,
       filters: [
         {
@@ -31,7 +32,7 @@ export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
       ],
       limit: 50,
     }),
-    server.getEvents({
+    getEventsSafe(server, {
       startLedger,
       filters: [
         {
@@ -41,7 +42,10 @@ export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
       ],
       limit: 50,
     }),
-  ]);
+  ])) as [
+    { events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[] },
+    { events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[] }
+  ];
 
   const allEvents = [...sRes.events, ...tRes.events]
     .sort((a, b) => b.ledger - a.ledger)
@@ -72,35 +76,39 @@ export async function fetchEventsPaginated(cursor: string | null, limit = 40, ad
     { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] },
   ];
 
-  let res;
+  let res: {
+    events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[];
+    cursor?: string | null;
+  };
   if (cursor) {
-    res = await server.getEvents({ filters: baseFilters, cursor, limit });
+    res = (await getEventsSafe(server, { filters: baseFilters, cursor, limit })) as never;
   } else {
     const latestLedger = await server.getLatestLedger();
-    res = await server.getEvents({
+    res = (await getEventsSafe(server, {
       startLedger: Math.max(1, latestLedger.sequence - 5000),
       filters: baseFilters,
       limit,
-    });
+    })) as never;
   }
 
   const decodedEvents = res.events
-    .filter((event) => eventInvolvesAddress(event, address))
-    .map((evt) => {
+    .filter((event: unknown) => eventInvolvesAddress(event as { topic: unknown[] }, address))
+    .map((evt: unknown) => {
+      const e = evt as { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown };
       try {
         return decodeEvent({
-          id: evt.id,
-          ledger: evt.ledger,
-          ledgerClosedAt: evt.ledgerClosedAt,
-          txHash: evt.txHash,
-          topic: evt.topic as unknown[],
-          value: evt.value as unknown,
+          id: e.id,
+          ledger: e.ledger,
+          ledgerClosedAt: e.ledgerClosedAt,
+          txHash: e.txHash,
+          topic: e.topic,
+          value: e.value,
         });
       } catch {
         return null;
       }
     })
-    .filter((e): e is DecodedEvent => e !== null);
+    .filter((e: unknown): e is DecodedEvent => e !== null);
 
   return {
     events: decodedEvents,

@@ -31,8 +31,8 @@ export function useActivityFeed(address?: string) {
 
       if (isLoadMore) {
         setEvents((prev) => {
-          const existingIds = new Set(prev.map((e) => e.id));
-          const newEvents = res.events.filter((e) => !existingIds.has(e.id));
+          const existingIds = new Set(prev.map((e: DecodedEvent) => e.id));
+          const newEvents = res.events.filter((e: DecodedEvent) => !existingIds.has(e.id));
           return [...prev, ...newEvents];
         });
       } else {

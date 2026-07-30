@@ -8,6 +8,7 @@ import {
   i128ToScVal,
   getRpcServer,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+  getEventsSafe,
 } from "@/shared/stellar/client";
 import { signTx } from "@/features/wallet/service/wallet";
 import { MenuItem, FoodOrder, FoodOrderStatus } from "./types";
@@ -46,7 +47,7 @@ export async function fetchMenuItems(address?: string): Promise<MenuItem[]> {
     const latest = await server.getLatestLedger();
     const startLedger = Math.max(1, latest.sequence - 10000);
 
-    const res = await server.getEvents({
+    const res = (await getEventsSafe(server, {
       startLedger,
       filters: [
         {
@@ -55,12 +56,12 @@ export async function fetchMenuItems(address?: string): Promise<MenuItem[]> {
         },
       ],
       limit: 100,
-    });
+    })) as { events: { topic: unknown[]; value: unknown }[] };
 
     const itemIds = new Set<number>();
     for (const evt of res.events) {
       try {
-        const topics = evt.topic.map((t) => scValToNative(t as never)) as unknown[];
+        const topics = evt.topic.map((t: unknown) => scValToNative(t as never)) as unknown[];
         if (topics[0] === "MenuItemPublished") {
           itemIds.add(Number(topics[1]));
         }
@@ -143,7 +144,7 @@ export async function fetchFoodOrders(address?: string): Promise<FoodOrder[]> {
     const latest = await server.getLatestLedger();
     const startLedger = Math.max(1, latest.sequence - 10000);
 
-    const res = await server.getEvents({
+    const res = (await getEventsSafe(server, {
       startLedger,
       filters: [
         {
@@ -152,12 +153,12 @@ export async function fetchFoodOrders(address?: string): Promise<FoodOrder[]> {
         },
       ],
       limit: 100,
-    });
+    })) as { events: { topic: unknown[]; value: unknown }[] };
 
     const orderIds = new Set<number>();
     for (const evt of res.events) {
       try {
-        const topics = evt.topic.map((t) => scValToNative(t as never)) as unknown[];
+        const topics = evt.topic.map((t: unknown) => scValToNative(t as never)) as unknown[];
         if (topics[0] === "OrderPlaced") {
           orderIds.add(Number(topics[1]));
         }

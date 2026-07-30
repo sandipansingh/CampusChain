@@ -21,6 +21,7 @@ import {
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
   NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
   NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS,
+  getEventsSafe,
 } from "@/shared/stellar/client";
 import { decodeEvent, shortAddr } from "@/shared/stellar/eventDecoder";
 import { useNotificationStore } from "./useNotificationStore";
@@ -109,11 +110,15 @@ export function useContractEventStream(address: string | null | undefined) {
           },
         ];
 
-        const [sRes, tRes, iRes] = await Promise.all([
-          server.getEvents({ startLedger, filters: [baseFilters[0]], limit: 30 }),
-          server.getEvents({ startLedger, filters: [baseFilters[1]], limit: 30 }),
-          server.getEvents({ startLedger, filters: [baseFilters[2]], limit: 30 }),
-        ]);
+        const [sRes, tRes, iRes] = (await Promise.all([
+          getEventsSafe(server, { startLedger, filters: [baseFilters[0]], limit: 30 }),
+          getEventsSafe(server, { startLedger, filters: [baseFilters[1]], limit: 30 }),
+          getEventsSafe(server, { startLedger, filters: [baseFilters[2]], limit: 30 }),
+        ])) as [
+          { events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[] },
+          { events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[] },
+          { events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[] }
+        ];
 
         if (destroyed) return;
 

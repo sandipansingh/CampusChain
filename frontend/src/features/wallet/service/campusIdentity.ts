@@ -6,6 +6,7 @@ import {
   readContract,
   stringToScVal,
   u32ToScVal,
+  getEventsSafe,
 } from "@/shared/stellar/client";
 import { nativeToScVal, scValToNative, xdr } from "@stellar/stellar-sdk";
 
@@ -196,7 +197,7 @@ export async function fetchUniversityProfiles(universityCode: string): Promise<U
     const latestLedger = await server.getLatestLedger();
     const startLedger = Math.max(1, latestLedger.sequence - 15000); // Look back 15k ledgers for events
 
-    const res = await server.getEvents({
+    const res = (await getEventsSafe(server, {
       startLedger,
       filters: [
         {
@@ -205,13 +206,13 @@ export async function fetchUniversityProfiles(universityCode: string): Promise<U
         },
       ],
       limit: 100,
-    });
+    })) as { events: { topic: unknown[]; value: unknown }[] };
 
     const addresses = new Set<string>();
 
     for (const evt of res.events) {
       try {
-        const topicNative = evt.topic.map((t) => scValToNative(evt.value ? t : t));
+        const topicNative = evt.topic.map((t: unknown) => scValToNative(evt.value ? (t as never) : (t as never)));
         const eventName = typeof topicNative[0] === "string" ? topicNative[0] : String(topicNative[0] || "");
         if (eventName === "ProfileSubmittedForVerification") {
           const address = topicNative[1];
