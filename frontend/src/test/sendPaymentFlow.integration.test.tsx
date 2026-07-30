@@ -19,7 +19,7 @@ import React, { useState } from "react";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { useCampusBalance, useTransferMutation } from "@/features/wallet/hooks/useWallet";
 
-// ── Mock the service layer (contract calls stop here) ─────────────────────
+// Mock the service layer (contract calls stop here)
 const mockFetchBalance = vi.fn();
 const mockExecuteTransfer = vi.fn();
 
@@ -41,7 +41,7 @@ vi.mock("@/features/wallet/service/campusToken", () => ({
   fetchPendingRoleRequests: vi.fn().mockResolvedValue([]),
 }));
 
-// ── Test Component ─────────────────────────────────────────────────────────
+// Test Component
 // A minimal component that exercises the real hook logic end-to-end
 const SENDER = "GAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWHF";
 const RECIPIENT = "GBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB4";
@@ -95,7 +95,7 @@ function WalletPage() {
   );
 }
 
-// ── Test Wrapper ───────────────────────────────────────────────────────────
+// Test Wrapper
 function makeWrapper() {
   const qc = new QueryClient({
     defaultOptions: { queries: { retry: false }, mutations: { retry: false } },
@@ -106,7 +106,7 @@ function makeWrapper() {
   return Wrapper;
 }
 
-// ── Tests ──────────────────────────────────────────────────────────────────
+// Tests
 describe("Send Payment Integration Flow", () => {
   beforeEach(() => {
     vi.clearAllMocks();

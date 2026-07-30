@@ -11,7 +11,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import React from "react";
 import { useCampusBalance } from "@/features/wallet/hooks/useWallet";
 
-// ── Mock the service layer (not the hook) ───────────────────────────────────
+// Mock the service layer (not the hook)
 vi.mock("@/features/wallet/service/campusToken", () => ({
   fetchBalance: vi.fn(),
   fetchUserRole: vi.fn().mockResolvedValue(1),
@@ -59,16 +59,15 @@ describe("useCampusBalance", () => {
     expect(mockFetchBalance).toHaveBeenCalledWith(TEST_ADDR);
   });
 
-  it("falls back to 1000.0 when the service throws", async () => {
+  it("propagates the error when the service throws", async () => {
     mockFetchBalance.mockRejectedValue(new Error("RPC timeout"));
 
     const { result } = renderHook(() => useCampusBalance(TEST_ADDR), {
       wrapper: makeWrapper(),
     });
 
-    // The hook catches the error internally and returns the fallback
-    await waitFor(() => expect(result.current.isSuccess).toBe(true));
-    expect(result.current.data).toBe(1000.0);
+    await waitFor(() => expect(result.current.isError).toBe(true));
+    expect(result.current.error).toEqual(new Error("RPC timeout"));
   });
 
   it("stays disabled (no fetch) when address is null", async () => {

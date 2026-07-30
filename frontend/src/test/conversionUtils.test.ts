@@ -10,7 +10,7 @@ import { describe, it, expect, vi, afterEach } from "vitest";
 import { mapTransactionError } from "@/shared/hooks/useTransactionStatus";
 import { shortAddr, relativeTime } from "@/shared/stellar/eventDecoder";
 
-// ── XLM ↔ CAMP conversion helpers (same arithmetic used in campusToken.ts) ──
+// XLM ↔ CAMP conversion helpers (same arithmetic used in campusToken.ts)
 function xlmToCamp(xlmAmount: number, rate = 100): number {
   return xlmAmount * rate;
 }
@@ -23,7 +23,7 @@ function rawStroopsToCamp(raw: bigint): number {
   return Number(raw) / 10_000_000;
 }
 
-// ── CAMP conversion tests ─────────────────────────────────────────────────
+// CAMP conversion tests
 describe("XLM ↔ CAMP conversion arithmetic", () => {
   it("converts 1 XLM to 100 CAMP at default rate", () => {
     expect(xlmToCamp(1)).toBe(100);
@@ -54,7 +54,7 @@ describe("XLM ↔ CAMP conversion arithmetic", () => {
   });
 });
 
-// ── mapTransactionError tests ─────────────────────────────────────────────
+// mapTransactionError tests
 describe("mapTransactionError", () => {
   it("maps user rejection to a friendly message", () => {
     const msg = mapTransactionError(new Error("User rejected the transaction"));
@@ -92,7 +92,7 @@ describe("mapTransactionError", () => {
   });
 });
 
-// ── shortAddr / relativeTime tests ───────────────────────────────────────
+// shortAddr / relativeTime tests
 describe("shortAddr", () => {
   it("shortens a full Stellar address to 8+8 with ellipsis", () => {
     const full = "GABC1234567890XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX";

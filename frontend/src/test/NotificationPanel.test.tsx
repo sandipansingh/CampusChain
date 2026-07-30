@@ -15,7 +15,7 @@ import { NotificationPanel } from "@/shared/ui/NotificationPanel";
 import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
 import type { DecodedEvent } from "@/shared/stellar/eventDecoder";
 
-// ── Helpers ──────────────────────────────────────────────────────────────
+// Helpers
 function makeEvent(overrides: Partial<DecodedEvent> = {}): DecodedEvent {
   return {
     id: "evt-001",
@@ -35,7 +35,7 @@ function makeEvent(overrides: Partial<DecodedEvent> = {}): DecodedEvent {
   };
 }
 
-// ── Test Suite ───────────────────────────────────────────────────────────
+// Test Suite
 describe("NotificationPanel", () => {
   beforeEach(() => {
     // Reset Zustand store to clean state for every test
