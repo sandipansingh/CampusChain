@@ -1,4 +1,3 @@
-# ─────────────────────────────────────────────────────────────────────────────
 # deploy.yml
 #
 # Triggered on push to `main` (i.e. after a PR is merged).
@@ -9,7 +8,7 @@
 #    updating .env.local and re-deploying the frontend with new contract IDs.
 #    Contract deployments are performed manually via `./scripts/deploy.sh`.
 #
-# ── Required GitHub Secrets ──────────────────────────────────────────────────
+# Required GitHub Secrets
 #   VERCEL_TOKEN          Vercel personal access token (Account → Settings → Tokens)
 #   VERCEL_ORG_ID         Vercel team/org ID  (vercel link → .vercel/project.json → orgId)
 #   VERCEL_PROJECT_ID     Vercel project ID   (vercel link → .vercel/project.json → projectId)
@@ -20,17 +19,16 @@
 #   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID   Deployed CampusService contract address
 #   NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS         Admin Stellar address (for XLM purchases)
 #
-# ── How to obtain Vercel IDs ─────────────────────────────────────────────────
+# How to obtain Vercel IDs
 #   1. npm i -g vercel
 #   2. cd frontend && vercel link       (authenticate and link the project)
 #   3. cat .vercel/project.json         (contains orgId and projectId)
 #   4. Add both values to GitHub Secrets.
 #
-# ── Fallback (no Vercel yet) ─────────────────────────────────────────────────
+# Fallback (no Vercel yet)
 #   Leave VERCEL_TOKEN, VERCEL_ORG_ID, and VERCEL_PROJECT_ID unset (or empty).
 #   The workflow will still build the app and upload the .next output as a
 #   GitHub Actions artefact (90-day retention) for manual deployment.
-# ─────────────────────────────────────────────────────────────────────────────
 name: Deploy Frontend
 
 on:
@@ -71,7 +69,7 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # ── Production build ──────────────────────────────────────────────────
+      # Production build
       # Injects real contract addresses from GitHub Secrets so the built
       # bundle points to the deployed testnet contracts.
       - name: Build Next.js for production
@@ -84,7 +82,7 @@ jobs:
           NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID }}
           NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS: ${{ secrets.NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS }}
 
-      # ── Deploy to Vercel (production) ─────────────────────────────────────
+      # Deploy to Vercel (production)
       # Uses the Vercel CLI directly (no third-party action dependency).
       # Skipped when VERCEL_TOKEN is not configured — see fallback step below.
       - name: Deploy to Vercel
@@ -100,7 +98,7 @@ jobs:
           vercel deploy --prebuilt --prod \
             --token="$VERCEL_TOKEN"
 
-      # ── Fallback: upload build artefact ──────────────────────────────────
+      # Fallback: upload build artefact
       # When Vercel is not yet configured, upload the .next output so the
       # build artefact is available for manual deployment or inspection.
       - name: Upload build artefact (fallback when Vercel not configured)
@@ -114,7 +112,7 @@ jobs:
           retention-days: 90
           if-no-files-found: error
 
-      # ── Post-deploy summary ───────────────────────────────────────────────
+      # Post-deploy summary
       - name: Write deployment summary
         if: always()
         run: |

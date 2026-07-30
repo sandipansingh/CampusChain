@@ -464,14 +464,14 @@ cp frontend/.env.example frontend/.env.local
 Create `frontend/.env.local` with the following. For local development pointing at testnet, you can use the deployed addresses directly:
 
 ```bash
-# ── Stellar network ─────────────────────────────────────────────────────────
+# Stellar network
 # Soroban RPC endpoint (Testnet)
 NEXT_PUBLIC_STELLAR_RPC_URL=https://soroban-testnet.stellar.org
 
 # Network passphrase — must match exactly (space-sensitive)
 NEXT_PUBLIC_STELLAR_PASSPHRASE="Test SDF Network ; September 2015"
 
-# ── Deployed contract addresses (Testnet) ───────────────────────────────────
+# Deployed contract addresses (Testnet)
 # CampusIdentity (on-chain profile registry)
 NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID=CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q
 
@@ -481,7 +481,7 @@ NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID=CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32
 # CampusService (escrow, events, marketplace, scholarships, rewards)
 NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID=CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL
 
-# ── Admin account ────────────────────────────────────────────────────────────
+# Admin account
 # Admin Stellar address — receives XLM during CAMP purchase, issues roles
 # NEVER put a private key here. This is a public G... address only.
 NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ

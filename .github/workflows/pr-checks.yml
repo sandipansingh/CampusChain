@@ -1,4 +1,3 @@
-# ─────────────────────────────────────────────────────────────────────────────
 # pr-checks.yml
 #
 # Runs on every pull-request targeting `main`.
@@ -9,7 +8,6 @@
 #   frontend   → npm ci · tsc --noEmit · eslint · vitest run · next build
 #
 # No secrets required for this workflow.
-# ─────────────────────────────────────────────────────────────────────────────
 name: PR Checks
 
 on:
@@ -21,7 +19,7 @@ concurrency:
   group: pr-checks-${{ github.head_ref }}
   cancel-in-progress: true
 
-# ── Soroban Contract Checks ──────────────────────────────────────────────────
+# Soroban Contract Checks
 jobs:
   contracts:
     name: "Contracts — fmt · clippy · test"
@@ -62,7 +60,7 @@ jobs:
       - name: Unit tests (cargo test)
         run: cargo test
 
-# ── Next.js Frontend Checks ──────────────────────────────────────────────────
+# Next.js Frontend Checks
   frontend:
     name: "Frontend — typecheck · lint · test · build"
     runs-on: ubuntu-latest
