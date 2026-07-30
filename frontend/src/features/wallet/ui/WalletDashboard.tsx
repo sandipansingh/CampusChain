@@ -64,6 +64,8 @@ export function WalletDashboard() {
   const { data: profile } = useCampusProfile(address);
   const { data: ledgerEvents, isLoading: isEventsLoading } = useLedgerEvents();
 
+  const isLocked = profile ? profile.verificationStatus !== 2 : false;
+
   // Navigation items for the sidebar (desktop)
   const navItems: { value: string; label: string; icon: React.ComponentType<React.SVGProps<SVGSVGElement>> }[] = [
     { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -76,14 +78,35 @@ export function WalletDashboard() {
     { value: "transactions", label: "Transactions", icon: Receipt },
   ];
 
-  if (userRole === 2 || userRole === 4) {
+  if (userRole === 2) {
     navItems.push({ value: "merchant", label: "Merchant Hub", icon: Store });
   }
-  if (userRole === 4) {
-    navItems.push({ value: "admin", label: "Admin Hub", icon: ShieldAlert });
-  }
+
+  const navItemsToShow = isLocked ? [] : navItems;
+
+  const LockedStateView = () => {
+    const isRejected = profile?.verificationStatus === 3;
+    return (
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 bg-card border border-border rounded-xl space-y-4 max-w-md mx-auto mt-12 shadow-sm">
+        <div className="w-12 h-12 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
+          <ShieldAlert className="h-6 w-6 animate-pulse" />
+        </div>
+        <h3 className="text-xl font-bold text-foreground">
+          {isRejected ? "Verification Rejected" : "Verification Pending"}
+        </h3>
+        <p className="text-sm text-muted-foreground leading-relaxed font-normal">
+          {isRejected
+            ? "Your identity profile verification was rejected by your University Administrator. All transactions and wallet services are locked."
+            : "Your identity profile is currently pending verification by your University Administrator. Wallet and campus features will unlock automatically once approved."}
+        </p>
+      </div>
+    );
+  };
 
   const renderContentView = () => {
+    if (isLocked && activeTab !== "settings") {
+      return <LockedStateView />;
+    }
     switch (activeTab) {
       case "wallet":
         return <SendReceive />;
@@ -98,8 +121,8 @@ export function WalletDashboard() {
         }
         return (
           <MarketplaceGrid
-            onSelectItem={(id) => setSelectedListingId(Number(id))}
-            onSellItem={() => setShowSellForm(true)}
+            onSelectListing={setSelectedListingId}
+            onSellClick={() => setShowSellForm(true)}
           />
         );
       case "events":
@@ -110,238 +133,188 @@ export function WalletDashboard() {
         return <Scholarships />;
       case "transactions":
         return <TransactionHistory />;
-      case "settings":
-        return <SettingsView />;
       case "merchant":
         return <MerchantDashboard />;
-      case "admin":
-        return <AdminDashboard />;
+      case "settings":
+        return <SettingsView />;
       case "dashboard":
       default:
-        return renderHomeDashboard();
-    }
-  };
-
-  const renderHomeDashboard = () => {
-    return (
-      <div className="max-w-5xl mx-auto space-y-6">
-        {/* MOBILE ONLY: Top Header Bar */}
-        <div className="flex md:hidden justify-between items-center py-2 shrink-0">
-          <div>
-            <h1 className="text-2xl font-bold">Wallet</h1>
-            {address && (
-              <p className="text-[10px] text-muted-foreground font-mono mt-0.5 break-all max-w-[200px] select-all">
-                {address}
-              </p>
-            )}
-          </div>
-          <div className="flex items-center gap-2">
-            <button
-              onClick={() => setIsFeedOpen(true)}
-              className="p-2 text-foreground relative cursor-pointer"
-              aria-label="Open activity feed"
-            >
-              <Bell className="h-5 w-5" />
-              {unreadCount > 0 && (
-                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-1">
-                  {unreadCount > 99 ? "99" : unreadCount}
-                </span>
-              )}
-            </button>
-            <ProfileAvatar profileName={profile?.fullName} address={address} />
-          </div>
-        </div>
-
-        {/* Grid Row: Balance Card & Quick Actions */}
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-          
-          {/* Wallet Balance Card */}
-          <div className="lg:col-span-8 bg-card border border-border rounded-xl p-6 shadow-sm flex flex-col justify-between min-h-[260px]">
-            {isBalanceLoading ? (
-              <div className="space-y-4 w-full">
-                <Skeleton className="h-4 w-28" />
-                <Skeleton className="h-10 w-48" />
-                <Skeleton className="h-6 w-36" />
-              </div>
-            ) : (
-              <div>
-                <p className="text-xs font-bold tracking-wider text-muted-foreground uppercase mb-2">
-                  Total Balance
-                </p>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-3xl md:text-4xl font-bold tracking-tight">
-                    {campBalance !== undefined ? campBalance.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : "—"}
+        return (
+          <div className="space-y-6">
+            {/* Header section with Balance and Quick Actions */}
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-stretch">
+              {/* Balance card */}
+              <div className="lg:col-span-8 bg-card rounded-xl p-6 border border-border shadow-sm flex flex-col justify-between relative overflow-hidden">
+                <div className="absolute top-0 right-0 w-32 h-32 bg-primary/5 rounded-full blur-2xl -mr-16 -mt-16"></div>
+                <div>
+                  <span className="text-xs font-bold uppercase tracking-wider text-muted-foreground">
+                    Wallet Balance
                   </span>
-                  <span className="text-lg text-muted-foreground font-medium">CAMP</span>
+                  {isBalanceLoading ? (
+                    <Skeleton className="h-10 w-44 mt-2" />
+                  ) : (
+                    <h3 className="text-3xl font-extrabold text-foreground mt-2 tracking-tight">
+                      {campBalance?.toLocaleString() || 0} <span className="text-lg font-medium text-muted-foreground">CAMP</span>
+                    </h3>
+                  )}
                 </div>
-
-                <div className="mt-4 flex flex-wrap gap-2">
-                  <div className="px-3 py-1 rounded-full bg-muted text-xs font-medium border border-border">
-                    <span className="font-bold text-foreground">
-                      Stellar Testnet
-                    </span>{" "}
-                    Network Connected
-                  </div>
+                <div className="flex gap-3 mt-8">
+                  <button
+                    onClick={() => setActiveTab("wallet")}
+                    className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                  >
+                    <ArrowUpRight className="h-4 w-4" />
+                    Send
+                  </button>
+                  <button
+                    onClick={() => setActiveTab("wallet")}
+                    className="flex-1 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-all border border-border cursor-pointer"
+                  >
+                    <ArrowDownLeft className="h-4 w-4" />
+                    Receive
+                  </button>
                 </div>
               </div>
-            )}
 
-            <div className="flex gap-4 mt-8">
-              <button
-                onClick={() => setActiveTab("wallet")}
-                className="flex-1 bg-primary text-primary-foreground font-semibold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-primary/90 transition-colors shadow-sm cursor-pointer"
-              >
-                <ArrowUpRight className="h-4 w-4" />
-                Send
-              </button>
-              <button
-                onClick={() => setActiveTab("wallet")}
-                className="flex-1 bg-card text-foreground border border-border font-semibold py-3 rounded-lg flex items-center justify-center gap-2 hover:bg-accent transition-colors shadow-sm cursor-pointer"
-              >
-                <ArrowDownLeft className="h-4 w-4" />
-                Receive
-              </button>
+              {/* Quick Actions */}
+              <div className="lg:col-span-4 grid grid-cols-4 lg:grid-cols-2 gap-4">
+                {[
+                  { label: "Scan & Pay", icon: QrCode, target: "pay" },
+                  { label: "Send Money", icon: Send, target: "wallet" },
+                  { label: "Rewards Hub", icon: Landmark, target: "rewards" },
+                  { label: "Marketplace", icon: Store, target: "marketplace" },
+                ].map((act) => {
+                  const Icon = act.icon;
+                  return (
+                    <button
+                      key={act.label}
+                      onClick={() => setActiveTab(act.target)}
+                      className="bg-card rounded-xl p-4 border border-border hover:border-foreground hover:shadow-md transition-all flex flex-col items-center justify-center gap-2.5 text-center cursor-pointer group"
+                    >
+                      <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center transition-colors">
+                        <Icon className="h-5 w-5" />
+                      </div>
+                      <span className="text-xs font-semibold text-foreground">
+                        {act.label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
             </div>
-          </div>
 
-          {/* Quick Actions */}
-          <div className="lg:col-span-4 grid grid-cols-4 lg:grid-cols-2 gap-4">
-            {[
-              { label: "Scan & Pay", icon: QrCode, target: "pay" },
-              { label: "Send Money", icon: Send, target: "wallet" },
-              { label: "Rewards Hub", icon: Landmark, target: "rewards" },
-              { label: "Marketplace", icon: Store, target: "marketplace" },
-            ].map((act) => {
-              const Icon = act.icon;
-              return (
+            {/* Stats Cards Row */}
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              {[
+                {
+                  label: "Role Permission",
+                  value: userRole === 4 ? "Administrator" : userRole === 2 ? "Merchant" : "Student / Member",
+                  emptyVal: "Student",
+                  icon: User,
+                },
+                {
+                  label: "CAMP Balance",
+                  value: `${campBalance || 0} CAMP`,
+                  emptyVal: "0 CAMP",
+                  icon: Award,
+                },
+                {
+                  label: "On-Chain Activity Logs",
+                  value: ledgerEvents ? `${ledgerEvents.length} recorded` : "0 logged",
+                  emptyVal: "0",
+                  icon: CalendarCheck,
+                },
+              ].map((stat) => {
+                const Icon = stat.icon;
+                return (
+                  <div
+                    key={stat.label}
+                    className="bg-card rounded-xl p-4 border border-border shadow-sm flex items-center justify-between"
+                  >
+                    {isBalanceLoading ? (
+                      <div className="space-y-2 flex-1">
+                        <Skeleton className="h-3 w-28" />
+                        <Skeleton className="h-6 w-20" />
+                      </div>
+                    ) : (
+                      <div>
+                        <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
+                        <p className="text-sm font-bold">{stat.value}</p>
+                      </div>
+                    )}
+                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
+                      <Icon className="h-5 w-5" />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Recent Transactions Section */}
+            <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+              <div className="p-4 md:p-6 border-b border-border flex justify-between items-center">
+                <h3 className="text-base font-bold">Recent Activity Feed</h3>
                 <button
-                  key={act.label}
-                  onClick={() => setActiveTab(act.target)}
-                  className="bg-card rounded-xl p-4 border border-border hover:border-foreground hover:shadow-md transition-all flex flex-col items-center justify-center gap-2.5 text-center cursor-pointer group"
+                  onClick={() => setActiveTab("transactions")}
+                  className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
-                  <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center transition-colors">
-                    <Icon className="h-5 w-5" />
-                  </div>
-                  <span className="text-xs font-semibold text-foreground">
-                    {act.label}
-                  </span>
+                  View All
                 </button>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Stats Cards Row */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          {[
-            {
-              label: "Role Permission",
-              value: userRole === 4 ? "Administrator" : userRole === 2 ? "Merchant" : "Student / Member",
-              emptyVal: "Student",
-              icon: User,
-            },
-            {
-              label: "CAMP Balance",
-              value: `${campBalance || 0} CAMP`,
-              emptyVal: "0 CAMP",
-              icon: Award,
-            },
-            {
-              label: "On-Chain Activity Logs",
-              value: ledgerEvents ? `${ledgerEvents.length} recorded` : "0 logged",
-              emptyVal: "0",
-              icon: CalendarCheck,
-            },
-          ].map((stat) => {
-            const Icon = stat.icon;
-            return (
-              <div
-                key={stat.label}
-                className="bg-card rounded-xl p-4 border border-border shadow-sm flex items-center justify-between"
-              >
-                {isBalanceLoading ? (
-                  <div className="space-y-2 flex-1">
-                    <Skeleton className="h-3 w-28" />
-                    <Skeleton className="h-6 w-20" />
-                  </div>
-                ) : (
-                  <div>
-                    <p className="text-xs text-muted-foreground mb-1">{stat.label}</p>
-                    <p className="text-sm font-bold">{stat.value}</p>
-                  </div>
-                )}
-                <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground shrink-0">
-                  <Icon className="h-5 w-5" />
-                </div>
               </div>
-            );
-          })}
-        </div>
 
-        {/* Recent Transactions Section */}
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
-          <div className="p-4 md:p-6 border-b border-border flex justify-between items-center">
-            <h3 className="text-base font-bold">Recent Activity Feed</h3>
-            <button
-              onClick={() => setActiveTab("transactions")}
-              className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
-            >
-              View All
-            </button>
+              {isEventsLoading ? (
+                <div className="divide-y divide-border">
+                  {[1, 2, 3].map((i) => (
+                    <div key={i} className="p-4 flex items-center justify-between">
+                      <div className="flex items-center gap-4">
+                        <Skeleton className="w-10 h-10 rounded-full" />
+                        <div className="space-y-2">
+                          <Skeleton className="h-4 w-32" />
+                          <Skeleton className="h-3 w-20" />
+                        </div>
+                      </div>
+                      <Skeleton className="h-4 w-16" />
+                    </div>
+                  ))}
+                </div>
+              ) : !ledgerEvents || ledgerEvents.length === 0 ? (
+                <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
+                  <Receipt className="h-10 w-10 text-muted-foreground/50" />
+                  <p className="text-sm font-semibold text-muted-foreground">
+                    No ledger activity found
+                  </p>
+                  <p className="text-xs text-muted-foreground/75">
+                    Your activities will appear here once you invoke Soroban transactions.
+                  </p>
+                </div>
+              ) : (
+                <div className="divide-y divide-border">
+                  {ledgerEvents.slice(0, 5).map((evt) => (
+                    <div
+                      key={evt.id}
+                      className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors text-xs"
+                    >
+                      <div className="flex items-center gap-4 min-w-0">
+                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground shrink-0">
+                          <Receipt className="h-5 w-5" />
+                        </div>
+                        <div className="min-w-0">
+                          <p className="font-bold text-foreground truncate">{evt.title}</p>
+                          <p className="text-muted-foreground truncate">{evt.message}</p>
+                        </div>
+                      </div>
+                      <div className="text-right shrink-0">
+                        <p className="font-bold text-foreground">{evt.details}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{evt.timestamp}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
           </div>
-
-          {isEventsLoading ? (
-            <div className="divide-y divide-border">
-              {[1, 2, 3].map((i) => (
-                <div key={i} className="p-4 flex items-center justify-between">
-                  <div className="flex items-center gap-4">
-                    <Skeleton className="w-10 h-10 rounded-full" />
-                    <div className="space-y-2">
-                      <Skeleton className="h-4 w-32" />
-                      <Skeleton className="h-3 w-20" />
-                    </div>
-                  </div>
-                  <Skeleton className="h-4 w-16" />
-                </div>
-              ))}
-            </div>
-          ) : !ledgerEvents || ledgerEvents.length === 0 ? (
-            <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
-              <Receipt className="h-10 w-10 text-muted-foreground/50" />
-              <p className="text-sm font-semibold text-muted-foreground">
-                No ledger activity found
-              </p>
-              <p className="text-xs text-muted-foreground/75">
-                Your activities will appear here once you invoke Soroban transactions.
-              </p>
-            </div>
-          ) : (
-            <div className="divide-y divide-border">
-              {ledgerEvents.slice(0, 5).map((evt) => (
-                <div
-                  key={evt.id}
-                  className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors text-xs"
-                >
-                  <div className="flex items-center gap-4 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground shrink-0">
-                      <Receipt className="h-5 w-5" />
-                    </div>
-                    <div className="min-w-0">
-                      <p className="font-bold text-foreground truncate">{evt.title}</p>
-                      <p className="text-muted-foreground truncate">{evt.message}</p>
-                    </div>
-                  </div>
-                  <div className="text-right shrink-0">
-                    <p className="font-bold text-foreground">{evt.details}</p>
-                    <p className="text-[10px] text-muted-foreground mt-0.5">{evt.timestamp}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-      </div>
-    );
+        );
+    }
   };
 
   return (
@@ -359,7 +332,7 @@ export function WalletDashboard() {
         </div>
 
         <div className="flex-1 space-y-1">
-          {navItems.map((item) => {
+          {navItemsToShow.map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.value;
             return (
@@ -442,13 +415,16 @@ export function WalletDashboard() {
       {/* 3. Mobile Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 h-20 bg-card border-t border-border z-40 md:hidden shadow-lg">
         <div className="flex justify-around items-center h-full px-2">
-          {[
-            { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
-            { value: "wallet", label: "Wallet", icon: Wallet },
-            { value: "pay", label: "Pay", icon: QrCode },
-            { value: "marketplace", label: "Market", icon: ShoppingBag },
-            { value: "settings", label: "Settings", icon: Settings },
-          ].map((item) => {
+          {(isLocked
+            ? [{ value: "settings", label: "Settings", icon: Settings }]
+            : [
+                { value: "dashboard", label: "Dashboard", icon: LayoutDashboard },
+                { value: "wallet", label: "Wallet", icon: Wallet },
+                { value: "pay", label: "Pay", icon: QrCode },
+                { value: "marketplace", label: "Market", icon: ShoppingBag },
+                { value: "settings", label: "Settings", icon: Settings },
+              ]
+          ).map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.value;
             return (
