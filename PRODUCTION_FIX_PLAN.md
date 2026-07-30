@@ -142,3 +142,15 @@ After the upgrade and before UI evidence is captured:
 - Settings contains only real Identity fields and safe network information; no email, notifications, or key-management controls remain.
 - The required Testnet payment and marketplace escrow flows have been personally executed and their post-transaction UI state appears without a manual refresh.
 - `DEMO_ACCOUNTS.md`, transaction evidence, documentation updates, tests, lint/build results, and a grouped changed-file list are included in the final Phase 1 handoff.
+
+## Phase 1 deployment record
+
+The Phase 1 Testnet deployment and seeding pass uses the following verified contract addresses:
+
+| Contract | Testnet address |
+| --- | --- |
+| CampusIdentity | `CDC7AN2SDMRCDXLSSPT4DTXPL25QYKDD45DQ3WB27KV2AJUDG5P3FUU7` |
+| CampusToken | `CDZND4MZAJ56UKLAEQFPGZBTWHT4KNCT5D367EZHOTRP7UOXJMQGWC2F` |
+| CampusService | `CBUV3KY32K3DF3RKDN3FTE3FWJDRDKQVCHQKPYD5K6Q6ET4ZALJ5RRDB` |
+
+The Service contract is wired to the Identity contract above.  The deployment, all ten profiles, marketplace listings, rewards, scholarship program/application, paid event ticket, CAMP payment, escrow purchase, and escrow release were verified with confirmed Testnet transactions. `DEMO_ACCOUNTS.md` contains the public account and transaction evidence.
