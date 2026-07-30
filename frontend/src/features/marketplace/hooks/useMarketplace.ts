@@ -51,10 +51,34 @@ export function useMarketplaceListing(listingId: number | null, address?: string
   });
 }
 
+import { useCampusProfile } from "@/features/wallet/hooks/useWallet";
+import { fetchUserProfile } from "@/features/wallet/service/campusIdentity";
+
 export function useMarketplaceListings(address?: string) {
+  const { data: profile } = useCampusProfile(address ?? null);
+  const myUnivCode = profile?.universityCode?.toUpperCase() ?? "";
+
   return useQuery({
-    queryKey: ["marketplace-listings", address],
-    queryFn: () => fetchListings(0, 50, address),
+    queryKey: ["marketplace-listings", address, myUnivCode],
+    queryFn: async () => {
+      const listings = await fetchListings(0, 50, address);
+      if (!address) return listings;
+      if (!myUnivCode) return []; // if current user has no approved university profile, show empty listings
+
+      const filtered = [];
+      for (const item of listings) {
+        try {
+          const sellerProfile = await fetchUserProfile(item.seller);
+          if (sellerProfile && sellerProfile.universityCode?.toUpperCase() === myUnivCode) {
+            filtered.push(item);
+          }
+        } catch {
+          // ignore profile fetch issues
+        }
+      }
+      return filtered;
+    },
+    enabled: address === undefined ? true : !!profile, // if no address provided (anonymous), skip filtering or handle as is
   });
 }
 
