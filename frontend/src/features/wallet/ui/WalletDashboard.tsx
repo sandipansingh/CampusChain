@@ -24,6 +24,8 @@ import {
   User,
   CalendarCheck,
   ShieldAlert,
+  Coffee,
+  ClipboardList,
 } from "lucide-react";
 
 // Import hooks
@@ -42,6 +44,9 @@ import { Rewards } from "@/features/rewards/ui/Rewards";
 import { Scholarships } from "@/features/scholarships/ui/Scholarships";
 import { TransactionHistory } from "@/features/transactions/ui/TransactionHistory";
 import { MerchantDashboard } from "@/features/transactions/ui/MerchantDashboard";
+import { MenuManagement } from "@/features/food-ordering/ui/MenuManagement";
+import { StudentOrdering } from "@/features/food-ordering/ui/StudentOrdering";
+import { OrderTracking } from "@/features/food-ordering/ui/OrderTracking";
 
 export function WalletDashboard() {
   const { address, disconnect } = useWallet();
@@ -79,8 +84,23 @@ export function WalletDashboard() {
     { value: "transactions", label: "Transactions", icon: Receipt },
   ];
 
+  const isFoodMerchant = profile?.role === 2 && (
+    profile.details?.category === "FoodCanteen" ||
+    profile.details?.category === 2 ||
+    String(profile.details?.category).toLowerCase() === "foodcanteen"
+  );
+
+  if (userRole === 1) {
+    navItems.push({ value: "canteen", label: "Campus Canteen", icon: Coffee });
+    navItems.push({ value: "my-orders", label: "My Orders", icon: ClipboardList });
+  }
+
   if (userRole === 2) {
     navItems.push({ value: "merchant", label: "Merchant Hub", icon: Store });
+    if (isFoodMerchant) {
+      navItems.push({ value: "menu-management", label: "Menu Management", icon: Settings });
+      navItems.push({ value: "incoming-orders", label: "Incoming Orders", icon: ClipboardList });
+    }
   }
 
   const navItemsToShow = isLocked ? [] : navItems;
@@ -136,6 +156,14 @@ export function WalletDashboard() {
         return <TransactionHistory />;
       case "merchant":
         return <MerchantDashboard />;
+      case "canteen":
+        return <StudentOrdering />;
+      case "my-orders":
+        return <OrderTracking isMerchant={false} />;
+      case "menu-management":
+        return <MenuManagement />;
+      case "incoming-orders":
+        return <OrderTracking isMerchant={true} />;
       case "settings":
         return <SettingsView />;
       case "dashboard":
