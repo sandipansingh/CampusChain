@@ -125,31 +125,61 @@ export function PlatformDashboard() {
           <p className="text-sm text-muted-foreground py-6 text-center">No pending approvals in queue.</p>
         ) : (
           <div className="space-y-3">
-            {pendingUniversities.map((u) => (
-              <div key={u.code} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-lg gap-4">
-                <div>
-                  <p className="font-bold text-sm">{u.name} <span className="text-xs text-muted-foreground font-mono">({u.code})</span></p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Physical address: {u.address}</p>
-                  <p className="text-xs text-muted-foreground mt-0.5">Admin wallet: <span className="font-mono text-xs">{u.adminAddress}</span></p>
+            {pendingUniversities.map((u) => {
+              const isApprovePending = approveUniv.isPending && approveUniv.variables === u.code;
+              const isRejectPending = rejectUniv.isPending && rejectUniv.variables === u.code;
+              const hasApproveError = approveUniv.isError && approveUniv.variables === u.code;
+              const hasRejectError = rejectUniv.isError && rejectUniv.variables === u.code;
+
+              return (
+                <div key={u.code} className="flex flex-col p-4 border border-border rounded-lg gap-3 bg-muted/10">
+                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                    <div>
+                      <p className="font-bold text-sm">{u.name} <span className="text-xs text-muted-foreground font-mono">({u.code})</span></p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Physical address: {u.address}</p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Admin wallet: <span className="font-mono text-xs">{u.adminAddress}</span></p>
+                      <p className="text-[10px] text-muted-foreground mt-1">Submitted: {new Date(Number(u.createdAt) * 1000).toLocaleString()}</p>
+                    </div>
+                    <div className="flex gap-2 shrink-0">
+                      <button
+                        disabled={approveUniv.isPending || rejectUniv.isPending}
+                        onClick={() => approveUniv.mutate(u.code)}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer h-9 transition-colors"
+                      >
+                        {isApprovePending ? (
+                          <span className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <CheckCircle2 className="size-3.5" />
+                        )}
+                        {isApprovePending ? "Approving..." : "Approve"}
+                      </button>
+                      <button
+                        disabled={approveUniv.isPending || rejectUniv.isPending}
+                        onClick={() => rejectUniv.mutate(u.code)}
+                        className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer h-9 transition-colors"
+                      >
+                        {isRejectPending ? (
+                          <span className="h-3 w-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                        ) : (
+                          <XCircle className="size-3.5" />
+                        )}
+                        {isRejectPending ? "Rejecting..." : "Reject"}
+                      </button>
+                    </div>
+                  </div>
+                  {hasApproveError && (
+                    <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
+                      Error: {approveUniv.error instanceof Error ? approveUniv.error.message : "Approval transaction failed"}
+                    </p>
+                  )}
+                  {hasRejectError && (
+                    <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
+                      Error: {rejectUniv.error instanceof Error ? rejectUniv.error.message : "Rejection transaction failed"}
+                    </p>
+                  )}
                 </div>
-                <div className="flex gap-2">
-                  <button
-                    disabled={approveUniv.isPending}
-                    onClick={() => approveUniv.mutate(u.code)}
-                    className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 disabled:opacity-50 cursor-pointer h-9"
-                  >
-                    <CheckCircle2 className="size-3.5" /> Approve
-                  </button>
-                  <button
-                    disabled={rejectUniv.isPending}
-                    onClick={() => rejectUniv.mutate(u.code)}
-                    className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 disabled:opacity-50 cursor-pointer h-9"
-                  >
-                    <XCircle className="size-3.5" /> Reject
-                  </button>
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
