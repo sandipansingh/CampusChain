@@ -10,7 +10,6 @@ import {
   CheckCircle2,
   XCircle,
   Settings,
-  Bell,
   Coins,
 } from "lucide-react";
 
@@ -31,7 +30,6 @@ export function PlatformDashboard() {
   // Fetch data
   const universitiesQuery = useCampusUniversities(address ?? undefined);
   const ledgerEventsQuery = useLedgerEvents();
-  const { data: profile } = useCampusProfile(address);
 
   // Mutations
   const approveUniv = useApproveUniversityMutation();

@@ -5,7 +5,6 @@ import { useRouter } from "next/navigation";
 import { useCampusProfile, useCampusUniversity } from "@/features/wallet/hooks/useWallet";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Login, PendingState } from "./Login";
-import { WalletDashboard } from "./WalletDashboard";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS } from "@/shared/stellar/client";
 

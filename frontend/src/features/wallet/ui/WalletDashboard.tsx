@@ -42,7 +42,6 @@ import { Rewards } from "@/features/rewards/ui/Rewards";
 import { Scholarships } from "@/features/scholarships/ui/Scholarships";
 import { TransactionHistory } from "@/features/transactions/ui/TransactionHistory";
 import { MerchantDashboard } from "@/features/transactions/ui/MerchantDashboard";
-import { AdminDashboard } from "@/features/transactions/ui/AdminDashboard";
 
 export function WalletDashboard() {
   const { address, disconnect } = useWallet();

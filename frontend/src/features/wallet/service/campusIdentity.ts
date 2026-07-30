@@ -222,7 +222,7 @@ export async function fetchUniversityProfiles(universityCode: string): Promise<U
             addresses.add(address);
           }
         }
-      } catch (e) {
+      } catch {
         // ignore parsing issues
       }
     }
@@ -234,7 +234,7 @@ export async function fetchUniversityProfiles(universityCode: string): Promise<U
         if (profile && profile.universityCode?.toUpperCase() === universityCode.toUpperCase()) {
           profiles.push(profile);
         }
-      } catch (e) {
+      } catch {
         // ignore profile fetch issues
       }
     }

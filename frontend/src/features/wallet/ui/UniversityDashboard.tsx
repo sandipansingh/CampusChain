@@ -15,7 +15,6 @@ import {
   Bell,
   CheckCircle2,
   XCircle,
-  ShieldAlert,
   ClipboardList,
 } from "lucide-react";
 
@@ -39,7 +38,6 @@ export function UniversityDashboard() {
   const { address, disconnect } = useWallet();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isFeedOpen, setIsFeedOpen] = useState(false);
-  const unreadCount = useActivityFeedStore((s) => s.unreadCount);
 
   // Scholarship form state
   const [progName, setProgName] = useState("");
@@ -50,7 +48,6 @@ export function UniversityDashboard() {
   const universityCode = profile?.universityCode ?? "";
 
   const { data: members = [], isLoading: isLoadingMembers } = useUniversityProfiles(universityCode);
-  const { data: ledgerEvents = [] } = useLedgerEvents();
 
   // Scholarships data
   const { data: programs = [], isLoading: isLoadingProgs } = useScholarshipPrograms(address ?? undefined);
