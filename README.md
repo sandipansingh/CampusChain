@@ -579,11 +579,18 @@ Merges to `main` trigger [`.github/workflows/deploy.yml`](.github/workflows/depl
 # 1. Build WASMs
 cargo build --target wasm32-unknown-unknown --release
 
-# 2. Deploy + initialise both contracts (generates new contract IDs)
-CAMPUSCHAIN_ADMIN_KEY=<your-secret-key> ./scripts/deploy.sh
+# 2. Deploy + initialise all contracts using the repeatable pipeline script
+CAMPUSCHAIN_ADMIN_KEY=<key-alias-or-secret> \
+NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=<immutable-platform-admin-G-address> \
+./deploy/testnet.sh
+```
 
-# 3. Update frontend/.env.local with the new contract IDs
-# 4. Commit + push → auto-deploy picks up new IDs from secrets
+The `deploy/testnet.sh` script delegates to the canonical deployment pipeline in `scripts/deploy.sh`. It compiles contract interfaces in dependency order, deploys them, and initializes `CampusIdentity`, `CampusToken`, and `CampusService`. If contracts have been instantiated manually, you can initialize them using:
+
+```bash
+CAMPUSCHAIN_ADMIN_KEY=<key-alias-or-secret> \
+NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=<immutable-platform-admin-G-address> \
+./deploy/init.sh
 ```
 
 For upgrade-only (WASM change, same contract ID):
@@ -678,6 +685,7 @@ CampusChain uses a multi-layered, role-based security architecture:
 | **CampusIdentity** | `CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q) |
 | **CampusToken** (CAMP) | `CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2) |
 | **CampusService** | `CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL) |
+| **Native XLM SAC** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) |
 
 #### CampusIdentity
 
