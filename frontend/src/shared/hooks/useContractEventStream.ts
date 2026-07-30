@@ -90,7 +90,7 @@ import { useCampusProfile } from "@/features/wallet/hooks/useWallet";
 export function useContractEventStream(address: string | null | undefined) {
   const queryClient = useQueryClient();
   const addItems = useActivityFeedStore((s) => s.addItems);
-  const { data: profile } = useCampusProfile(address ?? undefined);
+  const { data: profile } = useCampusProfile(address ?? null);
 
   // Track the highest ledger sequence we have already processed.
   // Initialized to 0 — first fetch will anchor to (latestLedger - 60) so we

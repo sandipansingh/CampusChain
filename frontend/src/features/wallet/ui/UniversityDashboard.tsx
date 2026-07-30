@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { ActivityFeedPanel } from "@/shared/ui/ActivityFeedPanel";

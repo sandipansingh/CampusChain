@@ -63,6 +63,8 @@ export function WalletDashboard() {
   const { data: profile } = useCampusProfile(address);
   const { data: ledgerEvents, isLoading: isEventsLoading } = useLedgerEvents();
 
+  // isLocked is true if profile verification is not Approved (status 2).
+  // Updates live via on-chain ProfileVerified / ProfileRejected events invalidating the 'campus-profile' query cache.
   const isLocked = profile ? profile.verificationStatus !== 2 : false;
 
   // Navigation items for the sidebar (desktop)
