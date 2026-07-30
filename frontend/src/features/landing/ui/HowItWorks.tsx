@@ -36,7 +36,7 @@ export function HowItWorks() {
 
 function DesktopStep({ step, number }: { step: (typeof desktopSteps)[number]; number: number }) {
   const Icon = step.icon;
-  return <article className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)] transition-transform hover:-translate-y-1"><div className="mb-6 flex size-12 items-center justify-center rounded-lg bg-[#f7f7f5]"><Icon size={24} /></div><p className="mb-2 text-xs font-medium text-zinc-500">Step {String(number).padStart(2, "0")}</p><h3 className="mb-4 text-2xl font-semibold tracking-[-0.02em]">{step.title}</h3><p className="text-base font-medium leading-6 text-zinc-500">{step.description}</p></article>;
+  return <article className="rounded-2xl border border-zinc-200 bg-white p-8 shadow-[0_4px_20px_rgba(0,0,0,0.04)]"><div className="mb-6 flex size-12 items-center justify-center rounded-lg bg-[#f7f7f5]"><Icon size={24} /></div><p className="mb-2 text-xs font-medium text-zinc-500">Step {String(number).padStart(2, "0")}</p><h3 className="mb-4 text-2xl font-semibold tracking-[-0.02em]">{step.title}</h3><p className="text-base font-medium leading-6 text-zinc-500">{step.description}</p></article>;
 }
 
 function MobileStep({ step, number }: { step: (typeof mobileSteps)[number]; number: number }) {
