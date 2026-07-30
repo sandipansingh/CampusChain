@@ -91,9 +91,8 @@ To deploy all contracts to Testnet and auto-update configuration files:
    ```
 
 ### What `./deploy/testnet.sh` does automatically:
-- Builds contracts in dependency order: `CampusIdentity` -> `CampusToken` -> `CampusService` (so cross-contract client imports are compiled with correct ABIs).
-- Optimizes WASMs using `stellar contract optimize`.
-- Deploys optimized WASM files to Stellar Testnet.
+- Builds and optimizes contracts in dependency order: `CampusIdentity` -> `CampusToken` -> `CampusService` (using `stellar contract build --optimize`).
+- Uploads optimized WASM files to Stellar Testnet.
 - Initializes all contracts (Identity, Token, Service) with immutable platform admin and cross-contract link addresses.
 - Extracts contract IDs, WASM hashes, and transaction hashes for upload, instantiation, and initialization.
 - **Updates configuration files automatically**:
@@ -138,11 +137,11 @@ If you want to update contract logic while keeping the same contract addresses a
 
 1. **Build updated WASM targets**:
    ```bash
-   cargo build --target wasm32-unknown-unknown --release
+   stellar contract build --optimize
    ```
 2. **Install the new WASM on Testnet** (this registers the new code and returns a Wasm Hash):
    ```bash
-   stellar contract install --wasm target/wasm32-unknown-unknown/release/campus_token.wasm --source campuschain-admin --network testnet
+   stellar contract upload --wasm target/wasm32v1-none/release/campus_token.wasm --source campuschain-admin --network testnet
    ```
 3. **Execute the upgrade** (invokes the `upgrade` method on-chain to point the existing contract ID to the new WASM code):
    ```bash

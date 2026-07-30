@@ -61,25 +61,24 @@ run_stellar_cmd() {
     echo "$stdout|$tx_hash"
 }
 
-echo "Step 1: Compiling Soroban Contracts and refreshing inter-contract interfaces..."
-# CampusToken imports Identity, and CampusService imports both. Build in dependency
-# order so contractimport! always consumes the current ABI rather than a stale WASM.
-cargo build -p campus-identity --target wasm32-unknown-unknown --release
-cp target/wasm32-unknown-unknown/release/campus_identity.wasm contracts/campus-service/wasm/campus_identity.wasm
-cargo build -p campus-token --target wasm32-unknown-unknown --release
-cp target/wasm32-unknown-unknown/release/campus_token.wasm contracts/campus-service/wasm/campus_token.wasm
-cargo build -p campus-service --target wasm32-unknown-unknown --release
+echo "Step 1: Compiling and optimizing contracts..."
+# Compile Identity and Token first
+stellar contract build --package campus-identity --package campus-token --optimize
 
-echo "Step 2: Optimizing WASM targets..."
-stellar contract optimize --wasm target/wasm32-unknown-unknown/release/campus_identity.wasm
-stellar contract optimize --wasm target/wasm32-unknown-unknown/release/campus_token.wasm
-stellar contract optimize --wasm target/wasm32-unknown-unknown/release/campus_service.wasm
+# Find where the WASMs are built (handle both wasm32v1-none and wasm32-unknown-unknown paths)
+WASM_DIR="target/wasm32v1-none/release"
+if [ ! -d "$WASM_DIR" ]; then
+    WASM_DIR="target/wasm32-unknown-unknown/release"
+fi
 
-# Copy optimized WASMs back to campus-service imports directory (just in case)
-cp target/wasm32-unknown-unknown/release/campus_identity.optimized.wasm contracts/campus-service/wasm/campus_identity.wasm
-cp target/wasm32-unknown-unknown/release/campus_token.optimized.wasm contracts/campus-service/wasm/campus_token.wasm
+# Copy dependency WASMs for contractimport! macros
+cp "$WASM_DIR/campus_identity.wasm" contracts/campus-service/wasm/campus_identity.wasm
+cp "$WASM_DIR/campus_token.wasm" contracts/campus-service/wasm/campus_token.wasm
 
-echo "Step 3: Deploying Contracts to Network: $NETWORK..."
+# Build the main service contract
+stellar contract build --package campus-service --optimize
+
+echo "Step 2: Resolving administrative identity..."
 ADMIN_ADDRESS=$(stellar keys address "$ADMIN_KEY")
 echo "Admin Address: $ADMIN_ADDRESS"
 if [ "$ADMIN_ADDRESS" != "$PLATFORM_ADMIN_ADDRESS" ]; then
@@ -87,10 +86,28 @@ if [ "$ADMIN_ADDRESS" != "$PLATFORM_ADMIN_ADDRESS" ]; then
     exit 1
 fi
 
+# Automatically fund account via Friendbot if it does not exist on-chain yet
+if [ "$NETWORK" = "testnet" ]; then
+    echo "Checking if admin account is funded on Testnet..."
+    if curl -s -f "https://horizon-testnet.stellar.org/accounts/$ADMIN_ADDRESS" >/dev/null; then
+        echo "Account is already funded."
+    else
+        echo "Account not found on-chain. Funding via Friendbot..."
+        if curl -s -f "https://friendbot.stellar.org/?addr=$ADMIN_ADDRESS" >/dev/null; then
+            echo "Account successfully funded! Waiting 8 seconds for ledger close..."
+            sleep 8
+        else
+            echo "WARNING: Failed to fund account via Friendbot. The deployment might fail."
+        fi
+    fi
+fi
+
+echo "Step 3: Deploying contracts to $NETWORK..."
+
 # Deploy CampusIdentity
 echo "Installing CampusIdentity WASM..."
-res=$(run_stellar_cmd stellar contract install \
-    --wasm target/wasm32-unknown-unknown/release/campus_identity.optimized.wasm \
+res=$(run_stellar_cmd stellar contract upload \
+    --wasm "$WASM_DIR/campus_identity.wasm" \
     --source-account "$ADMIN_KEY" \
     --network "$NETWORK")
 IDENTITY_WASM_HASH=$(echo "$res" | cut -d'|' -f1)
@@ -122,8 +139,8 @@ echo "CampusIdentity Init Tx: $IDENTITY_INIT_TX"
 
 # Deploy CampusToken
 echo "Installing CampusToken WASM..."
-res=$(run_stellar_cmd stellar contract install \
-    --wasm target/wasm32-unknown-unknown/release/campus_token.optimized.wasm \
+res=$(run_stellar_cmd stellar contract upload \
+    --wasm "$WASM_DIR/campus_token.wasm" \
     --source-account "$ADMIN_KEY" \
     --network "$NETWORK")
 TOKEN_WASM_HASH=$(echo "$res" | cut -d'|' -f1)
@@ -143,8 +160,8 @@ echo "CampusToken Deploy Tx: $TOKEN_DEPLOY_TX"
 
 # Deploy CampusService
 echo "Installing CampusService WASM..."
-res=$(run_stellar_cmd stellar contract install \
-    --wasm target/wasm32-unknown-unknown/release/campus_service.optimized.wasm \
+res=$(run_stellar_cmd stellar contract upload \
+    --wasm "$WASM_DIR/campus_service.wasm" \
     --source-account "$ADMIN_KEY" \
     --network "$NETWORK")
 SERVICE_WASM_HASH=$(echo "$res" | cut -d'|' -f1)

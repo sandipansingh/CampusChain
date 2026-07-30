@@ -16,7 +16,7 @@ echo " CAMPUSCHAIN - CONTRACT UPGRADE SCRIPT"
 echo "========================================="
 
 echo "Installing new WASM code..."
-NEW_WASM_HASH=$(stellar contract install \
+NEW_WASM_HASH=$(stellar contract upload \
     --wasm "$WASM_PATH" \
     --source-account "$IDENTITY" \
     --network "$NETWORK")
