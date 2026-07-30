@@ -197,6 +197,40 @@ export function decodeEvent(evt: {
     return { ...baseEvent, type: "membership", title: "Member Left", message: `${shortAddr(member)} left university`, details: "membership removed", color: "gray", icon: "membership" };
   }
 
+  if (eventName === "UniversityRegistered") {
+    const admin = typeof topicNative[1] === "string" ? topicNative[1] : "";
+    const name = valueNative && typeof valueNative === "object" && "name" in valueNative ? String((valueNative as { name: unknown }).name) : "";
+    return { ...baseEvent, type: "university", title: "University Registered", message: `New claim: ${name || "Unknown University"}`, details: admin, color: "indigo", icon: "university" };
+  }
+
+  if (eventName === "UniversityApproved") {
+    const code = typeof valueNative === "string" ? valueNative : "";
+    return { ...baseEvent, type: "university", title: "University Approved", message: `University Approved: ${code}`, details: code, color: "emerald", icon: "university" };
+  }
+
+  if (eventName === "UniversityRejected") {
+    const code = typeof valueNative === "string" ? valueNative : "";
+    return { ...baseEvent, type: "university", title: "University Rejected", message: `University Rejected: ${code}`, details: code, color: "orange", icon: "university" };
+  }
+
+  if (eventName === "ProfileSubmittedForVerification") {
+    const applicant = typeof topicNative[1] === "string" ? topicNative[1] : "";
+    const code = typeof valueNative === "string" ? valueNative : "";
+    return { ...baseEvent, type: "role", title: "Verification Request", message: `Applicant: ${shortAddr(applicant)}`, details: code, color: "purple", icon: "role" };
+  }
+
+  if (eventName === "ProfileVerified") {
+    const target = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    const code = typeof valueNative === "string" ? valueNative : "";
+    return { ...baseEvent, type: "role", title: "Profile Verified", message: `Approved for university ${code}`, details: target, color: "emerald", icon: "role" };
+  }
+
+  if (eventName === "ProfileRejected") {
+    const target = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    const code = typeof valueNative === "string" ? valueNative : "";
+    return { ...baseEvent, type: "role", title: "Profile Rejected", message: `Rejected for university ${code}`, details: target, color: "orange", icon: "role" };
+  }
+
   return { ...baseEvent, type: "system", title: eventName || "Contract Event", message: `Ledger ${evt.ledger}`, details: evt.txHash.slice(0, 8), color: "gray", icon: "system" };
 }
 

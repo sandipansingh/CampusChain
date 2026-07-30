@@ -131,51 +131,66 @@ export function ActivityFeedPanel({ isOpen, onClose }: ActivityFeedPanelProps) {
               </div>
             </div>
           ) : (
-            items.map((evt) => (
-              <div
-                key={evt.id}
-                className="flex items-start gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors"
-              >
-                {/* Icon */}
+            items.map((evt) => {
+              const isActionable = evt.eventName === "UniversityRegistered" || evt.eventName === "ProfileSubmittedForVerification";
+              const handleClick = () => {
+                if (evt.eventName === "UniversityRegistered") {
+                  window.dispatchEvent(new CustomEvent("campuschain:navigate", { detail: "queue" }));
+                  onClose();
+                } else if (evt.eventName === "ProfileSubmittedForVerification") {
+                  window.dispatchEvent(new CustomEvent("campuschain:navigate", { detail: "requests" }));
+                  onClose();
+                }
+              };
+              return (
                 <div
-                  className={`mt-0.5 w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-                    ICON_COLORS[evt.color]
+                  key={evt.id}
+                  onClick={isActionable ? handleClick : undefined}
+                  className={`flex items-start gap-3 px-4 py-3.5 hover:bg-muted/30 transition-colors ${
+                    isActionable ? "cursor-pointer" : ""
                   }`}
                 >
-                  <EventIcon icon={evt.icon} />
-                </div>
+                  {/* Icon */}
+                  <div
+                    className={`mt-0.5 w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
+                      ICON_COLORS[evt.color]
+                    }`}
+                  >
+                    <EventIcon icon={evt.icon} />
+                  </div>
 
-                {/* Content */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start justify-between gap-2">
-                    <p className="text-xs font-bold text-foreground leading-snug truncate">
-                      {evt.title}
+                  {/* Content */}
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-start justify-between gap-2">
+                      <p className="text-xs font-bold text-foreground leading-snug truncate">
+                        {evt.title}
+                      </p>
+                      <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
+                        {evt.timestamp}
+                      </span>
+                    </div>
+                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                      {evt.message}
                     </p>
-                    <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
-                      {evt.timestamp}
-                    </span>
-                  </div>
-                  <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
-                    {evt.message}
-                  </p>
-                  <div className="flex items-center justify-between mt-1.5">
-                    <span className="text-[10px] font-medium text-foreground/80">
-                      {evt.details}
-                    </span>
-                    <a
-                      href={`https://stellar.expert/explorer/testnet/tx/${evt.fullTxHash}`}
-                      target="_blank"
-                      rel="noopener noreferrer"
-                      className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
-                      title="View transaction on Stellar Expert"
-                    >
-                      <span className="font-mono">{evt.txHash}</span>
-                      <ExternalLink className="h-2.5 w-2.5" />
-                    </a>
+                    <div className="flex items-center justify-between mt-1.5">
+                      <span className="text-[10px] font-medium text-foreground/80">
+                        {evt.details}
+                      </span>
+                      <a
+                        href={`https://stellar.expert/explorer/testnet/tx/${evt.fullTxHash}`}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                        title="View transaction on Stellar Expert"
+                      >
+                        <span className="font-mono">{evt.txHash}</span>
+                        <ExternalLink className="h-2.5 w-2.5" />
+                      </a>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))
+              );
+            })
           )}
         </div>
 

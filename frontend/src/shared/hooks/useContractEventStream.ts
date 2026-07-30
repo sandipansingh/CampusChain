@@ -19,6 +19,8 @@ import {
   getRpcServer,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+  NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
+  NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS,
 } from "@/shared/stellar/client";
 import { decodeEvent } from "@/shared/stellar/eventDecoder";
 import { useActivityFeedStore } from "./useActivityFeedStore";
@@ -68,14 +70,27 @@ function getCacheKeysForEvent(eventName: string): string[][] {
     case "role_change_denied":
       return [["campus-user-role"]];
 
+    case "UniversityRegistered":
+    case "UniversityApproved":
+    case "UniversityRejected":
+      return [["universities"], ["campus-university"]];
+
+    case "ProfileSubmittedForVerification":
+    case "ProfileVerified":
+    case "ProfileRejected":
+      return [["university-profiles"], ["campus-profile"], ["campus-role"]];
+
     default:
       return [];
   }
 }
 
+import { useCampusProfile } from "@/features/wallet/hooks/useWallet";
+
 export function useContractEventStream(address: string | null | undefined) {
   const queryClient = useQueryClient();
   const addItems = useActivityFeedStore((s) => s.addItems);
+  const { data: profile } = useCampusProfile(address ?? undefined);
 
   // Track the highest ledger sequence we have already processed.
   // Initialized to 0 — first fetch will anchor to (latestLedger - 60) so we
@@ -115,16 +130,21 @@ export function useContractEventStream(address: string | null | undefined) {
             type: "contract" as const,
             contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID],
           },
+          {
+            type: "contract" as const,
+            contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID],
+          },
         ];
 
-        const [sRes, tRes] = await Promise.all([
+        const [sRes, tRes, iRes] = await Promise.all([
           server.getEvents({ startLedger, filters: [baseFilters[0]], limit: 30 }),
           server.getEvents({ startLedger, filters: [baseFilters[1]], limit: 30 }),
+          server.getEvents({ startLedger, filters: [baseFilters[2]], limit: 30 }),
         ]);
 
         if (destroyed) return;
 
-        const rawEvents = [...sRes.events, ...tRes.events].sort(
+        const rawEvents = [...sRes.events, ...tRes.events, ...iRes.events].sort(
           (a, b) => a.ledger - b.ledger
         );
 
@@ -154,8 +174,52 @@ export function useContractEventStream(address: string | null | undefined) {
 
         if (decoded.length === 0) return;
 
-        // Push all new decoded events into the activity feed store
-        addItems(decoded);
+        // Filter events client-side based on user context before pushing to notifications bell
+        const isPlatformAdmin = address === NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS;
+        const myUnivCode = profile?.universityCode?.toUpperCase() ?? "";
+
+        const filteredDecoded = decoded.filter((evt) => {
+          if (
+            evt.eventName === "UniversityRegistered" ||
+            evt.eventName === "UniversityApproved" ||
+            evt.eventName === "UniversityRejected" ||
+            evt.eventName === "ProfileSubmittedForVerification" ||
+            evt.eventName === "ProfileVerified" ||
+            evt.eventName === "ProfileRejected"
+          ) {
+            if (isPlatformAdmin) {
+              return (
+                evt.eventName === "UniversityRegistered" ||
+                evt.eventName === "UniversityApproved" ||
+                evt.eventName === "UniversityRejected"
+              );
+            }
+
+            if (profile?.role === 4) {
+              // University Admin:
+              // - See approval/rejection for their own university code
+              // - See new profiles submitted under their university code
+              // - See verification completions for their university code
+              const eventCode = evt.details.toUpperCase();
+              return eventCode === myUnivCode;
+            }
+
+            // Student/Merchant/Organizer:
+            // - See profile approval or rejection matching their own wallet address
+            if (evt.eventName === "ProfileVerified" || evt.eventName === "ProfileRejected") {
+              const eventTarget = evt.details;
+              return eventTarget.toUpperCase() === address.toUpperCase();
+            }
+
+            return false;
+          }
+          return true; // keep standard transactions / escrows
+        });
+
+        if (filteredDecoded.length > 0) {
+          // Push filtered events to feed
+          addItems(filteredDecoded);
+        }
 
         // Emit a structured batch log entry + per-event entries through the monitor
         eventMonitor.recordBatch(
@@ -199,5 +263,5 @@ export function useContractEventStream(address: string | null | undefined) {
       destroyed = true;
       if (intervalId) clearInterval(intervalId);
     };
-  }, [address, addItems, queryClient]);
+  }, [address, profile, addItems, queryClient]);
 }

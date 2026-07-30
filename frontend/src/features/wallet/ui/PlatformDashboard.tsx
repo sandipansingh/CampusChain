@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import {
@@ -27,6 +27,17 @@ export function PlatformDashboard() {
   const { address, disconnect } = useWallet();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const queryClient = useQueryClient();
+
+  useEffect(() => {
+    const handleNavigate = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setActiveTab(customEvent.detail);
+      }
+    };
+    window.addEventListener("campuschain:navigate", handleNavigate);
+    return () => window.removeEventListener("campuschain:navigate", handleNavigate);
+  }, []);
 
   // Fetch data
   const universitiesQuery = useQuery({
