@@ -120,8 +120,8 @@ export function WalletDashboard() {
         }
         return (
           <MarketplaceGrid
-            onSelectListing={setSelectedListingId}
-            onSellClick={() => setShowSellForm(true)}
+            onSelectItem={(id) => setSelectedListingId(Number(id))}
+            onSellItem={() => setShowSellForm(true)}
           />
         );
       case "events":
