@@ -251,7 +251,6 @@ export function decodeEvent(evt: {
 
   if (eventName === "OrderStatusChanged") {
     const id = decodeNative(topicNative[1]) ?? 0;
-    const caller = typeof topicNative[2] === "string" ? topicNative[2] : "";
     let statusText = "Updated";
     if (valueNative && typeof valueNative === "object" && "name" in valueNative) {
       statusText = String((valueNative as { name: unknown }).name);
