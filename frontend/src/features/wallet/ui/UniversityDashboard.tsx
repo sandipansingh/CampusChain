@@ -32,10 +32,13 @@ import {
 } from "@/features/scholarships/hooks/useScholarships";
 import { Settings as SettingsView } from "./Settings";
 
+import { useActivityFeedStore } from "@/shared/hooks/useActivityFeedStore";
+
 export function UniversityDashboard() {
   const { address, disconnect } = useWallet();
   const [activeTab, setActiveTab] = useState<string>("overview");
   const [isFeedOpen, setIsFeedOpen] = useState(false);
+  const unreadCount = useActivityFeedStore((s) => s.unreadCount);
 
   // Scholarship form state
   const [progName, setProgName] = useState("");
@@ -540,8 +543,14 @@ export function UniversityDashboard() {
             <button
               onClick={() => setIsFeedOpen(true)}
               className="text-muted-foreground hover:text-foreground p-2 rounded-full hover:bg-muted transition-colors relative cursor-pointer"
+              aria-label="Open activity feed"
             >
               <Bell className="h-5 w-5" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-0.5 -right-0.5 min-w-[18px] h-[18px] rounded-full bg-primary text-primary-foreground text-[9px] font-bold flex items-center justify-center px-1">
+                  {unreadCount > 99 ? "99" : unreadCount}
+                </span>
+              )}
             </button>
 
             <div className="flex items-center gap-2 md:gap-3">
