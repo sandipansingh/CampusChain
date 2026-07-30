@@ -143,7 +143,7 @@ export function StudentOrdering() {
                       {canteen.fullName}
                     </p>
                     <p className="text-[10px] text-muted-foreground truncate mt-0.5">
-                      {canteen.details?.businessDescription || "Campus food outlet."}
+                      {String(canteen.details?.businessDescription || "Campus food outlet.")}
                     </p>
                   </div>
                   <ChevronRight className="size-4 shrink-0" />
@@ -162,13 +162,13 @@ export function StudentOrdering() {
                   Menu: {selectedCanteen.fullName}
                 </h3>
                 <p className="text-xs text-muted-foreground mt-0.5">
-                  {selectedCanteen.details?.businessDescription || "Order delicious canteen food."}
+                  {String(selectedCanteen.details?.businessDescription || "Order delicious canteen food.")}
                 </p>
               </div>
 
               {canteenItems.length === 0 ? (
                 <p className="text-sm text-muted-foreground py-10 text-center">
-                  This canteen hasn't published any menu items yet.
+                  This canteen hasn&apos;t published any menu items yet.
                 </p>
               ) : (
                 <div className="divide-y divide-border/60">
