@@ -13,7 +13,7 @@ export function useLedgerEvents() {
   });
 }
 
-export function useActivityPagination(address?: string) {
+export function useActivityFeed(address?: string) {
   const [events, setEvents] = useState<DecodedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);

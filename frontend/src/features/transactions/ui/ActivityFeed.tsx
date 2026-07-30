@@ -4,7 +4,7 @@ import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Dropdown } from "@/shared/ui/Dropdown";
 import { Skeleton } from "@/shared/ui/Skeleton";
-import { useActivityPagination } from "@/features/transactions/hooks/useTransactions";
+import { useActivityFeed } from "@/features/transactions/hooks/useActivityFeed";
 import {
   Search,
   Copy,
@@ -14,7 +14,7 @@ import {
   ArrowDownLeft,
 } from "lucide-react";
 
-export function TransactionHistory() {
+export function ActivityFeed() {
   const { address } = useWallet();
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -30,7 +30,7 @@ export function TransactionHistory() {
     typeFilter,
     setTypeFilter,
     loadMore,
-  } = useActivityPagination(address ?? undefined);
+  } = useActivityFeed(address ?? undefined);
 
   // Toggle detail rows
   const handleToggleDetails = (id: string) => {
@@ -53,7 +53,7 @@ export function TransactionHistory() {
     <div className="w-full space-y-6">
       {/* Header Panel */}
       <div className="flex justify-between items-center">
-        <h3 className="text-sm font-bold text-foreground">Transaction Ledger</h3>
+        <h3 className="text-sm font-bold text-foreground">Activity Feed</h3>
       </div>
 
       {/* Filters Row */}
@@ -107,9 +107,9 @@ export function TransactionHistory() {
       ) : filteredEvents.length === 0 ? (
         <div className="p-16 border border-border rounded-xl bg-card text-center flex flex-col items-center justify-center gap-3 shadow-sm">
           <History className="h-12 w-12 text-muted-foreground/50" />
-          <h3 className="text-md font-bold">No Transactions Found</h3>
+          <h3 className="text-md font-bold">No Activities Found</h3>
           <p className="text-xs text-muted-foreground max-w-[260px] mx-auto leading-relaxed">
-            There are no ledger entries recorded on-chain matching your filter options.
+            There are no activity feed entries recorded on-chain matching your filter options.
           </p>
         </div>
       ) : (
@@ -192,7 +192,7 @@ export function TransactionHistory() {
                 disabled={loadingMore}
                 className="px-6 py-2 border border-border rounded-full text-foreground font-bold hover:bg-accent transition-colors bg-card text-xs cursor-pointer disabled:opacity-50"
               >
-                {loadingMore ? "Fetching more transactions" : "Load more transactions"}
+                {loadingMore ? "Fetching more feed entries" : "Load more feed entries"}
               </button>
             </div>
           )}
@@ -201,4 +201,5 @@ export function TransactionHistory() {
     </div>
   );
 }
-export default TransactionHistory;
+
+export default ActivityFeed;

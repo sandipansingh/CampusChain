@@ -1,10 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
-import { ActivityFeedPanel } from "@/shared/ui/ActivityFeedPanel";
-import { useActivityFeedStore } from "@/shared/hooks/useActivityFeedStore";
+import { NotificationPanel } from "@/shared/ui/NotificationPanel";
+import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
 import {
   LayoutDashboard,
   Wallet,
@@ -30,7 +30,7 @@ import {
 
 // Import hooks
 import { useCampusBalance, useCampusProfile, useCampusUserRole } from "@/features/wallet/hooks/useWallet";
-import { useLedgerEvents } from "@/features/transactions/hooks/useTransactions";
+import { useActivityFeed } from "@/features/transactions/hooks/useActivityFeed";
 
 // Import sub-screens
 import { SendReceive } from "./SendReceive";
@@ -42,7 +42,7 @@ import { MarketplaceSell } from "@/features/marketplace/ui/MarketplaceSell";
 import { Events } from "@/features/events/ui/Events";
 import { Rewards } from "@/features/rewards/ui/Rewards";
 import { Scholarships } from "@/features/scholarships/ui/Scholarships";
-import { TransactionHistory } from "@/features/transactions/ui/TransactionHistory";
+import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
 import { MerchantDashboard } from "@/features/transactions/ui/MerchantDashboard";
 import { MenuManagement } from "@/features/food-ordering/ui/MenuManagement";
 import { StudentOrdering } from "@/features/food-ordering/ui/StudentOrdering";
@@ -56,7 +56,19 @@ export function WalletDashboard() {
 
   // Activity Feed panel state
   const [isFeedOpen, setIsFeedOpen] = useState(false);
-  const unreadCount = useActivityFeedStore((s) => s.unreadCount);
+  const unreadCount = useNotificationStore((s) => s.unreadCount);
+
+  // Navigation custom event listener for deep-linking
+  useEffect(() => {
+    const handleNavigate = (e: Event) => {
+      const customEvent = e as CustomEvent<string>;
+      if (customEvent.detail) {
+        setActiveTab(customEvent.detail);
+      }
+    };
+    window.addEventListener("campuschain:navigate", handleNavigate);
+    return () => window.removeEventListener("campuschain:navigate", handleNavigate);
+  }, []);
 
   // Marketplace sub-views state
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
@@ -66,7 +78,7 @@ export function WalletDashboard() {
   const { data: campBalance, isLoading: isBalanceLoading } = useCampusBalance(address);
   const { data: userRole } = useCampusUserRole(address);
   const { data: profile } = useCampusProfile(address);
-  const { data: ledgerEvents, isLoading: isEventsLoading } = useLedgerEvents();
+  const { filteredEvents: ledgerEvents, loading: isEventsLoading } = useActivityFeed(address ?? undefined);
 
   // isLocked is true if profile verification is not Approved (status 2).
   // Updates live via on-chain ProfileVerified / ProfileRejected events invalidating the 'campus-profile' query cache.
@@ -81,7 +93,7 @@ export function WalletDashboard() {
     { value: "events", label: "Events", icon: Calendar },
     { value: "rewards", label: "Rewards", icon: Award },
     { value: "scholarships", label: "Scholarships", icon: GraduationCap },
-    { value: "transactions", label: "Transactions", icon: Receipt },
+    { value: "activity-feed", label: "Activity Feed", icon: Receipt },
   ];
 
   const isFoodMerchant = profile?.role === 2 && (
@@ -152,8 +164,8 @@ export function WalletDashboard() {
         return <Rewards />;
       case "scholarships":
         return <Scholarships />;
-      case "transactions":
-        return <TransactionHistory />;
+      case "activity-feed":
+        return <ActivityFeed />;
       case "merchant":
         return <MerchantDashboard />;
       case "canteen":
@@ -284,7 +296,7 @@ export function WalletDashboard() {
               <div className="p-4 md:p-6 border-b border-border flex justify-between items-center">
                 <h3 className="text-base font-bold">Recent Activity Feed</h3>
                 <button
-                  onClick={() => setActiveTab("transactions")}
+                  onClick={() => setActiveTab("activity-feed")}
                   className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   View All
@@ -438,8 +450,8 @@ export function WalletDashboard() {
         </main>
       </div>
 
-      {/* Activity Feed Panel */}
-      <ActivityFeedPanel isOpen={isFeedOpen} onClose={() => setIsFeedOpen(false)} />
+      {/* Notification Panel */}
+      <NotificationPanel isOpen={isFeedOpen} onClose={() => setIsFeedOpen(false)} />
 
       {/* 3. Mobile Bottom Navigation Bar */}
       <nav className="fixed bottom-0 left-0 right-0 h-20 bg-card border-t border-border z-40 md:hidden shadow-lg">
