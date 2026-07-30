@@ -205,15 +205,15 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                     <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
                       {evt.message}
                     </p>
-                    <div className="flex items-center justify-between mt-1.5">
-                      <span className="text-[10px] font-medium text-foreground/80">
+                    <div className="flex items-center justify-between mt-1.5 gap-2 min-w-0">
+                      <span className="text-[10px] font-medium text-foreground/80 truncate" title={evt.details}>
                         {evt.details}
                       </span>
                       <a
                         href={`https://stellar.expert/explorer/testnet/tx/${evt.fullTxHash}`}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors"
+                        className="flex items-center gap-0.5 text-[10px] text-muted-foreground hover:text-foreground transition-colors shrink-0"
                         onClick={(e) => e.stopPropagation()}
                         title="View transaction on Stellar Expert"
                       >
