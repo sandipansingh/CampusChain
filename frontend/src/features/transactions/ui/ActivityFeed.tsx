@@ -12,6 +12,11 @@ import {
   Check,
   History,
   ArrowDownLeft,
+  ListFilter,
+  ArrowLeftRight,
+  Lock,
+  Ticket,
+  Coins,
 } from "lucide-react";
 
 export function ActivityFeed() {
@@ -75,11 +80,11 @@ export function ActivityFeed() {
           <div className="w-full sm:w-40">
             <Dropdown<string>
               options={[
-                { value: "all", label: "All Types" },
-                { value: "transfer", label: "Transfers" },
-                { value: "escrow", label: "Escrow" },
-                { value: "ticket", label: "Ticketing" },
-                { value: "faucet", label: "Faucet" },
+                { value: "all", label: "All Types", icon: <ListFilter className="h-4 w-4 text-muted-foreground" /> },
+                { value: "transfer", label: "Transfers", icon: <ArrowLeftRight className="h-4 w-4 text-sky-500" /> },
+                { value: "escrow", label: "Escrow", icon: <Lock className="h-4 w-4 text-amber-500" /> },
+                { value: "ticket", label: "Ticketing", icon: <Ticket className="h-4 w-4 text-indigo-500" /> },
+                { value: "faucet", label: "Faucet", icon: <Coins className="h-4 w-4 text-emerald-500" /> },
               ]}
               value={typeFilter}
               onChange={(val) => setTypeFilter(val)}

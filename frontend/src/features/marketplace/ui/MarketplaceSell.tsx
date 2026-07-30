@@ -8,6 +8,15 @@ import { useCreateListingMutation } from "@/features/marketplace/hooks/useMarket
 import {
   ArrowLeft,
   CheckCircle2,
+  BookOpen,
+  Laptop,
+  FileText,
+  Home,
+  Layers,
+  Sparkles,
+  ThumbsUp,
+  Wrench,
+  AlertCircle,
 } from "lucide-react";
 
 type CategoryType = "textbooks" | "electronics" | "notes" | "hostel" | "other";
@@ -187,12 +196,12 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
                 ) : (
                   <Dropdown<CategoryType | "">
                     options={[
-                      { value: "", label: "Select category" },
-                      { value: "textbooks", label: "Textbooks" },
-                      { value: "electronics", label: "Electronics" },
-                      { value: "notes", label: "Course Notes" },
-                      { value: "hostel", label: "Hostel" },
-                      { value: "other", label: "Other" },
+                      { value: "", label: "Select category", icon: <AlertCircle className="h-4 w-4 text-muted-foreground" /> },
+                      { value: "textbooks", label: "Textbooks", icon: <BookOpen className="h-4 w-4 text-blue-500" /> },
+                      { value: "electronics", label: "Electronics", icon: <Laptop className="h-4 w-4 text-purple-500" /> },
+                      { value: "notes", label: "Course Notes", icon: <FileText className="h-4 w-4 text-amber-500" /> },
+                      { value: "hostel", label: "Hostel", icon: <Home className="h-4 w-4 text-emerald-500" /> },
+                      { value: "other", label: "Other", icon: <Layers className="h-4 w-4 text-zinc-500" /> },
                     ]}
                     value={category}
                     onChange={(val) => setCategory(val)}
@@ -207,16 +216,16 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
                 {isSubmitting ? (
                   <Skeleton className="h-11 w-full rounded-lg" />
                 ) : (
-                  <Dropdown<ConditionType | "">
-                    options={[
-                      { value: "", label: "Select condition" },
-                      { value: "new", label: "New" },
-                      { value: "like-new", label: "Like New" },
-                      { value: "used", label: "Used" },
-                    ]}
-                    value={condition}
-                    onChange={(val) => setCondition(val)}
-                  />
+                <Dropdown<ConditionType | "">
+                  options={[
+                    { value: "", label: "Select condition", icon: <AlertCircle className="h-4 w-4 text-muted-foreground" /> },
+                    { value: "new", label: "New", icon: <Sparkles className="h-4 w-4 text-emerald-500" /> },
+                    { value: "like-new", label: "Like New", icon: <ThumbsUp className="h-4 w-4 text-blue-500" /> },
+                    { value: "used", label: "Used", icon: <Wrench className="h-4 w-4 text-amber-500" /> },
+                  ]}
+                  value={condition}
+                  onChange={(val) => setCondition(val)}
+                />
                 )}
               </div>
             </div>
