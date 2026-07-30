@@ -87,7 +87,7 @@ if [ "$ADMIN_ADDRESS" != "$PLATFORM_ADMIN_ADDRESS" ]; then
     exit 1
 fi
 
-# ── Deploy CampusIdentity ──
+# Deploy CampusIdentity
 echo "Installing CampusIdentity WASM..."
 res=$(run_stellar_cmd stellar contract install \
     --wasm target/wasm32-unknown-unknown/release/campus_identity.optimized.wasm \
@@ -120,7 +120,7 @@ res=$(run_stellar_cmd stellar contract invoke \
 IDENTITY_INIT_TX=$(echo "$res" | cut -d'|' -f2)
 echo "CampusIdentity Init Tx: $IDENTITY_INIT_TX"
 
-# ── Deploy CampusToken ──
+# Deploy CampusToken
 echo "Installing CampusToken WASM..."
 res=$(run_stellar_cmd stellar contract install \
     --wasm target/wasm32-unknown-unknown/release/campus_token.optimized.wasm \
@@ -141,7 +141,7 @@ TOKEN_DEPLOY_TX=$(echo "$res" | cut -d'|' -f2)
 echo "CampusToken Contract ID: $TOKEN_CONTRACT_ID"
 echo "CampusToken Deploy Tx: $TOKEN_DEPLOY_TX"
 
-# ── Deploy CampusService ──
+# Deploy CampusService
 echo "Installing CampusService WASM..."
 res=$(run_stellar_cmd stellar contract install \
     --wasm target/wasm32-unknown-unknown/release/campus_service.optimized.wasm \
@@ -202,7 +202,7 @@ echo "CampusToken ID:    $TOKEN_CONTRACT_ID"
 echo "CampusService ID:  $SERVICE_CONTRACT_ID"
 echo ""
 
-# ── Update environment files automatically ──
+# Update environment files automatically
 echo "Updating environment files..."
 
 # 1. Update frontend/.env.local
@@ -245,7 +245,7 @@ if [ -f frontend/.env.example ]; then
     echo "Updated frontend/.env.example"
 fi
 
-# ── Update documentation files automatically ──
+# Update documentation files automatically
 echo "Updating documentation files (README.md & DEPLOYMENT.md)..."
 ./scripts/update_docs.sh \
     "$IDENTITY_CONTRACT_ID" \
