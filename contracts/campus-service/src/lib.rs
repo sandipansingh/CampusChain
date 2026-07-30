@@ -1082,7 +1082,7 @@ impl CampusService {
         );
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "menu_item_published"), id, merchant),
+            (Symbol::new(&env, "MenuItemPublished"), id, merchant),
             price_camp,
         );
         Ok(id)
@@ -1179,7 +1179,7 @@ impl CampusService {
         );
         extend_persistent(&env, &key);
         env.events()
-            .publish((Symbol::new(&env, "order_placed"), id, student), total_camp);
+            .publish((Symbol::new(&env, "OrderPlaced"), id, student), total_camp);
         Ok(id)
     }
 
@@ -1222,11 +1222,7 @@ impl CampusService {
         env.storage().persistent().set(&key, &order);
         extend_persistent(&env, &key);
         env.events().publish(
-            (
-                Symbol::new(&env, "order_status_changed"),
-                order_id,
-                merchant,
-            ),
+            (Symbol::new(&env, "OrderStatusChanged"), order_id, merchant),
             new_status,
         );
         Ok(())
@@ -1264,7 +1260,7 @@ impl CampusService {
         env.storage().persistent().set(&key, &order);
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "order_status_changed"), order_id, caller),
+            (Symbol::new(&env, "OrderStatusChanged"), order_id, caller),
             FoodOrderStatus::Cancelled,
         );
         Ok(())

@@ -379,7 +379,7 @@ impl CampusIdentity {
         extend_persistent(&env, &owner_key);
         extend_instance(&env);
         env.events().publish(
-            (Symbol::new(&env, "university_registered"), admin),
+            (Symbol::new(&env, "UniversityRegistered"), admin),
             university,
         );
         Ok(())
@@ -398,7 +398,7 @@ impl CampusIdentity {
         extend_persistent(&env, &key);
         extend_instance(&env);
         env.events()
-            .publish((Symbol::new(&env, "university_approved"), caller), code);
+            .publish((Symbol::new(&env, "UniversityApproved"), caller), code);
         Ok(())
     }
 
@@ -415,7 +415,7 @@ impl CampusIdentity {
         extend_persistent(&env, &key);
         extend_instance(&env);
         env.events()
-            .publish((Symbol::new(&env, "university_rejected"), caller), code);
+            .publish((Symbol::new(&env, "UniversityRejected"), caller), code);
         Ok(())
     }
 
@@ -481,7 +481,10 @@ impl CampusIdentity {
         extend_persistent(&env, &profile_key);
         extend_instance(&env);
         env.events().publish(
-            (Symbol::new(&env, "profile_submitted"), address),
+            (
+                Symbol::new(&env, "ProfileSubmittedForVerification"),
+                address,
+            ),
             university_code,
         );
         Ok(())
@@ -505,11 +508,7 @@ impl CampusIdentity {
         extend_persistent(&env, &target_key);
         extend_instance(&env);
         env.events().publish(
-            (
-                Symbol::new(&env, "profile_verified"),
-                caller,
-                target_address,
-            ),
+            (Symbol::new(&env, "ProfileVerified"), caller, target_address),
             code,
         );
         Ok(())
@@ -533,11 +532,7 @@ impl CampusIdentity {
         extend_persistent(&env, &target_key);
         extend_instance(&env);
         env.events().publish(
-            (
-                Symbol::new(&env, "profile_rejected"),
-                caller,
-                target_address,
-            ),
+            (Symbol::new(&env, "ProfileRejected"), caller, target_address),
             code,
         );
         Ok(())
