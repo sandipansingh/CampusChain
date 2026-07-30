@@ -78,10 +78,6 @@ function enumScVal(name: string, payload: xdr.ScVal): xdr.ScVal {
   return xdr.ScVal.scvVec([nativeToScVal(name, { type: "symbol" }), payload]);
 }
 
-function unitEnumScVal(name: string): xdr.ScVal {
-  return enumScVal(name, xdr.ScVal.scvVoid());
-}
-
 function structScVal(fields: Record<string, unknown>, types: Record<string, ["symbol", "string" | "u32" | "bytes"]>): xdr.ScVal {
   return nativeToScVal(fields, { type: types });
 }
