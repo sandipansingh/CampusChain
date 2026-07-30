@@ -2,8 +2,8 @@
 
 import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
-import { Skeleton } from "@/shared/ui/Skeleton";
 import { Dropdown } from "@/shared/ui/Dropdown";
+import { Skeleton } from "@/shared/ui/Skeleton";
 import { useActivityPagination } from "@/features/transactions/hooks/useTransactions";
 import {
   Search,
@@ -11,15 +11,11 @@ import {
   ExternalLink,
   Check,
   History,
-  ArrowRight,
   ArrowDownLeft,
 } from "lucide-react";
 
-type TxState = "success" | "loading" | "empty";
-
 export function TransactionHistory() {
   const { address } = useWallet();
-  const [txState, setTxState] = useState<TxState>("success");
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
@@ -34,7 +30,7 @@ export function TransactionHistory() {
     typeFilter,
     setTypeFilter,
     loadMore,
-  } = useActivityPagination();
+  } = useActivityPagination(address ?? undefined);
 
   // Toggle detail rows
   const handleToggleDetails = (id: string) => {
@@ -58,17 +54,6 @@ export function TransactionHistory() {
       {/* Header Panel */}
       <div className="flex justify-between items-center">
         <h3 className="text-sm font-bold text-foreground">Transaction Ledger</h3>
-        <div className="w-40">
-          <Dropdown<TxState>
-            options={[
-              { value: "success", label: "State: Loaded" },
-              { value: "loading", label: "State: Loading" },
-              { value: "empty", label: "State: Empty" },
-            ]}
-            value={txState}
-            onChange={(val) => setTxState(val)}
-          />
-        </div>
       </div>
 
       {/* Filters Row */}
@@ -104,7 +89,7 @@ export function TransactionHistory() {
       </div>
 
       {/* Content Lists */}
-      {loading || txState === "loading" ? (
+      {loading ? (
         <div className="space-y-4">
           {[1, 2, 3].map((i) => (
             <div key={i} className="bg-card border border-border p-4 rounded-xl flex items-center justify-between">
@@ -119,7 +104,7 @@ export function TransactionHistory() {
             </div>
           ))}
         </div>
-      ) : txState === "empty" || filteredEvents.length === 0 ? (
+      ) : filteredEvents.length === 0 ? (
         <div className="p-16 border border-border rounded-xl bg-card text-center flex flex-col items-center justify-center gap-3 shadow-sm">
           <History className="h-12 w-12 text-muted-foreground/50" />
           <h3 className="text-md font-bold">No Transactions Found</h3>
@@ -136,7 +121,7 @@ export function TransactionHistory() {
               <div
                 key={evt.id}
                 onClick={() => handleToggleDetails(evt.id)}
-                className="bg-card border border-border rounded-xl p-4 hover:border-foreground/35 transition-all duration-200 cursor-pointer shadow-sm text-xs"
+                className="bg-card border border-border rounded-xl p-4 hover:border-foreground/35 cursor-pointer shadow-sm text-xs"
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3 min-w-0">
@@ -157,7 +142,7 @@ export function TransactionHistory() {
 
                 {/* Collapsible Details */}
                 {isExpanded && (
-                  <div className="mt-4 pt-4 border-t border-border space-y-3 animate-in slide-in-from-top-1 duration-200">
+                  <div className="mt-4 pt-4 border-t border-border space-y-3">
                     <div className="flex justify-between items-center bg-muted/50 p-2 rounded-lg border border-border">
                       <div className="flex flex-col min-w-0 pr-4">
                         <span className="text-[9px] uppercase font-bold tracking-wider text-muted-foreground mb-0.5">
@@ -191,8 +176,6 @@ export function TransactionHistory() {
                     </div>
 
                     <div className="flex gap-4 text-[10px] font-bold uppercase tracking-wider text-muted-foreground pl-1">
-                      <span>Fee: ~0.0001 XLM</span>
-                      <span>•</span>
                       <span>Ledger: {evt.ledger}</span>
                     </div>
                   </div>
@@ -209,7 +192,7 @@ export function TransactionHistory() {
                 disabled={loadingMore}
                 className="px-6 py-2 border border-border rounded-full text-foreground font-bold hover:bg-accent transition-colors bg-card text-xs cursor-pointer disabled:opacity-50"
               >
-                {loadingMore ? "Loading..." : "Load More Transactions"}
+                {loadingMore ? "Fetching more transactions" : "Load more transactions"}
               </button>
             </div>
           )}

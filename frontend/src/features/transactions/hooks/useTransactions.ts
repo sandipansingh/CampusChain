@@ -13,7 +13,7 @@ export function useLedgerEvents() {
   });
 }
 
-export function useActivityPagination() {
+export function useActivityPagination(address?: string) {
   const [events, setEvents] = useState<DecodedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -22,13 +22,12 @@ export function useActivityPagination() {
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
 
-  const fetchEvents = useCallback(async (isLoadMore = false) => {
-    if (isLoadMore && loadingMore) return;
+  const fetchEvents = useCallback(async (nextCursor: string | null, isLoadMore = false) => {
     try {
       if (isLoadMore) setLoadingMore(true);
       else setLoading(true);
 
-      const res = await fetchEventsPaginated(isLoadMore ? cursor : null, 40);
+      const res = await fetchEventsPaginated(nextCursor, 40, address);
 
       if (isLoadMore) {
         setEvents((prev) => {
@@ -48,11 +47,17 @@ export function useActivityPagination() {
       setLoading(false);
       setLoadingMore(false);
     }
-  }, [cursor, loadingMore]);
+  }, [address]);
 
   useEffect(() => {
-    fetchEvents(false);
-  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+    void fetchEvents(null);
+  }, [address, fetchEvents]);
+
+  useEffect(() => {
+    const refresh = () => void fetchEvents(null);
+    window.addEventListener("campuschain:transaction-submitted", refresh);
+    return () => window.removeEventListener("campuschain:transaction-submitted", refresh);
+  }, [fetchEvents]);
 
   const filteredEvents = events.filter((e) => {
     const query = searchQuery.toLowerCase().trim();
@@ -76,6 +81,8 @@ export function useActivityPagination() {
     setSearchQuery,
     typeFilter,
     setTypeFilter,
-    loadMore: () => fetchEvents(true),
+    loadMore: () => {
+      if (!loadingMore && hasMore) void fetchEvents(cursor, true);
+    },
   };
 }
