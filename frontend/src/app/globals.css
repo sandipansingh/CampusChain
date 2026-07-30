@@ -90,3 +90,27 @@
     font-family: Inter, ui-sans-serif, system-ui, sans-serif;
   }
 }
+
+.input {
+  display: block;
+  width: 100%;
+  border-radius: 0.75rem; /* rounded-xl */
+  border: 1px solid var(--border);
+  background-color: var(--card);
+  color: var(--foreground);
+  padding: 0.625rem 0.875rem; /* px-3.5 py-2.5 */
+  font-size: 0.875rem; /* text-sm */
+  box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05); /* shadow-sm */
+  transition: all 0.2s ease-in-out;
+}
+
+.input:focus {
+  border-color: var(--foreground);
+  outline: none;
+  box-shadow: 0 0 0 1px var(--foreground);
+}
+
+.input:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
