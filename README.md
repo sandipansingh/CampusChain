@@ -4,9 +4,9 @@
 </p>
 
 <p align="center">
-  <a href="https://stellar.expert/explorer/testnet/contract/CAICTPPKS7JOWZMPK2UHTJAEXDYWNEXLDBFLAPFSZURKDCRNYUCRHCSR"><img src="https://img.shields.io/badge/CampusIdentity-Testnet-blue?logo=stellar" alt="CampusIdentity"/></a>
-  <a href="https://stellar.expert/explorer/testnet/contract/CAODSL3PHLTCLATVT4FZWXNMSN6WVKZ4LLOSVLLE5OJSVAHAOG4UYEDZ"><img src="https://img.shields.io/badge/CampusToken-Testnet-blue?logo=stellar" alt="CampusToken"/></a>
-  <a href="https://stellar.expert/explorer/testnet/contract/CA4FLLDHACOF23QFI3CQILR44KJ6M6DXND77RUMAGCTRRG3KK4ZY7RJJ"><img src="https://img.shields.io/badge/CampusService-Testnet-blue?logo=stellar" alt="CampusService"/></a>
+  <a href="https://stellar.expert/explorer/testnet/contract/CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E"><img src="https://img.shields.io/badge/CampusIdentity-Testnet-blue?logo=stellar" alt="CampusIdentity"/></a>
+  <a href="https://stellar.expert/explorer/testnet/contract/CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7"><img src="https://img.shields.io/badge/CampusToken-Testnet-blue?logo=stellar" alt="CampusToken"/></a>
+  <a href="https://stellar.expert/explorer/testnet/contract/CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257"><img src="https://img.shields.io/badge/CampusService-Testnet-blue?logo=stellar" alt="CampusService"/></a>
   <img src="https://img.shields.io/badge/tests-passing-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build"/>
 </p>
@@ -85,7 +85,7 @@ graph TD
 
 **Purpose**: Single source of truth for identity, user profiles, roles, and student verification status.
 
-**Address**: [`CAICTPPKS7JOWZMPK2UHTJAEXDYWNEXLDBFLAPFSZURKDCRNYUCRHCSR`](https://stellar.expert/explorer/testnet/contract/CAICTPPKS7JOWZMPK2UHTJAEXDYWNEXLDBFLAPFSZURKDCRNYUCRHCSR)
+**Address**: [`CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E`](https://stellar.expert/explorer/testnet/contract/CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E)
 
 #### Storage Model
 
@@ -104,7 +104,7 @@ graph TD
 
 **Purpose**: Fungible campus token (7 decimals), on-chain role registry, faucet, and upgrade-safe WASM entrypoint.
 
-**Address**: [`CAODSL3PHLTCLATVT4FZWXNMSN6WVKZ4LLOSVLLE5OJSVAHAOG4UYEDZ`](https://stellar.expert/explorer/testnet/contract/CAODSL3PHLTCLATVT4FZWXNMSN6WVKZ4LLOSVLLE5OJSVAHAOG4UYEDZ)
+**Address**: [`CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7`](https://stellar.expert/explorer/testnet/contract/CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7)
 
 #### Storage Model
 
@@ -153,7 +153,7 @@ graph TD
 
 **Purpose**: All campus services — escrow, marketplace, event tickets, university registry, scholarships, and rewards. Calls into CampusToken via a compiled WASM import (cross-contract client).
 
-**Address**: [`CA4FLLDHACOF23QFI3CQILR44KJ6M6DXND77RUMAGCTRRG3KK4ZY7RJJ`](https://stellar.expert/explorer/testnet/contract/CA4FLLDHACOF23QFI3CQILR44KJ6M6DXND77RUMAGCTRRG3KK4ZY7RJJ)
+**Address**: [`CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257`](https://stellar.expert/explorer/testnet/contract/CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257)
 
 #### Storage Model (selected keys)
 
@@ -342,18 +342,18 @@ NEXT_PUBLIC_STELLAR_PASSPHRASE="Test SDF Network ; September 2015"
 
 # ── Deployed contract addresses (Testnet) ───────────────────────────────────
 # CampusIdentity (on-chain profile registry)
-NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID=CAICTPPKS7JOWZMPK2UHTJAEXDYWNEXLDBFLAPFSZURKDCRNYUCRHCSR
+NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID=CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E
 
 # CampusToken (CAMP fungible token)
-NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID=CAODSL3PHLTCLATVT4FZWXNMSN6WVKZ4LLOSVLLE5OJSVAHAOG4UYEDZ
+NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID=CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7
 
 # CampusService (escrow, events, marketplace, scholarships, rewards)
-NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID=CA4FLLDHACOF23QFI3CQILR44KJ6M6DXND77RUMAGCTRRG3KK4ZY7RJJ
+NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID=CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257
 
 # ── Admin account ────────────────────────────────────────────────────────────
 # Admin Stellar address — receives XLM during CAMP purchase, issues roles
 # NEVER put a private key here. This is a public G... address only.
-NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=GBPVICMAESR2O4LJRDAV2YGGIQDAEY6ANCAF3GLIXEYRAIDDXM7WQP7X
+NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ
 ```
 
 > **All `NEXT_PUBLIC_` variables are baked into the client bundle at build time** — they must never contain secret material. Private keys are always held in user wallets, never in this app.
@@ -544,18 +544,18 @@ CampusChain uses a two-layer RBAC:
 
 | Contract | Address | Explorer |
 |---|---|---|
-| **CampusIdentity** | `CAICTPPKS7JOWZMPK2UHTJAEXDYWNEXLDBFLAPFSZURKDCRNYUCRHCSR` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CAICTPPKS7JOWZMPK2UHTJAEXDYWNEXLDBFLAPFSZURKDCRNYUCRHCSR) |
-| **CampusToken** (CAMP) | `CAODSL3PHLTCLATVT4FZWXNMSN6WVKZ4LLOSVLLE5OJSVAHAOG4UYEDZ` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CAODSL3PHLTCLATVT4FZWXNMSN6WVKZ4LLOSVLLE5OJSVAHAOG4UYEDZ) |
-| **CampusService** | `CA4FLLDHACOF23QFI3CQILR44KJ6M6DXND77RUMAGCTRRG3KK4ZY7RJJ` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CA4FLLDHACOF23QFI3CQILR44KJ6M6DXND77RUMAGCTRRG3KK4ZY7RJJ) |
+| **CampusIdentity** | `CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E) |
+| **CampusToken** (CAMP) | `CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7) |
+| **CampusService** | `CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257) |
 | **Native XLM SAC** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) |
 
 ### Admin Account
 
 | Item | Value |
 |---|---|
-| **Identity** | `CAMPUSCHAIN_TESTNET` |
-| **Public Address** | `GBPVICMAESR2O4LJRDAV2YGGIQDAEY6ANCAF3GLIXEYRAIDDXM7WQP7X` |
-| **Explorer** | [StellarExpert ↗](https://stellar.expert/explorer/testnet/account/GBPVICMAESR2O4LJRDAV2YGGIQDAEY6ANCAF3GLIXEYRAIDDXM7WQP7X) |
+| **Identity** | `campuschain-phase1-admin` |
+| **Public Address** | `GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ` |
+| **Explorer** | [StellarExpert ↗](https://stellar.expert/explorer/testnet/account/GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ) |
 
 #### CampusIdentity
 

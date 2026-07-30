@@ -1,69 +1,41 @@
 # CampusChain — Testnet Deployment Record
 
-This document records the official smart contract deployment details on the Stellar Testnet.
+This is the active university-scoped RBAC deployment on Stellar Testnet, deployed on 2026-07-30.
 
-## Deployed Identity
+## Platform Admin
 
-*   **Identity Name**: `CAMPUSCHAIN_TESTNET`
-*   **Stellar Public Address**: `GBPVICMAESR2O4LJRDAV2YGGIQDAEY6ANCAF3GLIXEYRAIDDXM7WQP7X`
-*   **StellarExpert Account Link**: [StellarExpert Account Details](https://stellar.expert/explorer/testnet/account/GBPVICMAESR2O4LJRDAV2YGGIQDAEY6ANCAF3GLIXEYRAIDDXM7WQP7X)
+- **Key alias:** `campuschain-phase1-admin`
+- **Immutable Platform Admin:** [`GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ`](https://stellar.expert/explorer/testnet/account/GC6BMAHRKAWHPPI6T67QZV2CQIWG7DVJT47ZNZQUYF3L625G3OPNBBSQ)
 
----
+The Identity initializer stores this address as the sole Platform Admin profile. Token and Service initialization both verify this value through an inter-contract call before their immutable links are stored.
 
 ## Contract Deployments
 
-### 1. CampusIdentity
-*   **Contract Address**: `CAICTPPKS7JOWZMPK2UHTJAEXDYWNEXLDBFLAPFSZURKDCRNYUCRHCSR`
-*   **StellarExpert Explorer Link**: [CampusIdentity on StellarExpert](https://stellar.expert/explorer/testnet/contract/CAICTPPKS7JOWZMPK2UHTJAEXDYWNEXLDBFLAPFSZURKDCRNYUCRHCSR)
-*   **WASM Hash**: `827b1a6d568ef124d72311a603a5ccfdcfe2ee6e87b5ac7f7af892fcde261351`
-*   **Transactions**:
-    *   **WASM Upload (Install)**: `31879a9aff3e285662250bf9d7681531fa26a9b29c13f4692256c5b0846e72da` — [WASM Upload Tx Details](https://stellar.expert/explorer/testnet/tx/31879a9aff3e285662250bf9d7681531fa26a9b29c13f4692256c5b0846e72da)
-    *   **Contract Instantiate**: `925aecc01a4a9b79bb13dec6f417c1abaeac9cf73a1c525189b76edbc5479fe3` — [Instantiate Tx Details](https://stellar.expert/explorer/testnet/tx/925aecc01a4a9b79bb13dec6f417c1abaeac9cf73a1c525189b76edbc5479fe3)
-    *   **initialize() invoke**: `48a93e71208bb0e8b82b7ac5feec41427e6fa87dbb3528d285bea41ad9cdcaca` — [Initialize Tx Details](https://stellar.expert/explorer/testnet/tx/48a93e71208bb0e8b82b7ac5feec41427e6fa87dbb3528d285bea41ad9cdcaca)
+| Contract | Address | WASM hash |
+| --- | --- | --- |
+| CampusIdentity / University Registry | [`CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E`](https://stellar.expert/explorer/testnet/contract/CARIZNHDFQU635QTQY7KK7N43D7YEQFUZDCEQC4IS6YBR7EMLHZVAW5E) | `277d0f9d5c9c89e5682644519ddf23165736fbdf8a5ad3d9c45b9f9201c10f37` |
+| CampusToken (CAMP) | [`CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7`](https://stellar.expert/explorer/testnet/contract/CD63BOFRQNCDR7FVVWYPOI5DASAMSIIR3O54EXMGGDNUMGEWAHMU5PA7) | `947105425fb113cbeb20ed057c97a855af8f2a4677e739e61c9ef160fbf7ee08` |
+| CampusService (escrow, marketplace, events, payments, food ordering) | [`CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257`](https://stellar.expert/explorer/testnet/contract/CDCPGEB2VLSKXGKHOBNZKUH5XEHLQ2VVYDQ2CAOO4Q7S2PEQXTKPY257) | `7f7b3fc4b42ea26070f639f762dfbf66868b2d8bad34665ee239d2cab33cd331` |
+| Native XLM SAC | [`CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) | Stellar Testnet native asset |
 
-### 2. CampusToken (CAMP)
-*   **Contract Address**: `CAODSL3PHLTCLATVT4FZWXNMSN6WVKZ4LLOSVLLE5OJSVAHAOG4UYEDZ`
-*   **StellarExpert Explorer Link**: [CampusToken on StellarExpert](https://stellar.expert/explorer/testnet/contract/CAODSL3PHLTCLATVT4FZWXNMSN6WVKZ4LLOSVLLE5OJSVAHAOG4UYEDZ)
-*   **WASM Hash**: `25b4ab1ea6331f976e7eac727251420b3ea00236cb1e4d1ba621afe0bf933e98`
-*   **Transactions**:
-    *   **WASM Upload (Install)**: `021d3e2547f36ce5012e395eec0683bf868e33e1691e2d13eaabd7d11a56bad3` — [WASM Upload Tx Details](https://stellar.expert/explorer/testnet/tx/021d3e2547f36ce5012e395eec0683bf868e33e1691e2d13eaabd7d11a56bad3)
-    *   **Contract Instantiate**: `01b27783400d9bd3fc17772dca40dad4b589af593efd71da61f1b2e3684c6258` — [Instantiate Tx Details](https://stellar.expert/explorer/testnet/tx/01b27783400d9bd3fc17772dca40dad4b589af593efd71da61f1b2e3684c6258)
-    *   **initialize() invoke**: `4cb97e4fed885d2eb6665be97c3252dd6f1ffa39308c40496a605fc8340c45f2` — [Initialize Tx Details](https://stellar.expert/explorer/testnet/tx/4cb97e4fed885d2eb6665be97c3252dd6f1ffa39308c40496a605fc8340c45f2)
-    *   **set_service_contract() invoke**: `fee67281e8a837159d5d63d201a073da222b37e2b1a4a2e682502e81d891e6bf` — [Set Service Tx Details](https://stellar.expert/explorer/testnet/tx/fee67281e8a837159d5d63d201a073da222b37e2b1a4a2e682502e81d891e6bf)
+## Confirmed deployment transactions
 
-### 3. CampusService
-*   **Contract Address**: `CA4FLLDHACOF23QFI3CQILR44KJ6M6DXND77RUMAGCTRRG3KK4ZY7RJJ`
-*   **StellarExpert Explorer Link**: [CampusService on StellarExpert](https://stellar.expert/explorer/testnet/contract/CA4FLLDHACOF23QFI3CQILR44KJ6M6DXND77RUMAGCTRRG3KK4ZY7RJJ)
-*   **WASM Hash**: `6116b96e6bdbd09112d51a9b1a13576d584c0e3a027236beae619fdaee08466f`
-*   **Transactions**:
-    *   **WASM Upload (Install)**: `0cc33d1a16043d4ef7ff650fe04306068ce89e3cd32e15ee897f39d8459b8bf9` — [WASM Upload Tx Details](https://stellar.expert/explorer/testnet/tx/0cc33d1a16043d4ef7ff650fe04306068ce89e3cd32e15ee897f39d8459b8bf9)
-    *   **Contract Instantiate**: `b6f49f1accc9add096000581b860e8d01e5f02869c41dd97f5ad21a0f23e4187` — [Instantiate Tx Details](https://stellar.expert/explorer/testnet/tx/b6f49f1accc9add096000581b860e8d01e5f02869c41dd97f5ad21a0f23e4187)
-    *   **initialize() invoke**: `404c3f44c99b7f6b7cd8d06d5a9ba041b88b52d1f93b7e97bc0c081923b6ffc7` — [Initialize Tx Details](https://stellar.expert/explorer/testnet/tx/404c3f44c99b7f6b7cd8d06d5a9ba041b88b52d1f93b7e97bc0c081923b6ffc7)
-    *   **set_native_token() invoke**: `51c3f39fd216f458cbd31c889c166cef23da232c274711c7635a9355cf42f058` — [Set Native Token Tx Details](https://stellar.expert/explorer/testnet/tx/51c3f39fd216f458cbd31c889c166cef23da232c274711c7635a9355cf42f058)
-    *   **set_identity_contract() invoke**: `d88bd65790d4a72d16870b277b668753af54e417cf124a2457551e5fe82f9c3e` — [Set Identity Contract Tx Details](https://stellar.expert/explorer/testnet/tx/d88bd65790d4a72d16870b277b668753af54e417cf124a2457551e5fe82f9c3e)
+| Contract | Upload | Instantiate | Initialize |
+| --- | --- | --- | --- |
+| CampusIdentity | [`c70e70bb…`](https://stellar.expert/explorer/testnet/tx/c70e70bb8cacf414df9a2f43d31237a5ce0c06da985277efcac17a965c5076af) | [`5c63922c…`](https://stellar.expert/explorer/testnet/tx/5c63922c7288f61b31d416c0bd6d90f98540495ffe8183bbcd488c35aa3af3dc) | [`2d486a0f…`](https://stellar.expert/explorer/testnet/tx/2d486a0f68b18bd38b6fbfcb56f8038f5ec505c520e93f9505146ff539f5f740) |
+| CampusToken | [`c37439b7…`](https://stellar.expert/explorer/testnet/tx/c37439b75879fd883dd651c02671ee5c7b045f0b999942137e502851093f1f74) | [`ec665d64…`](https://stellar.expert/explorer/testnet/tx/ec665d6406dbdbee325ab57b83615df88e8ce8dc2215bb1ca65dd535daf11150) | [`724d059d…`](https://stellar.expert/explorer/testnet/tx/724d059daaef98122ada22e472f618e7635113dd0c3307e6e8d6967572db7b10) |
+| CampusService | [`67ad28e4…`](https://stellar.expert/explorer/testnet/tx/67ad28e49911fb7eb0eee2bcf07479e97b5d995ff0cf22af0d8329e3671dcf06) | [`c919035f…`](https://stellar.expert/explorer/testnet/tx/c919035f65f72d9015740a178c02b85a3aa72facdaf1cc03a41ddc9d0c9c3767) | [`138ed001…`](https://stellar.expert/explorer/testnet/tx/138ed001e04bcf8e5448031966f23e781e24d84b2efbc3914b1dd40a631901ab) |
 
-### 4. Native Stellar Asset Contract (XLM Wrapper)
-*   **Contract Address**: `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC`
-*   **StellarExpert Explorer Link**: [Native XLM Contract on StellarExpert](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC)
+Initialization order was **Identity → Token → Service**. The resulting links were read back on-chain: Token and Service both point to the Identity above; Token points to Service; Service points to Token.
 
----
+## Repeatable deployment pipeline
 
-## Repeatable Deployment Pipeline
+```bash
+CAMPUSCHAIN_ADMIN_KEY=<key-alias-or-secret> \
+NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=<immutable-platform-admin-G-address> \
+./deploy/testnet.sh
+```
 
-The pipeline is automated via scripts located under the `deploy/` directory:
+`deploy/testnet.sh` delegates to the canonical pipeline in `scripts/deploy.sh`. It builds imported WASM interfaces in dependency order and deploys and initializes Identity, Token, and Service. `deploy/init.sh` remains available when contracts have been instantiated manually; it requires the same `NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS` and rejects a signer that does not match it.
 
-1.  **Deploy WASM and Instantiate Contracts**:
-    ```bash
-    ./deploy/testnet.sh
-    ```
-    This generates the `CAMPUSCHAIN_TESTNET` keys, funds them via Friendbot, adds the network to CLI config, and deploys all three contract WASMs, displaying their contract IDs.
-2.  **Initialize and Wire Contracts**:
-    ```bash
-    ./deploy/init.sh <TOKEN_CONTRACT_ID> <SERVICE_CONTRACT_ID> <IDENTITY_CONTRACT_ID> CAMPUSCHAIN_TESTNET testnet
-    ```
-    This initializes metadata, sets the cross-contract links, and binds the native XLM token and identity addresses.
-3.  **Upgrade Contract WASM**:
-    ```bash
-    ./deploy/upgrade.sh <CONTRACT_ID> <NEW_WASM_PATH> CAMPUSCHAIN_TESTNET testnet
-    ```
-    This uploads the new WASM binary and triggers the `upgrade()` method on the contract.
+There is no `NEXT_PUBLIC_UNIVERSITY_REGISTRY_CONTRACT_ID`: the university registry is intentionally part of `CampusIdentity`.
