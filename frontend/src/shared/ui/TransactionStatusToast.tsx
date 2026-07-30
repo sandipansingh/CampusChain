@@ -136,9 +136,9 @@ export function TransactionStatusToast() {
             <div className="space-y-4">
               <div className="flex items-start gap-3 bg-destructive/10 border border-destructive/20 p-3 rounded-lg">
                 <XCircle className="h-5 w-5 text-destructive shrink-0 mt-0.5" />
-                <div>
+                <div className="min-w-0 flex-1">
                   <p className="text-xs font-semibold text-destructive">Transaction Failed</p>
-                  <p className="text-[10px] text-destructive/80 mt-1 leading-relaxed">{error}</p>
+                  <p className="text-[10px] text-destructive/80 mt-1 leading-relaxed break-words whitespace-pre-wrap max-h-40 overflow-y-auto">{error}</p>
                 </div>
               </div>
 

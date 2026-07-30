@@ -5,6 +5,7 @@ import {
   NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
   readContract,
   stringToScVal,
+  u32ToScVal,
 } from "@/shared/stellar/client";
 import { nativeToScVal, scValToNative, xdr } from "@stellar/stellar-sdk";
 
@@ -106,7 +107,7 @@ async function profileDetailsScVal(registration: ProfileRegistration): Promise<x
   }
   if (registration.role === "Merchant") {
     return enumScVal("Merchant", structScVal(
-      { business_name: registration.businessName, category: unitEnumScVal(["Retail", "FoodCanteen", "Services", "Other"][registration.category - 1] ?? "Other"), business_description: registration.businessDescription },
+      { business_name: registration.businessName, category: registration.category, business_description: registration.businessDescription },
       { business_name: ["symbol", "string"], category: ["symbol", "u32"], business_description: ["symbol", "string"] }
     ));
   }
@@ -170,7 +171,7 @@ export async function executeRegisterUniversity(admin: string, code: string, nam
 
 export async function executeRegisterProfile(address: string, fullName: string, universityCode: string, registration: ProfileRegistration): Promise<string> {
   const { signTx } = await import("./wallet");
-  return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "register_profile", [addressToScVal(address), stringToScVal(fullName), stringToScVal(universityCode), unitEnumScVal(registration.role), await profileDetailsScVal(registration)], address, signTx);
+  return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "register_profile", [addressToScVal(address), stringToScVal(fullName), stringToScVal(universityCode), u32ToScVal(UserRole[registration.role]), await profileDetailsScVal(registration)], address, signTx);
 }
 
 export async function executeApproveUniversity(caller: string, code: string): Promise<string> {
