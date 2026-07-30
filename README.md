@@ -744,4 +744,4 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 ## License
 
-MIT © Sandipan Singh
+[MIT © Sandipan Singh](LICENSE)
