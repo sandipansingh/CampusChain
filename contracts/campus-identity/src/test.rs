@@ -94,7 +94,7 @@ fn test_admin_set_role_and_verify() {
     identity_client.register_profile(&merchant, &merchant_name, &merchant_uni_id, &merchant_dept);
 
     // Promote to Merchant
-    identity_client.set_role(&admin, &merchant, &UserRole::Merchant);
+    identity_client.set_role_value(&admin, &merchant, &2);
     // Verify to True
     identity_client.set_verified(&admin, &merchant, &true);
 

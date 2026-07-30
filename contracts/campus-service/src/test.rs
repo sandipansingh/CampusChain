@@ -1,8 +1,8 @@
 #![cfg(test)]
 
 use super::*;
-use campus_token::{CampusToken, CampusTokenClient};
 use campus_identity::{CampusIdentity, CampusIdentityClient};
+use campus_token::{CampusToken, CampusTokenClient};
 use soroban_sdk::{testutils::Address as _, Address, Env, String};
 
 #[test]
@@ -114,6 +114,8 @@ fn test_event_ticketing_workflow() {
     assert_eq!(event.price, 50i128);
     assert_eq!(event.capacity, 100);
     assert_eq!(event.tickets_sold, 0);
+    let events = service_client.list_events(&0u64, &50u32);
+    assert_eq!(events.len(), 1);
 
     // Mint tokens to buyer & approve
     token_client.mint(&buyer, &200i128);
@@ -207,6 +209,8 @@ fn test_marketplace_flow() {
     assert_eq!(listing.seller, seller);
     assert_eq!(listing.price, 200i128);
     assert_eq!(listing.status, 1); // Active
+    let listings = service_client.list_listings(&0u64, &50u32);
+    assert_eq!(listings.len(), 1);
 
     // Mint tokens to buyer & approve service
     token_client.mint(&buyer, &500i128);
@@ -224,6 +228,8 @@ fn test_marketplace_flow() {
     assert_eq!(escrow.seller, seller);
     assert_eq!(escrow.amount, 200i128);
     assert_eq!(escrow.status, 1); // Funded
+    assert_eq!(service_client.get_listing_escrow(&listing_id), Some(1u64));
+    assert_eq!(service_client.list_escrows(&0u64, &50u32).len(), 1);
 
     // Buyer releases escrow
     service_client.release_escrow(&1u64, &buyer);
@@ -273,6 +279,12 @@ fn test_scholarship_flow() {
     assert_eq!(program.amount, 1000i128);
     assert_eq!(program.min_gpa, 380u32);
     assert!(program.active);
+    assert_eq!(
+        service_client
+            .list_scholarship_programs(&0u64, &50u32)
+            .len(),
+        1
+    );
 
     // Student applies
     let app_id = service_client.apply_for_scholarship(&student, &program_id, &390u32);
@@ -281,6 +293,12 @@ fn test_scholarship_flow() {
     assert_eq!(app.applicant, student);
     assert_eq!(app.gpa, 390u32);
     assert_eq!(app.status, 0); // Applied
+    assert_eq!(
+        service_client
+            .list_scholarship_applications(&0u64, &50u32)
+            .len(),
+        1
+    );
 
     // Admin reviews and approves
     service_client.review_scholarship_application(&admin, &app_id, &true);
@@ -335,6 +353,7 @@ fn test_rewards_redemption_flow() {
     let reward = service_client.get_utility_reward(&reward_id);
     assert_eq!(reward.cost_camp, 50i128);
     assert_eq!(reward.stock, 5u32);
+    assert_eq!(service_client.list_utility_rewards(&0u64, &50u32).len(), 1);
 
     // Mint CAMP to student and approve service contract
     token_client.mint(&student, &100i128);
@@ -458,7 +477,10 @@ fn test_identity_contract_integration() {
 
     // Link identity contract to service contract
     service_client.set_identity_contract(&admin, &identity_id);
-    assert_eq!(service_client.identity_contract(), Some(identity_id.clone()));
+    assert_eq!(
+        service_client.identity_contract(),
+        Some(identity_id.clone())
+    );
 
     // 1. Trying to create a listing when seller does not have a profile in identity contract fails
     let result = service_client.try_create_listing(

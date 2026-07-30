@@ -40,7 +40,7 @@
           "function": {
             "contract_fn": {
               "contract_address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAHK3M",
-              "function_name": "set_role",
+              "function_name": "set_role_value",
               "args": [
                 {
                   "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAD2KM"
@@ -668,7 +668,7 @@
                 "bytes": "0000000000000000000000000000000000000000000000000000000000000003"
               },
               {
-                "symbol": "set_role"
+                "symbol": "set_role_value"
               }
             ],
             "data": {
@@ -724,7 +724,7 @@
                 "symbol": "fn_return"
               },
               {
-                "symbol": "set_role"
+                "symbol": "set_role_value"
               }
             ],
             "data": "void"

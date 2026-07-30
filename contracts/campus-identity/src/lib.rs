@@ -37,6 +37,15 @@ pub enum UserRole {
     Admin = 4,
 }
 
+fn user_role_from_u32(role: u32) -> Result<UserRole, Error> {
+    match role {
+        1 => Ok(UserRole::Student),
+        2 => Ok(UserRole::Merchant),
+        4 => Ok(UserRole::Admin),
+        _ => Err(Error::InvalidInput),
+    }
+}
+
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct Profile {
@@ -218,6 +227,22 @@ impl CampusIdentity {
         );
 
         Ok(())
+    }
+
+    /// Assign a role using its stable numeric representation.
+    ///
+    /// Browser SDKs and some CLI versions do not encode Soroban user-defined
+    /// enums consistently.  This endpoint keeps the same authorization and
+    /// validation as `set_role` while providing a portable input shape for
+    /// the frontend and operational tooling.
+    pub fn set_role_value(
+        env: Env,
+        admin: Address,
+        target_address: Address,
+        role: u32,
+    ) -> Result<(), Error> {
+        let role = user_role_from_u32(role)?;
+        Self::set_role(env, admin, target_address, role)
     }
 
     pub fn set_verified(

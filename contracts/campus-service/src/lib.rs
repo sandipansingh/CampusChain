@@ -28,12 +28,12 @@ mod token_wasm {
 mod identity_wasm {
     soroban_sdk::contractimport!(file = "wasm/campus_identity.wasm");
 }
+use identity_wasm::Client as CampusIdentityClient;
+use identity_wasm::UserRole as IdentityUserRole;
 use soroban_sdk::{
     contract, contracterror, contractimpl, contracttype, Address, BytesN, Env, String, Symbol, Vec,
 };
 use token_wasm::Client as CampusTokenClient;
-use identity_wasm::Client as CampusIdentityClient;
-use identity_wasm::UserRole as IdentityUserRole;
 
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
@@ -79,6 +79,7 @@ pub enum DataKey {
     NativeTokenContract,
     ListingCounter,
     Listing(u64),
+    ListingEscrow(u64),
     ScholarshipProgramCounter,
     ScholarshipProgram(u64),
     ScholarshipApplicationCounter,
@@ -388,6 +389,31 @@ impl CampusService {
             .ok_or(Error::EscrowNotFound)
     }
 
+    /// Returns escrows in ascending id order, starting after `start_after`.
+    pub fn list_escrows(env: Env, start_after: u64, limit: u32) -> Vec<EscrowAgreement> {
+        let upper_bound: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::EscrowCounter)
+            .unwrap_or(0);
+        let mut escrows = Vec::new(&env);
+        let max = if limit > 50 { 50 } else { limit };
+        let mut id = start_after;
+        while id < upper_bound && escrows.len() < max {
+            id += 1;
+            let key = DataKey::Escrow(id);
+            if let Some(escrow) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, EscrowAgreement>(&key)
+            {
+                extend_persistent(&env, &key);
+                escrows.push_back(escrow);
+            }
+        }
+        escrows
+    }
+
     pub fn release_escrow(env: Env, id: u64, caller: Address) -> Result<(), Error> {
         let key = DataKey::Escrow(id);
         extend_persistent(&env, &key);
@@ -530,6 +556,32 @@ impl CampusService {
             .persistent()
             .get(&key)
             .ok_or(Error::EventNotFound)
+    }
+
+    /// Returns events in ascending id order, starting after `start_after`.
+    /// The fixed bound keeps contract reads predictable for frontend pagination.
+    pub fn list_events(env: Env, start_after: u64, limit: u32) -> Vec<EventDetails> {
+        let upper_bound: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::EventCounter)
+            .unwrap_or(0);
+        let mut events = Vec::new(&env);
+        let max = if limit > 50 { 50 } else { limit };
+        let mut id = start_after;
+        while id < upper_bound && events.len() < max {
+            id += 1;
+            let key = DataKey::Event(id);
+            if let Some(event) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, EventDetails>(&key)
+            {
+                extend_persistent(&env, &key);
+                events.push_back(event);
+            }
+        }
+        events
     }
 
     pub fn buy_ticket(env: Env, event_id: u64, buyer: Address) -> Result<u64, Error> {
@@ -1200,6 +1252,31 @@ impl CampusService {
             .ok_or(Error::UniversityNotFound) // CustomListingNotFound
     }
 
+    /// Returns listings in ascending id order, starting after `start_after`.
+    pub fn list_listings(env: Env, start_after: u64, limit: u32) -> Vec<MarketplaceListing> {
+        let upper_bound: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::ListingCounter)
+            .unwrap_or(0);
+        let mut listings = Vec::new(&env);
+        let max = if limit > 50 { 50 } else { limit };
+        let mut id = start_after;
+        while id < upper_bound && listings.len() < max {
+            id += 1;
+            let key = DataKey::Listing(id);
+            if let Some(listing) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, MarketplaceListing>(&key)
+            {
+                extend_persistent(&env, &key);
+                listings.push_back(listing);
+            }
+        }
+        listings
+    }
+
     pub fn update_listing(
         env: Env,
         id: u64,
@@ -1266,6 +1343,11 @@ impl CampusService {
                 listing.seller.clone(),
                 listing.price,
             )?;
+            let listing_escrow_key = DataKey::ListingEscrow(id);
+            env.storage()
+                .persistent()
+                .set(&listing_escrow_key, &escrow_id);
+            extend_persistent(&env, &listing_escrow_key);
             listing.status = 2; // Sold
             env.storage().persistent().set(&key, &listing);
 
@@ -1294,6 +1376,13 @@ impl CampusService {
         }
 
         Ok(())
+    }
+
+    /// Returns the escrow created for an escrow-backed listing after it is bought.
+    pub fn get_listing_escrow(env: Env, listing_id: u64) -> Option<u64> {
+        let key = DataKey::ListingEscrow(listing_id);
+        extend_persistent(&env, &key);
+        env.storage().persistent().get(&key)
     }
 
     // --- SCHOLARSHIP OPERATIONS ---
@@ -1367,6 +1456,35 @@ impl CampusService {
             .ok_or(Error::UniversityNotFound)
     }
 
+    /// Returns scholarship programs in ascending id order, starting after `start_after`.
+    pub fn list_scholarship_programs(
+        env: Env,
+        start_after: u64,
+        limit: u32,
+    ) -> Vec<ScholarshipProgram> {
+        let upper_bound: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::ScholarshipProgramCounter)
+            .unwrap_or(0);
+        let mut programs = Vec::new(&env);
+        let max = if limit > 50 { 50 } else { limit };
+        let mut id = start_after;
+        while id < upper_bound && programs.len() < max {
+            id += 1;
+            let key = DataKey::ScholarshipProgram(id);
+            if let Some(program) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, ScholarshipProgram>(&key)
+            {
+                extend_persistent(&env, &key);
+                programs.push_back(program);
+            }
+        }
+        programs
+    }
+
     pub fn apply_for_scholarship(
         env: Env,
         applicant: Address,
@@ -1432,6 +1550,35 @@ impl CampusService {
             .persistent()
             .get(&key)
             .ok_or(Error::UniversityNotFound)
+    }
+
+    /// Returns applications in ascending id order, starting after `start_after`.
+    pub fn list_scholarship_applications(
+        env: Env,
+        start_after: u64,
+        limit: u32,
+    ) -> Vec<ScholarshipApplication> {
+        let upper_bound: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::ScholarshipApplicationCounter)
+            .unwrap_or(0);
+        let mut applications = Vec::new(&env);
+        let max = if limit > 50 { 50 } else { limit };
+        let mut id = start_after;
+        while id < upper_bound && applications.len() < max {
+            id += 1;
+            let key = DataKey::ScholarshipApplication(id);
+            if let Some(application) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, ScholarshipApplication>(&key)
+            {
+                extend_persistent(&env, &key);
+                applications.push_back(application);
+            }
+        }
+        applications
     }
 
     pub fn review_scholarship_application(
@@ -1591,6 +1738,31 @@ impl CampusService {
             .persistent()
             .get(&key)
             .ok_or(Error::UniversityNotFound)
+    }
+
+    /// Returns rewards in ascending id order, starting after `start_after`.
+    pub fn list_utility_rewards(env: Env, start_after: u64, limit: u32) -> Vec<UtilityReward> {
+        let upper_bound: u64 = env
+            .storage()
+            .instance()
+            .get(&DataKey::UtilityRewardCounter)
+            .unwrap_or(0);
+        let mut rewards = Vec::new(&env);
+        let max = if limit > 50 { 50 } else { limit };
+        let mut id = start_after;
+        while id < upper_bound && rewards.len() < max {
+            id += 1;
+            let key = DataKey::UtilityReward(id);
+            if let Some(reward) = env
+                .storage()
+                .persistent()
+                .get::<DataKey, UtilityReward>(&key)
+            {
+                extend_persistent(&env, &key);
+                rewards.push_back(reward);
+            }
+        }
+        rewards
     }
 
     pub fn redeem_reward(env: Env, student: Address, reward_id: u64) -> Result<u64, Error> {
