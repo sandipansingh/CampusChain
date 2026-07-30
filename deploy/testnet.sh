@@ -1,67 +1,36 @@
 #!/usr/bin/env bash
-set -e
+set -euo pipefail
 
 echo "========================================="
-echo " CAMPUSCHAIN - TESTNET DEPLOYMENT SCRIPT"
+echo " CAMPUSCHAIN - TESTNET CONTRACT DEPLOYMENT"
 echo "========================================="
 
 NETWORK="testnet"
-IDENTITY="CAMPUSCHAIN_TESTNET"
+REPO_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+cd "$REPO_ROOT"
 
-# Check if stellar CLI is installed
-if ! command -v stellar &> /dev/null; then
+if [ -z "${CAMPUSCHAIN_ADMIN_KEY:-}" ]; then
+    echo "Usage: CAMPUSCHAIN_ADMIN_KEY=<key-alias-or-secret> NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS=<G...> ./deploy/testnet.sh"
+    exit 1
+fi
+if [ -z "${NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS:-}" ]; then
+    echo "ERROR: NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS must identify the immutable Platform Admin."
+    exit 1
+fi
+if ! command -v stellar >/dev/null 2>&1; then
     echo "ERROR: 'stellar' CLI is not installed."
     exit 1
 fi
 
-# Ensure identity exists, otherwise generate
-if ! stellar keys address "$IDENTITY" &> /dev/null; then
-    echo "Generating new identity: $IDENTITY..."
-    stellar keys generate "$IDENTITY"
-else
-    echo "Using existing identity: $IDENTITY"
+ADMIN_ADDRESS=$(stellar keys address "$CAMPUSCHAIN_ADMIN_KEY")
+if [ "$ADMIN_ADDRESS" != "$NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS" ]; then
+    echo "ERROR: deploy signer does not match NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS."
+    exit 1
 fi
 
-ADMIN_ADDRESS=$(stellar keys address "$IDENTITY")
-echo "Admin Address: $ADMIN_ADDRESS"
+echo "Platform Admin: $ADMIN_ADDRESS"
+echo "Building, deploying, and initializing Identity -> Token -> Service..."
 
-# Add network if not exists
-stellar network add testnet --rpc-url https://soroban-testnet.stellar.org \
-    --network-passphrase "Test SDF Network ; September 2015" &> /dev/null || true
-
-echo "Funding identity on Testnet..."
-stellar keys fund "$IDENTITY" --network "$NETWORK" || true
-
-echo "Building contracts..."
-stellar contract build
-
-echo "Deploying CampusIdentity..."
-IDENTITY_CONTRACT_ID=$(stellar contract deploy \
-    --wasm target/wasm32v1-none/release/campus_identity.wasm \
-    --source "$IDENTITY" \
-    --network "$NETWORK")
-echo "Deployed CampusIdentity: $IDENTITY_CONTRACT_ID"
-
-echo "Deploying CampusToken..."
-TOKEN_CONTRACT_ID=$(stellar contract deploy \
-    --wasm target/wasm32v1-none/release/campus_token.wasm \
-    --source "$IDENTITY" \
-    --network "$NETWORK")
-echo "Deployed CampusToken: $TOKEN_CONTRACT_ID"
-
-echo "Deploying CampusService..."
-SERVICE_CONTRACT_ID=$(stellar contract deploy \
-    --wasm target/wasm32v1-none/release/campus_service.wasm \
-    --source "$IDENTITY" \
-    --network "$NETWORK")
-echo "Deployed CampusService: $SERVICE_CONTRACT_ID"
-
-echo "========================================="
-echo "DEPLOYMENT COMPLETE"
-echo "CampusIdentity ID: $IDENTITY_CONTRACT_ID"
-echo "CampusToken ID: $TOKEN_CONTRACT_ID"
-echo "CampusService ID: $SERVICE_CONTRACT_ID"
-echo "========================================="
-
-echo "To initialize and wire contracts, run:"
-echo "./deploy/init.sh $TOKEN_CONTRACT_ID $SERVICE_CONTRACT_ID $IDENTITY_CONTRACT_ID $IDENTITY $NETWORK"
+# scripts/deploy.sh is the canonical testnet pipeline. It builds imported WASM
+# interfaces in dependency order and initializes every immutable contract link.
+exec ./scripts/deploy.sh
