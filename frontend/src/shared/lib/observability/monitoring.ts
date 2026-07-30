@@ -25,7 +25,7 @@
 
 import { logger } from "./logger";
 
-// ── Transaction lifecycle monitor ──────────────────────────────────────────
+// Transaction lifecycle monitor
 
 export interface TxLifecycleContext {
   /** The contract method being called, e.g. "transfer", "buy_item" */
@@ -80,7 +80,7 @@ export const txMonitor = {
   },
 };
 
-// ── Contract event monitor ─────────────────────────────────────────────────
+// Contract event monitor
 
 export interface EventMonitorContext {
   /** Decoded event name, e.g. "transfer", "escrow_released" */
