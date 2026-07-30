@@ -11,7 +11,7 @@ import {
 } from "@/shared/stellar/client";
 import { signTx } from "@/features/wallet/service/wallet";
 import { MenuItem, FoodOrder, FoodOrderStatus } from "./types";
-import { scValToNative } from "@stellar/stellar-sdk";
+import { scValToNative, nativeToScVal } from "@stellar/stellar-sdk";
 
 export async function fetchMenuItem(itemId: number, address?: string): Promise<MenuItem | null> {
   try {
@@ -205,7 +205,7 @@ export async function executePublishMenuItem(
       stringToScVal(name),
       stringToScVal(description),
       i128ToScVal(priceRaw),
-      available,
+      nativeToScVal(available),
     ],
     merchant,
     signTx
@@ -230,7 +230,7 @@ export async function executeUpdateMenuItem(
       stringToScVal(name),
       stringToScVal(description),
       i128ToScVal(priceRaw),
-      available,
+      nativeToScVal(available),
     ],
     merchant,
     signTx
