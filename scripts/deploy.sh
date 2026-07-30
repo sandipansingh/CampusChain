@@ -247,22 +247,22 @@ fi
 
 # ── Update documentation files automatically ──
 echo "Updating documentation files (README.md & DEPLOYMENT.md)..."
-python3 scripts/update_docs.py \
-    --identity-id "$IDENTITY_CONTRACT_ID" \
-    --token-id "$TOKEN_CONTRACT_ID" \
-    --service-id "$SERVICE_CONTRACT_ID" \
-    --admin-address "$ADMIN_ADDRESS" \
-    --identity-wasm "$IDENTITY_WASM_HASH" \
-    --token-wasm "$TOKEN_WASM_HASH" \
-    --service-wasm "$SERVICE_WASM_HASH" \
-    --identity-install-tx "$IDENTITY_INSTALL_TX" \
-    --identity-deploy-tx "$IDENTITY_DEPLOY_TX" \
-    --identity-init-tx "$IDENTITY_INIT_TX" \
-    --token-install-tx "$TOKEN_INSTALL_TX" \
-    --token-deploy-tx "$TOKEN_DEPLOY_TX" \
-    --token-init-tx "$TOKEN_INIT_TX" \
-    --service-install-tx "$SERVICE_INSTALL_TX" \
-    --service-deploy-tx "$SERVICE_DEPLOY_TX" \
-    --service-init-tx "$SERVICE_INIT_TX"
+./scripts/update_docs.sh \
+    "$IDENTITY_CONTRACT_ID" \
+    "$TOKEN_CONTRACT_ID" \
+    "$SERVICE_CONTRACT_ID" \
+    "$ADMIN_ADDRESS" \
+    "$IDENTITY_WASM_HASH" \
+    "$TOKEN_WASM_HASH" \
+    "$SERVICE_WASM_HASH" \
+    "$IDENTITY_INSTALL_TX" \
+    "$IDENTITY_DEPLOY_TX" \
+    "$IDENTITY_INIT_TX" \
+    "$TOKEN_INSTALL_TX" \
+    "$TOKEN_DEPLOY_TX" \
+    "$TOKEN_INIT_TX" \
+    "$SERVICE_INSTALL_TX" \
+    "$SERVICE_DEPLOY_TX" \
+    "$SERVICE_INIT_TX"
 
 echo "Documentation update completed."
