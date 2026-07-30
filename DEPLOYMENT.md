@@ -114,20 +114,37 @@ This is the current active deployment state updated by the deploy script:
 
 ---
 
-## 6. Upgrading a Contract
+## 6. Upgrading or Redeploying on Code Changes
 
-`CampusToken` and `CampusService` contracts can be upgraded in-place without changing their contract IDs:
+When you make changes to the smart contract Rust code, you have two options to deploy those changes:
+
+### Approach A: Fresh Redeployment (New Contract IDs)
+If you want to start with a completely fresh database state, or if your changes broke storage layout compatibility (which makes upgrades impossible), perform a fresh redeployment.
+
+Simply run the deployment script again:
+```bash
+CAMPUSCHAIN_ADMIN_KEY=campuschain-admin ./deploy/testnet.sh
+```
+**What this does automatically:**
+- Compiles the updated Rust contracts.
+- Deploys brand new contract instances (generating new contract IDs).
+- Re-runs the initialization sequence.
+- Updates all environment configuration files (`.env`, `frontend/.env.local`) and documentation with the new addresses and transaction hashes.
+
+---
+
+### Approach B: In-Place Upgrade (Preserving State & Contract IDs)
+If you want to update contract logic while keeping the same contract addresses and preserving existing on-chain user state, perform an in-place upgrade (supported by `CampusToken` and `CampusService`).
 
 1. **Build updated WASM targets**:
    ```bash
    cargo build --target wasm32-unknown-unknown --release
    ```
-2. **Install the new WASM on Testnet**:
+2. **Install the new WASM on Testnet** (this registers the new code and returns a Wasm Hash):
    ```bash
    stellar contract install --wasm target/wasm32-unknown-unknown/release/campus_token.wasm --source campuschain-admin --network testnet
    ```
-   *This outputs the new 32-byte Wasm Hash.*
-3. **Execute the upgrade**:
+3. **Execute the upgrade** (invokes the `upgrade` method on-chain to point the existing contract ID to the new WASM code):
    ```bash
    ./deploy/upgrade.sh <CONTRACT_ID> <NEW_WASM_PATH> campuschain-admin testnet
    ```
