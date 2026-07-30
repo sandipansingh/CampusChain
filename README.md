@@ -436,6 +436,8 @@ CampusChain includes a comprehensive Canteen Canteen/Food Ordering system integr
 
 ## 6. Local Development Setup
 
+For a comprehensive guide covering local standalone node deployments, repeatable testnet pipelines, and contract upgrades, please see [DEPLOYMENT.md](DEPLOYMENT.md).
+
 ### Prerequisites
 
 | Tool | Version | Install |
@@ -721,12 +723,7 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 ---
 
-## 11. Demo & Evaluation Accounts
-
-To evaluate the full university-scoped onboarding, verification, and commerce flows, please refer to [DEMO_ACCOUNTS.md](DEMO_ACCOUNTS.md). It outlines pre-funded testnet accounts for NIT and IITM campuses across all five roles:
-- **Platform Admin**: Super-admin console for reviewing university registry claims.
-- **University Admin**: Profile dashboards for Nit (Aarav Shah) and IITM (Priya Nair) to approve/reject onboarding requests.
-- **Student, Merchant & Event Organizer Profiles**: Pre-created and verified accounts to test immediate payments, canteens, canteens checkout, and ticket redemptions.
+## 11. Resources & Links
 
 | Resource | Link |
 |---|---|
