@@ -16,6 +16,9 @@ use soroban_sdk::{
 };
 use token_wasm::Client as CampusTokenClient;
 
+#[cfg(test)]
+mod test;
+
 #[contracterror]
 #[derive(Copy, Clone, Debug, Eq, PartialEq, PartialOrd, Ord)]
 #[repr(u32)]

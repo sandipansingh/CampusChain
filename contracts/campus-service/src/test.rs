@@ -1,540 +1,386 @@
-#![cfg(test)]
-
 use super::*;
-use campus_identity::{CampusIdentity, CampusIdentityClient};
+use campus_identity::{
+    CampusIdentity, CampusIdentityClient, EventOrganizerDetails, MerchantCategory, MerchantDetails,
+    ProfileDetails, StudentDetails, UserRole,
+};
 use campus_token::{CampusToken, CampusTokenClient};
-use soroban_sdk::{testutils::Address as _, Address, Env, String};
+use soroban_sdk::{testutils::Address as _, Address, BytesN, Env, String};
 
-#[test]
-fn test_escrow_workflow() {
-    let env = Env::default();
+fn text(env: &Env, value: &str) -> String {
+    String::from_str(env, value)
+}
+
+fn student_details(env: &Env) -> ProfileDetails {
+    ProfileDetails::Student(StudentDetails {
+        student_identifier_hash: BytesN::from_array(env, &[9; 32]),
+        department: text(env, "Engineering"),
+        program: text(env, "Computer Science"),
+        graduation_year: 2027,
+    })
+}
+
+fn merchant_details(env: &Env, category: MerchantCategory) -> ProfileDetails {
+    ProfileDetails::Merchant(MerchantDetails {
+        business_name: text(env, "Campus Merchant"),
+        category,
+        business_description: text(env, "Campus goods"),
+    })
+}
+
+fn organizer_details(env: &Env) -> ProfileDetails {
+    ProfileDetails::EventOrganizer(EventOrganizerDetails {
+        organization_name: text(env, "Campus Events"),
+        organization_description: text(env, "Events for students"),
+    })
+}
+
+struct Contracts<'a> {
+    identity: CampusIdentityClient<'a>,
+    token: CampusTokenClient<'a>,
+    service: CampusServiceClient<'a>,
+    platform_admin: Address,
+}
+
+fn deployed(env: &Env) -> Contracts<'_> {
     env.mock_all_auths();
+    let platform_admin = Address::generate(env);
+    let identity_id = env.register_contract(None, CampusIdentity);
+    let identity = CampusIdentityClient::new(env, &identity_id);
+    identity.initialize(&platform_admin, &text(env, "Campus Platform"));
 
-    let admin = Address::generate(&env);
-    let buyer = Address::generate(&env);
-    let seller = Address::generate(&env);
-
-    // Register token contract
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    // Register service contract
+    // Token initialization needs the service address, so reserve it before both
+    // immutable contract links are initialized.
     let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
+    let token_id = env.register_contract(None, CampusToken);
+    let token = CampusTokenClient::new(env, &token_id);
+    token.initialize(
+        &platform_admin,
+        &identity_id,
+        &service_id,
+        &7,
+        &text(env, "Campus Token"),
+        &text(env, "CAMP"),
+    );
+    let service = CampusServiceClient::new(env, &service_id);
+    service.initialize(
+        &platform_admin,
+        &token_id,
+        &identity_id,
+        &Address::generate(env),
+    );
+    Contracts {
+        identity,
+        token,
+        service,
+        platform_admin,
+    }
+}
 
-    // Mint tokens to buyer
-    token_client.mint(&buyer, &1000i128);
+fn claim_and_approve(contracts: &Contracts<'_>, env: &Env, university_admin: &Address, code: &str) {
+    contracts.identity.register_university(
+        university_admin,
+        &text(env, code),
+        &text(env, "Example University"),
+        &text(env, "1 University Avenue"),
+        &text(env, "Registrar"),
+    );
+    contracts
+        .identity
+        .approve_university(&contracts.platform_admin, &text(env, code));
+}
 
-    // Buyer approves service contract to spend tokens
-    token_client.approve(&buyer, &service_id, &500i128, &1000);
-
-    // Create Escrow (locks 300 tokens in service contract)
-    let escrow_id = service_client.create_escrow(&buyer, &seller, &300i128);
-    assert_eq!(token_client.balance(&buyer), 700i128);
-    assert_eq!(token_client.balance(&service_id), 300i128);
-
-    let escrow = service_client.get_escrow(&escrow_id);
-    assert_eq!(escrow.buyer, buyer);
-    assert_eq!(escrow.seller, seller);
-    assert_eq!(escrow.amount, 300i128);
-    assert_eq!(escrow.status, 1); // Funded
-
-    // Release Escrow (buyer releases to seller)
-    service_client.release_escrow(&escrow_id, &buyer);
-    assert_eq!(token_client.balance(&service_id), 0i128);
-    assert_eq!(token_client.balance(&seller), 300i128);
-
-    let escrow_after = service_client.get_escrow(&escrow_id);
-    assert_eq!(escrow_after.status, 2); // Completed
+fn register_and_verify(
+    contracts: &Contracts<'_>,
+    env: &Env,
+    university_admin: &Address,
+    address: &Address,
+    code: &str,
+    role: UserRole,
+    details: ProfileDetails,
+) {
+    contracts.identity.register_profile(
+        address,
+        &text(env, "Campus User"),
+        &text(env, code),
+        &role,
+        &details,
+    );
+    contracts.identity.verify_profile(university_admin, address);
 }
 
 #[test]
-fn test_escrow_refund_workflow() {
+fn pending_profiles_are_blocked_from_marketplace_actions() {
     let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let buyer = Address::generate(&env);
-    let seller = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
-
-    token_client.mint(&buyer, &1000i128);
-    token_client.approve(&buyer, &service_id, &500i128, &1000);
-
-    let escrow_id = service_client.create_escrow(&buyer, &seller, &300i128);
-
-    // Seller refunds back to buyer
-    service_client.refund_escrow(&escrow_id, &seller);
-    assert_eq!(token_client.balance(&service_id), 0i128);
-    assert_eq!(token_client.balance(&buyer), 1000i128);
-
-    let escrow = service_client.get_escrow(&escrow_id);
-    assert_eq!(escrow.status, 3); // Refunded
-}
-
-#[test]
-fn test_event_ticketing_workflow() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let host = Address::generate(&env);
-    let buyer = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
-
-    // Set host role to Club (3)
-    token_client.set_role(&admin, &host, &3);
-
-    // Create Event
-    let event_id = service_client.create_event(&host, &50i128, &100u32);
-    let event = service_client.get_event(&event_id);
-    assert_eq!(event.host, host);
-    assert_eq!(event.price, 50i128);
-    assert_eq!(event.capacity, 100);
-    assert_eq!(event.tickets_sold, 0);
-    let events = service_client.list_events(&0u64, &50u32);
-    assert_eq!(events.len(), 1);
-
-    // Mint tokens to buyer & approve
-    token_client.mint(&buyer, &200i128);
-    token_client.approve(&buyer, &service_id, &100i128, &1000);
-
-    // Buy Ticket
-    let ticket_id = service_client.buy_ticket(&event_id, &buyer);
-    let ticket = service_client.get_ticket(&ticket_id);
-    assert_eq!(ticket.event_id, event_id);
-    assert_eq!(ticket.owner, buyer);
-    assert_eq!(ticket.redeemed, false);
-
-    assert_eq!(token_client.balance(&buyer), 150i128);
-    assert_eq!(token_client.balance(&host), 50i128);
-
-    let event_after = service_client.get_event(&event_id);
-    assert_eq!(event_after.tickets_sold, 1);
-
-    // Redeem Ticket
-    service_client.redeem_ticket(&ticket_id, &host);
-    let ticket_after = service_client.get_ticket(&ticket_id);
-    assert_eq!(ticket_after.redeemed, true);
-}
-
-#[test]
-fn test_buy_camp_tokens() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let buyer = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
-
-    assert_eq!(token_client.balance(&buyer), 0i128);
-
-    // Buy 5 XLM worth of CAMP (1 XLM = 100 CAMP => 500 CAMP)
-    let xlm_stroops = 5i128 * 10i128.pow(7); // 5 XLM in stroops
-    let expected_camp = xlm_stroops * 100; // 500 CAMP in stroops
-
-    service_client.buy_camp_tokens(&buyer, &xlm_stroops);
-
-    assert_eq!(token_client.balance(&buyer), expected_camp);
-
-    // Verify below minimum fails
-    let too_small = 1i128; // way below 1 XLM minimum
-    let result = service_client.try_buy_camp_tokens(&buyer, &too_small);
-    assert!(result.is_err());
-}
-
-#[test]
-fn test_marketplace_flow() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let buyer = Address::generate(&env);
-    let seller = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
-
-    // Register service contract in token
-    token_client.set_service_contract(&admin, &service_id);
-
-    // Set roles: buyer is Student (1), seller is Merchant (2)
-    token_client.set_role(&admin, &buyer, &1);
-    token_client.set_role(&admin, &seller, &2);
-
-    // Seller creates listing
-    let title = String::from_str(&env, "Textbook");
-    let desc = String::from_str(&env, "Used college textbook");
-    let listing_id = service_client.create_listing(&seller, &title, &desc, &200i128, &1u32, &true);
-
-    let listing = service_client.get_listing(&listing_id);
-    assert_eq!(listing.seller, seller);
-    assert_eq!(listing.price, 200i128);
-    assert_eq!(listing.status, 1); // Active
-    let listings = service_client.list_listings(&0u64, &50u32);
-    assert_eq!(listings.len(), 1);
-
-    // Mint tokens to buyer & approve service
-    token_client.mint(&buyer, &500i128);
-    token_client.approve(&buyer, &service_id, &200i128, &1000);
-
-    // Buy Listing (locks funds in escrow)
-    service_client.buy_listing(&listing_id, &buyer);
-
-    let listing_after = service_client.get_listing(&listing_id);
-    assert_eq!(listing_after.status, 2); // Sold
-
-    // Verify escrow was created (escrow counter should be 1)
-    let escrow = service_client.get_escrow(&1u64);
-    assert_eq!(escrow.buyer, buyer);
-    assert_eq!(escrow.seller, seller);
-    assert_eq!(escrow.amount, 200i128);
-    assert_eq!(escrow.status, 1); // Funded
-    assert_eq!(service_client.get_listing_escrow(&listing_id), Some(1u64));
-    assert_eq!(service_client.list_escrows(&0u64, &50u32).len(), 1);
-
-    // Buyer releases escrow
-    service_client.release_escrow(&1u64, &buyer);
-    assert_eq!(token_client.balance(&seller), 200i128);
-
-    let escrow_after = service_client.get_escrow(&1u64);
-    assert_eq!(escrow_after.status, 2); // Completed
-}
-
-#[test]
-fn test_scholarship_flow() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let student = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
-
-    token_client.set_service_contract(&admin, &service_id);
-
-    // Set roles
-    token_client.set_role(&admin, &student, &1); // Student
-    token_client.set_role(&admin, &admin, &4); // Admin
-
-    // Mint CAMP to admin and approve service contract
-    token_client.mint(&admin, &2000i128);
-    token_client.approve(&admin, &service_id, &1000i128, &1000);
-
-    // Create scholarship program
-    let program_id = service_client.create_scholarship_program(
-        &admin,
-        &String::from_str(&env, "GPA Scholarship"),
-        &1000i128,
-        &380u32, // min GPA 3.8
+    let contracts = deployed(&env);
+    let university_admin = Address::generate(&env);
+    let pending_student = Address::generate(&env);
+    claim_and_approve(&contracts, &env, &university_admin, "UNI-A");
+    contracts.identity.register_profile(
+        &pending_student,
+        &text(&env, "Pending Student"),
+        &text(&env, "UNI-A"),
+        &UserRole::Student,
+        &student_details(&env),
     );
 
-    let program = service_client.get_scholarship_program(&program_id);
-    assert_eq!(program.amount, 1000i128);
-    assert_eq!(program.min_gpa, 380u32);
-    assert!(program.active);
-    assert_eq!(
-        service_client
-            .list_scholarship_programs(&0u64, &50u32)
-            .len(),
-        1
-    );
-
-    // Student applies
-    let app_id = service_client.apply_for_scholarship(&student, &program_id, &390u32);
-
-    let app = service_client.get_scholarship_application(&app_id);
-    assert_eq!(app.applicant, student);
-    assert_eq!(app.gpa, 390u32);
-    assert_eq!(app.status, 0); // Applied
-    assert_eq!(
-        service_client
-            .list_scholarship_applications(&0u64, &50u32)
-            .len(),
-        1
-    );
-
-    // Admin reviews and approves
-    service_client.review_scholarship_application(&admin, &app_id, &true);
-    let app_after = service_client.get_scholarship_application(&app_id);
-    assert_eq!(app_after.status, 2); // Approved
-
-    // Admin disburses
-    service_client.disburse_scholarship(&admin, &app_id);
-    assert_eq!(token_client.balance(&student), 1000i128);
-
-    let app_final = service_client.get_scholarship_application(&app_id);
-    assert_eq!(app_final.status, 4); // Disbursed
-
-    let program_final = service_client.get_scholarship_program(&program_id);
-    assert!(!program_final.active); // Program finished
+    assert!(contracts
+        .service
+        .try_create_listing(
+            &pending_student,
+            &text(&env, "Pending listing"),
+            &text(&env, "Must not be listed"),
+            &10i128,
+            &1u32,
+            &false,
+        )
+        .is_err());
 }
 
 #[test]
-fn test_rewards_redemption_flow() {
+fn verified_student_and_merchant_can_both_create_marketplace_listings() {
     let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
+    let contracts = deployed(&env);
+    let university_admin = Address::generate(&env);
     let student = Address::generate(&env);
     let merchant = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
-
-    token_client.set_service_contract(&admin, &service_id);
-
-    // Set roles
-    token_client.set_role(&admin, &student, &1); // Student
-    token_client.set_role(&admin, &merchant, &2); // Merchant
-    token_client.set_role(&admin, &admin, &4); // Admin
-
-    // Create utility reward item
-    let reward_id = service_client.create_utility_reward(
-        &admin,
-        &String::from_str(&env, "Cafeteria Voucher"),
-        &50i128,
-        &5u32, // stock 5
-    );
-
-    let reward = service_client.get_utility_reward(&reward_id);
-    assert_eq!(reward.cost_camp, 50i128);
-    assert_eq!(reward.stock, 5u32);
-    assert_eq!(service_client.list_utility_rewards(&0u64, &50u32).len(), 1);
-
-    // Mint CAMP to student and approve service contract
-    token_client.mint(&student, &100i128);
-    token_client.approve(&student, &service_id, &50i128, &1000);
-
-    // Student redeems reward
-    let red_id = service_client.redeem_reward(&student, &reward_id);
-
-    // Check balances (student paid 50 CAMP, which got burned)
-    assert_eq!(token_client.balance(&student), 50i128);
-    assert_eq!(token_client.total_supply(), 50i128); // 100 - 50 = 50 (burned)
-
-    let reward_after = service_client.get_utility_reward(&reward_id);
-    assert_eq!(reward_after.stock, 4u32);
-
-    let redemption = service_client.get_redemption(&red_id);
-    assert_eq!(redemption.student, student);
-    assert_eq!(redemption.status, 1); // Redeemed
-
-    // Merchant fulfills redemption
-    service_client.fulfill_redemption(&merchant, &red_id);
-
-    let redemption_after = service_client.get_redemption(&red_id);
-    assert_eq!(redemption_after.status, 2); // Fulfilled
-}
-
-#[test]
-fn test_access_control_and_invalid_transitions() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let student = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
-
-    token_client.set_service_contract(&admin, &service_id);
-
-    token_client.set_role(&admin, &student, &1);
-    token_client.set_role(&admin, &admin, &4);
-
-    // 1. Non-admin trying to create scholarship program (fails)
-    let result = service_client.try_create_scholarship_program(
+    claim_and_approve(&contracts, &env, &university_admin, "UNI-A");
+    register_and_verify(
+        &contracts,
+        &env,
+        &university_admin,
         &student,
-        &String::from_str(&env, "Hackathon Grant"),
-        &1000i128,
-        &380u32,
+        "UNI-A",
+        UserRole::Student,
+        student_details(&env),
     );
-    assert!(result.is_err());
-
-    // Setup program
-    token_client.mint(&admin, &1000i128);
-    token_client.approve(&admin, &service_id, &1000i128, &1000);
-    let program_id = service_client.create_scholarship_program(
-        &admin,
-        &String::from_str(&env, "Hackathon Grant"),
-        &1000i128,
-        &380u32,
+    register_and_verify(
+        &contracts,
+        &env,
+        &university_admin,
+        &merchant,
+        "UNI-A",
+        UserRole::Merchant,
+        merchant_details(&env, MerchantCategory::Retail),
     );
 
-    // 2. Student with GPA below minimum trying to apply (fails)
-    let result = service_client.try_apply_for_scholarship(&student, &program_id, &370u32);
-    assert!(result.is_err());
-
-    // 3. Unauthorized caller tries to call mint_purchase directly on CampusToken (fails)
-    let result = token_client.try_mint_purchase(&admin, &student, &100i128);
-    assert!(result.is_err());
-
-    // 4. Double release of escrow fails
-    let buyer = Address::generate(&env);
-    let seller = Address::generate(&env);
-    token_client.mint(&buyer, &500i128);
-    token_client.approve(&buyer, &service_id, &500i128, &1000);
-
-    let escrow_id = service_client.create_escrow(&buyer, &seller, &300i128);
-    service_client.release_escrow(&escrow_id, &buyer);
-
-    // Second release attempt should fail
-    let result_second = service_client.try_release_escrow(&escrow_id, &buyer);
-    assert!(result_second.is_err());
-}
-
-#[test]
-fn test_identity_contract_integration() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let student = Address::generate(&env);
-    let seller = Address::generate(&env);
-
-    // Register token contract
-    let token_id = env.register_contract(None, CampusToken);
-    let token_client = CampusTokenClient::new(&env, &token_id);
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    token_client.initialize(&admin, &name, &symbol, &7);
-
-    // Register identity contract
-    let identity_id = env.register_contract(None, CampusIdentity);
-    let identity_client = CampusIdentityClient::new(&env, &identity_id);
-    identity_client.initialize(
-        &admin,
-        &String::from_str(&env, "Admin User"),
-        &String::from_str(&env, "123"),
-        &String::from_str(&env, "Administration"),
+    let student_listing = contracts.service.create_listing(
+        &student,
+        &text(&env, "Used textbook"),
+        &text(&env, "Personal item"),
+        &10i128,
+        &1u32,
+        &false,
     );
-
-    // Register service contract
-    let service_id = env.register_contract(None, CampusService);
-    let service_client = CampusServiceClient::new(&env, &service_id);
-    service_client.initialize(&admin, &token_id);
-
-    // Link identity contract to service contract
-    service_client.set_identity_contract(&admin, &identity_id);
+    let merchant_listing = contracts.service.create_listing(
+        &merchant,
+        &text(&env, "New notebook"),
+        &text(&env, "Shop inventory"),
+        &15i128,
+        &1u32,
+        &false,
+    );
     assert_eq!(
-        service_client.identity_contract(),
-        Some(identity_id.clone())
+        contracts.service.get_listing(&student_listing).seller,
+        student
+    );
+    assert_eq!(
+        contracts.service.get_listing(&merchant_listing).seller,
+        merchant
+    );
+}
+
+#[test]
+fn university_boundaries_block_cross_campus_actions_and_allow_same_campus_actions() {
+    let env = Env::default();
+    let contracts = deployed(&env);
+    let admin_a = Address::generate(&env);
+    let admin_b = Address::generate(&env);
+    let student_a = Address::generate(&env);
+    let student_b = Address::generate(&env);
+    let retail_merchant_a = Address::generate(&env);
+    let food_merchant_a = Address::generate(&env);
+    let organizer_a = Address::generate(&env);
+    claim_and_approve(&contracts, &env, &admin_a, "UNI-A");
+    claim_and_approve(&contracts, &env, &admin_b, "UNI-B");
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_a,
+        &student_a,
+        "UNI-A",
+        UserRole::Student,
+        student_details(&env),
+    );
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_b,
+        &student_b,
+        "UNI-B",
+        UserRole::Student,
+        student_details(&env),
+    );
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_a,
+        &retail_merchant_a,
+        "UNI-A",
+        UserRole::Merchant,
+        merchant_details(&env, MerchantCategory::Retail),
+    );
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_a,
+        &food_merchant_a,
+        "UNI-A",
+        UserRole::Merchant,
+        merchant_details(&env, MerchantCategory::FoodCanteen),
+    );
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_a,
+        &organizer_a,
+        "UNI-A",
+        UserRole::EventOrganizer,
+        organizer_details(&env),
     );
 
-    // 1. Trying to create a listing when seller does not have a profile in identity contract fails
-    let result = service_client.try_create_listing(
-        &seller,
-        &String::from_str(&env, "Textbook"),
-        &String::from_str(&env, "Math 101"),
-        &50i128,
+    let listing_id = contracts.service.create_listing(
+        &retail_merchant_a,
+        &text(&env, "Calculator"),
+        &text(&env, "Campus shop stock"),
+        &25i128,
         &1u32,
         &false,
     );
-    assert!(result.is_err());
+    assert!(contracts
+        .service
+        .try_buy_listing(&listing_id, &student_b)
+        .is_err());
 
-    // Register profiles in Identity contract
-    identity_client.register_profile(
-        &seller,
-        &String::from_str(&env, "Bob Merchant"),
-        &String::from_str(&env, "456"),
-        &String::from_str(&env, "Business"),
+    assert!(contracts
+        .service
+        .try_pay_camp(&student_b, &retail_merchant_a, &1i128)
+        .is_err());
+    contracts.token.mint(&student_a, &100i128);
+    contracts
+        .token
+        .approve(&student_a, &contracts.service.address, &100i128, &1000u32);
+    contracts
+        .service
+        .pay_camp(&student_a, &retail_merchant_a, &10i128);
+    contracts.service.buy_listing(&listing_id, &student_a);
+    assert_eq!(contracts.service.get_listing(&listing_id).status, 2);
+
+    let event_id = contracts.service.create_event(&organizer_a, &0i128, &10u32);
+    assert!(contracts
+        .service
+        .try_buy_ticket(&event_id, &student_b)
+        .is_err());
+    let ticket_id = contracts.service.buy_ticket(&event_id, &student_a);
+    assert_eq!(contracts.service.get_ticket(&ticket_id).owner, student_a);
+
+    let menu_item_id = contracts.service.publish_menu_item(
+        &food_merchant_a,
+        &text(&env, "Lunch"),
+        &text(&env, "Daily canteen meal"),
+        &20i128,
+        &true,
     );
-    identity_client.register_profile(
+    assert!(contracts
+        .service
+        .try_place_order(&student_b, &menu_item_id, &1u32)
+        .is_err());
+}
+
+#[test]
+fn food_ordering_enforces_ownership_cancellation_and_sequential_transitions() {
+    let env = Env::default();
+    let contracts = deployed(&env);
+    let university_admin = Address::generate(&env);
+    let student = Address::generate(&env);
+    let food_merchant = Address::generate(&env);
+    let other_merchant = Address::generate(&env);
+    claim_and_approve(&contracts, &env, &university_admin, "UNI-A");
+    register_and_verify(
+        &contracts,
+        &env,
+        &university_admin,
         &student,
-        &String::from_str(&env, "Alice Student"),
-        &String::from_str(&env, "789"),
-        &String::from_str(&env, "Engineering"),
+        "UNI-A",
+        UserRole::Student,
+        student_details(&env),
+    );
+    register_and_verify(
+        &contracts,
+        &env,
+        &university_admin,
+        &food_merchant,
+        "UNI-A",
+        UserRole::Merchant,
+        merchant_details(&env, MerchantCategory::FoodCanteen),
+    );
+    register_and_verify(
+        &contracts,
+        &env,
+        &university_admin,
+        &other_merchant,
+        "UNI-A",
+        UserRole::Merchant,
+        merchant_details(&env, MerchantCategory::FoodCanteen),
+    );
+    contracts.token.mint(&student, &200i128);
+    contracts
+        .token
+        .approve(&student, &contracts.service.address, &200i128, &1000u32);
+    let menu_item_id = contracts.service.publish_menu_item(
+        &food_merchant,
+        &text(&env, "Canteen lunch"),
+        &text(&env, "Fresh meal"),
+        &20i128,
+        &true,
     );
 
-    // Now Bobs' listing creation succeeds
-    let listing_id = service_client.create_listing(
-        &seller,
-        &String::from_str(&env, "Textbook"),
-        &String::from_str(&env, "Math 101"),
-        &50i128,
-        &1u32,
-        &false,
+    let cancelled_order = contracts
+        .service
+        .place_order(&student, &menu_item_id, &1u32);
+    contracts.service.cancel_order(&student, &cancelled_order);
+    assert_eq!(
+        contracts.service.get_food_order(&cancelled_order).status,
+        FoodOrderStatus::Cancelled
     );
-    assert_eq!(listing_id, 1);
 
-    // 2. Scholarship application: fails if student profile is not verified
-    token_client.mint(&admin, &1000i128);
-    token_client.approve(&admin, &service_id, &1000i128, &1000);
-
-    let program_id = service_client.create_scholarship_program(
-        &admin,
-        &String::from_str(&env, "Engineering Grant"),
-        &500i128,
-        &350u32,
+    let order_id = contracts
+        .service
+        .place_order(&student, &menu_item_id, &1u32);
+    assert!(contracts
+        .service
+        .try_update_order_status(&food_merchant, &order_id, &FoodOrderStatus::Completed)
+        .is_err());
+    assert!(contracts
+        .service
+        .try_update_order_status(&other_merchant, &order_id, &FoodOrderStatus::Preparing)
+        .is_err());
+    contracts
+        .service
+        .update_order_status(&food_merchant, &order_id, &FoodOrderStatus::Preparing);
+    assert!(contracts
+        .service
+        .try_cancel_order(&student, &order_id)
+        .is_err());
+    contracts.service.update_order_status(
+        &food_merchant,
+        &order_id,
+        &FoodOrderStatus::ReadyForPickup,
     );
-    let app_result = service_client.try_apply_for_scholarship(&student, &program_id, &380u32);
-    assert!(app_result.is_err()); // fails because student is not verified yet
-
-    // Admin verifies the student profile
-    identity_client.set_verified(&admin, &student, &true);
-
-    // Now application succeeds
-    let app_id = service_client.apply_for_scholarship(&student, &program_id, &380u32);
-    assert_eq!(app_id, 1);
+    contracts
+        .service
+        .update_order_status(&food_merchant, &order_id, &FoodOrderStatus::Completed);
+    assert_eq!(
+        contracts.service.get_food_order(&order_id).status,
+        FoodOrderStatus::Completed
+    );
 }
