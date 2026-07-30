@@ -65,6 +65,11 @@ export function Dropdown<T>({ options, value, onChange, label, className }: Drop
               key={String(opt.value)}
               role="option"
               aria-selected={opt.value === value}
+              onMouseDown={(e) => {
+                e.preventDefault();
+                onChange(opt.value);
+                setIsOpen(false);
+              }}
               onClick={() => {
                 onChange(opt.value);
                 setIsOpen(false);
