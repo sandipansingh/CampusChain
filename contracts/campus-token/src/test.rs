@@ -1,213 +1,185 @@
 #![cfg(test)]
 
 use super::*;
-use soroban_sdk::{testutils::Address as _, Address, Env, String};
+use campus_identity::{
+    CampusIdentity, CampusIdentityClient, ProfileDetails, StudentDetails, UserRole,
+};
+use soroban_sdk::{testutils::Address as _, Address, BytesN, Env, String};
+
+fn text(env: &Env, value: &str) -> String {
+    String::from_str(env, value)
+}
+
+fn student_details(env: &Env, hash_val: u8) -> ProfileDetails {
+    ProfileDetails::Student(StudentDetails {
+        student_identifier_hash: BytesN::from_array(env, &[hash_val; 32]),
+        department: text(env, "Engineering"),
+        program: text(env, "Computer Science"),
+        graduation_year: 2027,
+    })
+}
+
+struct TestContext<'a> {
+    identity: CampusIdentityClient<'a>,
+    token: CampusTokenClient<'a>,
+    platform_admin: Address,
+    service: Address,
+}
+
+fn setup_test_context(env: &Env) -> TestContext<'_> {
+    env.mock_all_auths();
+    let platform_admin = Address::generate(env);
+    let service = Address::generate(env);
+
+    // Register and initialize Identity
+    let identity_id = env.register_contract(None, CampusIdentity);
+    let identity = CampusIdentityClient::new(env, &identity_id);
+    identity.initialize(&platform_admin, &text(env, "Campus Platform"));
+
+    // Register and initialize Token
+    let token_id = env.register_contract(None, CampusToken);
+    let token = CampusTokenClient::new(env, &token_id);
+    token.initialize(
+        &platform_admin,
+        &identity_id,
+        &service,
+        &7u32,
+        &text(env, "CampusToken"),
+        &text(env, "CAMP"),
+    );
+
+    TestContext {
+        identity,
+        token,
+        platform_admin,
+        service,
+    }
+}
+
+fn onboard_student(
+    ctx: &TestContext<'_>,
+    env: &Env,
+    student: &Address,
+    univ_admin: &Address,
+    code: &str,
+    hash_val: u8,
+) {
+    // Register university if not already
+    let univ_code = text(env, code);
+    if ctx.identity.try_get_university(&univ_code).is_err() {
+        ctx.identity.register_university(
+            univ_admin,
+            &univ_code,
+            &text(env, "Test University"),
+            &text(env, "123 Campus Rd"),
+            &text(env, "Registrar"),
+        );
+        ctx.identity.approve_university(&ctx.platform_admin, &univ_code);
+    }
+
+    // Register and verify student
+    ctx.identity.register_profile(
+        student,
+        &text(env, "Test Student"),
+        &univ_code,
+        &UserRole::Student,
+        &student_details(env, hash_val),
+    );
+    ctx.identity.verify_profile(univ_admin, student);
+}
 
 #[test]
 fn test_initialize_and_metadata() {
     let env = Env::default();
-    env.mock_all_auths();
+    let ctx = setup_test_context(&env);
 
-    let admin = Address::generate(&env);
-    let token_id = env.register_contract(None, CampusToken);
-    let client = CampusTokenClient::new(&env, &token_id);
-
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-
-    client.initialize(&admin, &name, &symbol, &7);
-
-    assert_eq!(client.admin(), admin);
-    assert_eq!(client.name(), name);
-    assert_eq!(client.symbol(), symbol);
-    assert_eq!(client.decimals(), 7);
-    assert_eq!(client.total_supply(), 0);
+    assert_eq!(ctx.token.platform_admin(), ctx.platform_admin);
+    assert_eq!(ctx.token.name(), text(&env, "CampusToken"));
+    assert_eq!(ctx.token.symbol(), text(&env, "CAMP"));
+    assert_eq!(ctx.token.decimals(), 7u32);
+    assert_eq!(ctx.token.total_supply(), 0i128);
 }
 
 #[test]
-fn test_mint_and_burn() {
+fn test_mint_burn_faucet() {
     let env = Env::default();
-    env.mock_all_auths();
+    let ctx = setup_test_context(&env);
+    let univ_admin = Address::generate(&env);
+    let student = Address::generate(&env);
 
-    let admin = Address::generate(&env);
-    let user = Address::generate(&env);
+    onboard_student(&ctx, &env, &student, &univ_admin, "UNI-A", 1);
 
-    let token_id = env.register_contract(None, CampusToken);
-    let client = CampusTokenClient::new(&env, &token_id);
+    // Faucet claim
+    ctx.token.faucet(&student);
+    assert_eq!(ctx.token.balance(&student), 100_000_0000i128);
+    assert_eq!(ctx.token.total_supply(), 100_000_0000i128);
 
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    client.initialize(&admin, &name, &symbol, &7);
+    // Faucet can only be claimed once
+    assert!(ctx.token.try_faucet(&student).is_err());
 
-    // Mint tokens
-    client.mint(&user, &1000i128);
-    assert_eq!(client.balance(&user), 1000i128);
-    assert_eq!(client.total_supply(), 1000i128);
+    // Mint by platform admin
+    ctx.token.mint(&student, &50_000_0000i128);
+    assert_eq!(ctx.token.balance(&student), 150_000_0000i128);
 
-    // Burn tokens
-    client.burn(&user, &400i128);
-    assert_eq!(client.balance(&user), 600i128);
-    assert_eq!(client.total_supply(), 600i128);
+    // Burn
+    ctx.token.burn(&student, &30_000_0000i128);
+    assert_eq!(ctx.token.balance(&student), 120_000_0000i128);
 }
 
 #[test]
-fn test_transfer_and_allowance() {
+fn test_transfer_and_allowances() {
     let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let user1 = Address::generate(&env);
-    let user2 = Address::generate(&env);
+    let ctx = setup_test_context(&env);
+    let admin_a = Address::generate(&env);
+    let student_a = Address::generate(&env);
+    let admin_b = Address::generate(&env);
+    let student_b = Address::generate(&env);
     let spender = Address::generate(&env);
 
-    let token_id = env.register_contract(None, CampusToken);
-    let client = CampusTokenClient::new(&env, &token_id);
+    onboard_student(&ctx, &env, &student_a, &admin_a, "UNI-A", 1);
+    onboard_student(&ctx, &env, &student_b, &admin_b, "UNI-B", 2);
 
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    client.initialize(&admin, &name, &symbol, &7);
+    ctx.token.mint(&student_a, &1000i128);
 
-    client.mint(&user1, &1000i128);
+    // Direct Transfer (cross-university peer-to-peer should succeed!)
+    ctx.token.transfer(&student_a, &student_b, &300i128);
+    assert_eq!(ctx.token.balance(&student_a), 700i128);
+    assert_eq!(ctx.token.balance(&student_b), 300i128);
 
-    // Direct Transfer
-    client.transfer(&user1, &user2, &300i128);
-    assert_eq!(client.balance(&user1), 700i128);
-    assert_eq!(client.balance(&user2), 300i128);
+    // Spender flow
+    // Spender must also be an active profile (in some role, let's onboard spender as a student at UNI-A)
+    onboard_student(&ctx, &env, &spender, &admin_a, "UNI-A", 3);
 
-    // Approval and Spender Transfer
-    client.approve(&user1, &spender, &200i128, &1000);
-    assert_eq!(client.allowance(&user1, &spender), 200i128);
+    ctx.token.approve(&student_a, &spender, &200i128, &1000u32);
+    assert_eq!(ctx.token.allowance(&student_a, &spender), 200i128);
 
-    client.transfer_from(&spender, &user1, &user2, &150i128);
-    assert_eq!(client.balance(&user1), 550i128);
-    assert_eq!(client.balance(&user2), 450i128);
-    assert_eq!(client.allowance(&user1, &spender), 50i128);
+    ctx.token.transfer_from(&spender, &student_a, &student_b, &150i128);
+    assert_eq!(ctx.token.balance(&student_a), 550i128);
+    assert_eq!(ctx.token.balance(&student_b), 450i128);
+    assert_eq!(ctx.token.allowance(&student_a, &spender), 50i128);
 }
 
 #[test]
-fn test_rbac_roles() {
+fn test_unverified_transfer_fails() {
     let env = Env::default();
-    env.mock_all_auths();
+    let ctx = setup_test_context(&env);
+    let admin_a = Address::generate(&env);
+    let student_a = Address::generate(&env);
+    let unverified_student = Address::generate(&env);
 
-    let admin = Address::generate(&env);
-    let user = Address::generate(&env);
+    onboard_student(&ctx, &env, &student_a, &admin_a, "UNI-A", 1);
 
-    let token_id = env.register_contract(None, CampusToken);
-    let client = CampusTokenClient::new(&env, &token_id);
+    // Unverified student tries to register profile but doesn't get verified
+    ctx.identity.register_profile(
+        &unverified_student,
+        &text(&env, "Unverified Student"),
+        &text(&env, "UNI-A"),
+        &UserRole::Student,
+        &student_details(&env, 2),
+    );
 
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    client.initialize(&admin, &name, &symbol, &7);
+    ctx.token.mint(&student_a, &1000i128);
 
-    // Default role should be Guest (0)
-    assert_eq!(client.get_role(&user), 0);
-
-    // Admin sets user to Student (1)
-    client.set_role(&admin, &user, &1);
-    assert_eq!(client.get_role(&user), 1);
-
-    // User can self-assign Student (1)
-    client.set_role(&user, &user, &1);
-    assert_eq!(client.get_role(&user), 1);
-
-    // Admin sets user to Merchant (2)
-    client.set_role(&admin, &user, &2);
-    assert_eq!(client.get_role(&user), 2);
-
-    // Non-admin cannot set role >= 2
-    let result = client.try_set_role(&user, &user, &3);
-    assert!(result.is_err());
-}
-
-#[test]
-fn test_role_change_request_flow() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let user = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let client = CampusTokenClient::new(&env, &token_id);
-
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    client.initialize(&admin, &name, &symbol, &7);
-
-    // Guest (0) requests Merchant (2)
-    let req_id = client.request_role_change(&user, &2);
-    assert!(req_id > 0);
-
-    let req = client.get_role_request(&req_id);
-    assert_eq!(req.applicant, user);
-    assert_eq!(req.requested_role, 2);
-    assert_eq!(req.status, 0);
-
-    // Cannot request role < 2
-    assert!(client.try_request_role_change(&user, &1).is_err());
-
-    // Admin approves
-    client.approve_role_change(&req_id, &admin);
-    assert_eq!(client.get_role(&user), 2);
-
-    let req_after = client.get_role_request(&req_id);
-    assert_eq!(req_after.status, 1);
-}
-
-#[test]
-fn test_role_change_request_deny() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let user = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let client = CampusTokenClient::new(&env, &token_id);
-
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    client.initialize(&admin, &name, &symbol, &7);
-
-    // User requests Club (3) — but they're Guest (0)
-    let req_id = client.request_role_change(&user, &3);
-
-    // Admin denies
-    client.deny_role_change(&req_id, &admin);
-    assert_eq!(client.get_role(&user), 0); // role unchanged
-
-    let req = client.get_role_request(&req_id);
-    assert_eq!(req.status, 2);
-}
-
-#[test]
-fn test_faucet_claim_and_has_claimed() {
-    let env = Env::default();
-    env.mock_all_auths();
-
-    let admin = Address::generate(&env);
-    let user = Address::generate(&env);
-
-    let token_id = env.register_contract(None, CampusToken);
-    let client = CampusTokenClient::new(&env, &token_id);
-
-    let name = String::from_str(&env, "Campus Token");
-    let symbol = String::from_str(&env, "CAMP");
-    client.initialize(&admin, &name, &symbol, &7);
-
-    // Before claim: has_claimed should be false, balance 0
-    assert!(!client.has_claimed_faucet(&user));
-    assert_eq!(client.balance(&user), 0i128);
-
-    // Claim 100 CAMP (100 * 10^7 stroops)
-    let amount = 100 * 10i128.pow(7);
-    client.faucet(&user, &amount);
-    assert_eq!(client.balance(&user), amount);
-
-    // After claim: has_claimed should be true
-    assert!(client.has_claimed_faucet(&user));
-
-    // Double claim should fail with AlreadyClaimed error
-    let result = client.try_faucet(&user, &amount);
-    assert!(result.is_err());
+    // Transfer to unverified should fail
+    assert!(ctx.token.try_transfer(&student_a, &unverified_student, &100i128).is_err());
 }

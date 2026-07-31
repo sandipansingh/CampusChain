@@ -3,6 +3,9 @@
 //! CAMP token. Identity is the sole role authority; this contract only keeps
 //! balances and refuses CAMP movement outside a verified university boundary.
 
+#[cfg(test)]
+mod test;
+
 mod identity_wasm {
     soroban_sdk::contractimport!(file = "../campus-service/wasm/campus_identity.wasm");
 }
@@ -119,11 +122,7 @@ fn assert_transfer_scope(env: &Env, from: &Address, to: &Address) -> Result<(), 
             Err(Error::IdentityCheckFailed)
         };
     }
-    let client = identity_client(env)?;
-    if matches!(
-        client.try_assert_active_same_university(from, to),
-        Ok(Ok(()))
-    ) {
+    if is_active_profile(env, from) && is_active_profile(env, to) {
         Ok(())
     } else {
         Err(Error::IdentityCheckFailed)
