@@ -1,3 +1,17 @@
+/* eslint-disable @typescript-eslint/no-explicit-any */
+import {
+  readContract,
+  invokeContractMethod,
+  addressToScVal,
+  i128ToScVal,
+  u32ToScVal,
+  u64ToScVal,
+  stringToScVal,
+  NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+} from "@/shared/stellar/client";
+import { nativeToScVal } from "@stellar/stellar-sdk";
+import { executeApprove } from "@/features/wallet/service/campusToken";
+
 export interface Scholarship {
   id: number;
   title: string;
@@ -8,7 +22,7 @@ export interface Scholarship {
   slots: number;
   createdByUniversityId: string;
   adminApprovalStatus: "pending" | "approved" | "rejected";
-  createdAt: string;
+  createdAt: number;
 }
 
 export interface ScholarshipApplication {
@@ -16,90 +30,128 @@ export interface ScholarshipApplication {
   scholarshipId: number;
   studentId: string;
   status: "pending" | "approved" | "rejected";
-  appliedAt: string;
-  decidedAt?: string;
-  decidedByUniversityId?: string;
+  appliedAt: number;
+  decidedAt: number;
+  decidedBy: string;
 }
 
-const DEFAULT_SCHOLARSHIPS: Scholarship[] = [
-  {
-    id: 1,
-    title: "Stellar Developer Initiative",
-    description: "For students demonstrating exceptional promise in building decentralized applications on Soroban and Stellar.",
-    criteria: "Minimum GPA 3.5, completed at least one blockchain workshop, submitted one repository link.",
-    amount: 1500,
-    deadline: "2026-12-31",
-    slots: 5,
-    createdByUniversityId: "GDLYWFB7IOMPWZTFYPTQZND4VCKUDEBXRDHL3DBQHRNV2GVILMNZXRAC",
-    adminApprovalStatus: "approved",
-    createdAt: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-  {
-    id: 2,
-    title: "President's Excellence Scholarship",
-    description: "Awarded to the top academic performers in computer science and engineering majors.",
-    criteria: "Minimum GPA 3.9, enrolled in final year of undergraduate study.",
-    amount: 3000,
-    deadline: "2026-11-15",
-    slots: 2,
-    createdByUniversityId: "GDLYWFB7IOMPWZTFYPTQZND4VCKUDEBXRDHL3DBQHRNV2GVILMNZXRAC",
-    adminApprovalStatus: "pending",
-    createdAt: new Date(Date.now() - 2 * 24 * 60 * 60 * 1000).toISOString(),
-  },
-];
-
-const DEFAULT_APPLICATIONS: ScholarshipApplication[] = [];
-
-const isServer = typeof window === "undefined";
-
-function getScholarships(): Scholarship[] {
-  if (isServer) return DEFAULT_SCHOLARSHIPS;
-  const stored = localStorage.getItem("campuschain_scholarships");
-  if (!stored) {
-    localStorage.setItem("campuschain_scholarships", JSON.stringify(DEFAULT_SCHOLARSHIPS));
-    return DEFAULT_SCHOLARSHIPS;
+function parseStatus(statusVal: any): "pending" | "approved" | "rejected" {
+  if (!statusVal) return "pending";
+  if (typeof statusVal === "string") {
+    const val = statusVal.toLowerCase();
+    if (val === "pending" || val === "approved" || val === "rejected") {
+      return val as any;
+    }
   }
-  return JSON.parse(stored);
-}
-
-function saveScholarships(list: Scholarship[]) {
-  if (isServer) return;
-  localStorage.setItem("campuschain_scholarships", JSON.stringify(list));
-}
-
-function getApplications(): ScholarshipApplication[] {
-  if (isServer) return DEFAULT_APPLICATIONS;
-  const stored = localStorage.getItem("campuschain_applications");
-  if (!stored) {
-    localStorage.setItem("campuschain_applications", JSON.stringify(DEFAULT_APPLICATIONS));
-    return DEFAULT_APPLICATIONS;
+  if (typeof statusVal === "object" && statusVal.name) {
+    const val = String(statusVal.name).toLowerCase();
+    if (val === "pending" || val === "approved" || val === "rejected") {
+      return val as any;
+    }
   }
-  return JSON.parse(stored);
+  return "pending";
 }
 
-function saveApplications(list: ScholarshipApplication[]) {
-  if (isServer) return;
-  localStorage.setItem("campuschain_applications", JSON.stringify(list));
+export async function fetchScholarshipProgram(id: number, address?: string): Promise<Scholarship | null> {
+  try {
+    const item: any = await readContract(
+      NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+      "get_scholarship",
+      [u64ToScVal(id)],
+      address
+    );
+    if (!item) return null;
+    return {
+      id: Number(item.id),
+      title: String(item.title || ""),
+      description: String(item.description || ""),
+      criteria: String(item.criteria || ""),
+      amount: Number(item.amount) / 10_000_000,
+      deadline: String(item.deadline || ""),
+      slots: Number(item.slots),
+      createdByUniversityId: String(item.created_by || ""),
+      adminApprovalStatus: parseStatus(item.admin_approval_status),
+      createdAt: Number(item.created_at) * 1000,
+    };
+  } catch (err) {
+    console.error("fetchScholarshipProgram failed", err);
+    return null;
+  }
 }
 
-export async function fetchScholarshipProgram(id: number): Promise<Scholarship | null> {
-  await new Promise((r) => setTimeout(r, 200));
-  return getScholarships().find((s) => s.id === id) || null;
+export async function fetchScholarshipPrograms(address?: string): Promise<Scholarship[]> {
+  try {
+    const list = await readContract(
+      NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+      "get_scholarships",
+      [],
+      address
+    );
+    if (!Array.isArray(list)) return [];
+    return list.map((item: any) => ({
+      id: Number(item.id),
+      title: String(item.title || ""),
+      description: String(item.description || ""),
+      criteria: String(item.criteria || ""),
+      amount: Number(item.amount) / 10_000_000,
+      deadline: String(item.deadline || ""),
+      slots: Number(item.slots),
+      createdByUniversityId: String(item.created_by || ""),
+      adminApprovalStatus: parseStatus(item.admin_approval_status),
+      createdAt: Number(item.created_at) * 1000,
+    }));
+  } catch (err) {
+    console.error("fetchScholarshipPrograms failed", err);
+    return [];
+  }
 }
 
-export async function fetchScholarshipPrograms(): Promise<Scholarship[]> {
-  await new Promise((r) => setTimeout(r, 200));
-  return getScholarships();
+export async function fetchScholarshipApplications(address?: string): Promise<ScholarshipApplication[]> {
+  try {
+    const list = await readContract(
+      NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+      "get_scholarship_applications",
+      [],
+      address
+    );
+    if (!Array.isArray(list)) return [];
+    return list.map((item: any) => ({
+      id: Number(item.id),
+      scholarshipId: Number(item.scholarship_id),
+      studentId: String(item.student || ""),
+      status: parseStatus(item.status),
+      appliedAt: Number(item.applied_at) * 1000,
+      decidedAt: Number(item.decided_at) * 1000,
+      decidedBy: String(item.decided_by || ""),
+    }));
+  } catch (err) {
+    console.error("fetchScholarshipApplications failed", err);
+    return [];
+  }
 }
 
-export async function fetchScholarshipApplications(): Promise<ScholarshipApplication[]> {
-  await new Promise((r) => setTimeout(r, 200));
-  return getApplications();
-}
-
-export async function fetchScholarshipApplication(id: number): Promise<ScholarshipApplication | null> {
-  await new Promise((r) => setTimeout(r, 200));
-  return getApplications().find((a) => a.id === id) || null;
+export async function fetchScholarshipApplication(id: number, address?: string): Promise<ScholarshipApplication | null> {
+  try {
+    const item: any = await readContract(
+      NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+      "get_scholarship_application",
+      [u64ToScVal(id)],
+      address
+    );
+    if (!item) return null;
+    return {
+      id: Number(item.id),
+      scholarshipId: Number(item.scholarship_id),
+      studentId: String(item.student || ""),
+      status: parseStatus(item.status),
+      appliedAt: Number(item.applied_at) * 1000,
+      decidedAt: Number(item.decided_at) * 1000,
+      decidedBy: String(item.decided_by || ""),
+    };
+  } catch (err) {
+    console.error("fetchScholarshipApplication failed", err);
+    return null;
+  }
 }
 
 export async function executeCreateScholarshipProgram(
@@ -110,76 +162,80 @@ export async function executeCreateScholarshipProgram(
   amount: number,
   deadline: string,
   slots: number
-): Promise<number> {
-  await new Promise((r) => setTimeout(r, 300));
-  const list = getScholarships();
-  const id = list.length > 0 ? Math.max(...list.map((s) => s.id)) + 1 : 1;
-  const newProg: Scholarship = {
-    id,
-    title,
-    description,
-    criteria,
-    amount,
-    deadline,
-    slots,
-    createdByUniversityId: universityId,
-    adminApprovalStatus: "pending",
-    createdAt: new Date().toISOString(),
-  };
-  list.push(newProg);
-  saveScholarships(list);
-  return id;
+): Promise<string> {
+  const totalAmount = amount * slots;
+  // Step 1: Approve service contract to withdraw funds
+  await executeApprove(universityId, NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, totalAmount);
+
+  // Step 2: Invoke create_scholarship
+  const rawAmount = BigInt(Math.round(amount * 10_000_000));
+  const { signTx } = await import("@/features/wallet/service/wallet");
+
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "create_scholarship",
+    [
+      addressToScVal(universityId),
+      stringToScVal(title),
+      stringToScVal(description),
+      stringToScVal(criteria),
+      i128ToScVal(rawAmount),
+      stringToScVal(deadline),
+      u32ToScVal(slots),
+    ],
+    universityId,
+    signTx
+  );
 }
 
-export async function executeAdminReviewScholarship(
-  _adminId: string,
-  scholarshipId: number,
-  approved: boolean
-): Promise<void> {
-  await new Promise((r) => setTimeout(r, 300));
-  const list = getScholarships();
-  const idx = list.findIndex((s) => s.id === scholarshipId);
-  if (idx !== -1) {
-    list[idx].adminApprovalStatus = approved ? "approved" : "rejected";
-    saveScholarships(list);
-  }
-}
-
-export async function executeApplyForScholarship(
-  studentId: string,
-  scholarshipId: number
-): Promise<number> {
-  await new Promise((r) => setTimeout(r, 300));
-  const list = getApplications();
-  const existing = list.find((a) => a.scholarshipId === scholarshipId && a.studentId === studentId);
-  if (existing) {
-    throw new Error("You have already applied for this scholarship.");
-  }
-  const id = list.length > 0 ? Math.max(...list.map((a) => a.id)) + 1 : 1;
-  const newApp: ScholarshipApplication = {
-    id,
-    scholarshipId,
+export async function executeApplyForScholarship(studentId: string, scholarshipId: number): Promise<string> {
+  const { signTx } = await import("@/features/wallet/service/wallet");
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "apply_scholarship",
+    [
+      addressToScVal(studentId),
+      u64ToScVal(scholarshipId),
+    ],
     studentId,
-    status: "pending",
-    appliedAt: new Date().toISOString(),
-  };
-  list.push(newApp);
-  saveApplications(list);
-  return id;
+    signTx
+  );
 }
 
 export async function executeReviewScholarshipApplication(
   universityId: string,
   applicationId: number,
   approved: boolean
-): Promise<void> {
-  await new Promise((r) => setTimeout(r, 300));
-  const list = getApplications();
-  const idx = list.findIndex((a) => a.id === applicationId);
-  if (idx !== -1) {
-    list[idx].status = approved ? "approved" : "rejected";
-    list[idx].decidedAt = new Date().toISOString();
-    list[idx].decidedByUniversityId = universityId;
-    saveApplications(list);
-  }
+): Promise<string> {
+  const { signTx } = await import("@/features/wallet/service/wallet");
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "decide_application",
+    [
+      addressToScVal(universityId),
+      u64ToScVal(applicationId),
+      nativeToScVal(approved),
+    ],
+    universityId,
+    signTx
+  );
+}
+
+export async function executeAdminReviewScholarship(
+  adminId: string,
+  scholarshipId: number,
+  approved: boolean
+): Promise<string> {
+  const { signTx } = await import("@/features/wallet/service/wallet");
+  const method = approved ? "admin_approve_scholarship" : "admin_reject_scholarship";
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    method,
+    [
+      addressToScVal(adminId),
+      u64ToScVal(scholarshipId),
+    ],
+    adminId,
+    signTx
+  );
 }
