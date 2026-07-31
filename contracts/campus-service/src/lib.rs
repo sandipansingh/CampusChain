@@ -275,6 +275,17 @@ fn assert_active_role(env: &Env, address: &Address, role: IdentityUserRole) -> R
     }
 }
 
+fn assert_active_profile(env: &Env, address: &Address) -> Result<(), Error> {
+    if matches!(
+        identity_client(env)?.try_assert_active_profile(address),
+        Ok(Ok(_))
+    ) {
+        Ok(())
+    } else {
+        Err(Error::IdentityCheckFailed)
+    }
+}
+
 fn assert_active_any_lister(env: &Env, address: &Address) -> Result<(), Error> {
     let student = assert_active_role(env, address, IdentityUserRole::Student).is_ok();
     let merchant = assert_active_role(env, address, IdentityUserRole::Merchant).is_ok();
@@ -422,13 +433,31 @@ impl CampusService {
         Ok(id)
     }
 
-    pub fn get_escrow(env: Env, id: u64) -> Result<EscrowAgreement, Error> {
+    pub fn get_escrow(env: Env, id: u64, caller: Address) -> Result<EscrowAgreement, Error> {
+        caller.require_auth();
         let key = DataKey::Escrow(id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+        let escrow: EscrowAgreement = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let caller_code = active_code(&env, &caller)?;
+            if caller_code != escrow.university_code {
+                return Err(Error::Unauthorized);
+            }
+        }
+        Ok(escrow)
     }
 
-    pub fn list_escrows(env: Env, start_after: u64, limit: u32) -> Vec<EscrowAgreement> {
+    pub fn list_escrows(env: Env, caller: Address, start_after: u64, limit: u32) -> Result<Vec<EscrowAgreement>, Error> {
+        caller.require_auth();
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        let caller_code = if caller != platform_admin {
+            Some(active_code(&env, &caller)?)
+        } else {
+            None
+        };
+
         let upper = env
             .storage()
             .instance()
@@ -438,11 +467,17 @@ impl CampusService {
         let mut id = start_after;
         while id < upper && records.len() < limit.min(50) {
             id += 1;
-            if let Some(record) = env.storage().persistent().get(&DataKey::Escrow(id)) {
-                records.push_back(record);
+            if let Some(record) = env.storage().persistent().get::<DataKey, EscrowAgreement>(&DataKey::Escrow(id)) {
+                if let Some(ref code) = caller_code {
+                    if record.university_code == *code {
+                        records.push_back(record);
+                    }
+                } else {
+                    records.push_back(record);
+                }
             }
         }
-        records
+        Ok(records)
     }
 
     pub fn release_escrow(env: Env, id: u64, caller: Address) -> Result<(), Error> {
@@ -518,13 +553,31 @@ impl CampusService {
         Ok(id)
     }
 
-    pub fn get_event(env: Env, id: u64) -> Result<EventDetails, Error> {
+    pub fn get_event(env: Env, id: u64, caller: Address) -> Result<EventDetails, Error> {
+        caller.require_auth();
         let key = DataKey::Event(id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+        let event: EventDetails = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let caller_code = active_code(&env, &caller)?;
+            if caller_code != event.university_code {
+                return Err(Error::Unauthorized);
+            }
+        }
+        Ok(event)
     }
 
-    pub fn list_events(env: Env, start_after: u64, limit: u32) -> Vec<EventDetails> {
+    pub fn list_events(env: Env, caller: Address, start_after: u64, limit: u32) -> Result<Vec<EventDetails>, Error> {
+        caller.require_auth();
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        let caller_code = if caller != platform_admin {
+            Some(active_code(&env, &caller)?)
+        } else {
+            None
+        };
+
         let upper = env
             .storage()
             .instance()
@@ -534,11 +587,17 @@ impl CampusService {
         let mut id = start_after;
         while id < upper && records.len() < limit.min(50) {
             id += 1;
-            if let Some(record) = env.storage().persistent().get(&DataKey::Event(id)) {
-                records.push_back(record);
+            if let Some(record) = env.storage().persistent().get::<DataKey, EventDetails>(&DataKey::Event(id)) {
+                if let Some(ref code) = caller_code {
+                    if record.university_code == *code {
+                        records.push_back(record);
+                    }
+                } else {
+                    records.push_back(record);
+                }
             }
         }
-        records
+        Ok(records)
     }
 
     pub fn buy_ticket(env: Env, event_id: u64, buyer: Address) -> Result<u64, Error> {
@@ -579,10 +638,20 @@ impl CampusService {
         Ok(id)
     }
 
-    pub fn get_ticket(env: Env, id: u64) -> Result<TicketDetails, Error> {
+    pub fn get_ticket(env: Env, id: u64, caller: Address) -> Result<TicketDetails, Error> {
+        caller.require_auth();
         let key = DataKey::Ticket(id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+        let ticket: TicketDetails = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let caller_code = active_code(&env, &caller)?;
+            if caller_code != ticket.university_code {
+                return Err(Error::Unauthorized);
+            }
+        }
+        Ok(ticket)
     }
 
     pub fn redeem_ticket(env: Env, ticket_id: u64, host: Address) -> Result<(), Error> {
@@ -652,13 +721,31 @@ impl CampusService {
         Ok(id)
     }
 
-    pub fn get_listing(env: Env, id: u64) -> Result<MarketplaceListing, Error> {
+    pub fn get_listing(env: Env, id: u64, caller: Address) -> Result<MarketplaceListing, Error> {
+        caller.require_auth();
         let key = DataKey::Listing(id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+        let listing: MarketplaceListing = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let caller_code = active_code(&env, &caller)?;
+            if caller_code != listing.university_code {
+                return Err(Error::Unauthorized);
+            }
+        }
+        Ok(listing)
     }
 
-    pub fn list_listings(env: Env, start_after: u64, limit: u32) -> Vec<MarketplaceListing> {
+    pub fn list_listings(env: Env, caller: Address, start_after: u64, limit: u32) -> Result<Vec<MarketplaceListing>, Error> {
+        caller.require_auth();
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        let caller_code = if caller != platform_admin {
+            Some(active_code(&env, &caller)?)
+        } else {
+            None
+        };
+
         let upper = env
             .storage()
             .instance()
@@ -668,11 +755,17 @@ impl CampusService {
         let mut id = start_after;
         while id < upper && records.len() < limit.min(50) {
             id += 1;
-            if let Some(record) = env.storage().persistent().get(&DataKey::Listing(id)) {
-                records.push_back(record);
+            if let Some(record) = env.storage().persistent().get::<DataKey, MarketplaceListing>(&DataKey::Listing(id)) {
+                if let Some(ref code) = caller_code {
+                    if record.university_code == *code {
+                        records.push_back(record);
+                    }
+                } else {
+                    records.push_back(record);
+                }
             }
         }
-        records
+        Ok(records)
     }
 
     pub fn update_listing(
@@ -743,10 +836,20 @@ impl CampusService {
         Ok(())
     }
 
-    pub fn get_listing_escrow(env: Env, listing_id: u64) -> Option<u64> {
+    pub fn get_listing_escrow(env: Env, listing_id: u64, caller: Address) -> Result<Option<u64>, Error> {
+        caller.require_auth();
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let listing_key = DataKey::Listing(listing_id);
+            let listing: MarketplaceListing = env.storage().persistent().get(&listing_key).ok_or(Error::NotFound)?;
+            let caller_code = active_code(&env, &caller)?;
+            if caller_code != listing.university_code {
+                return Err(Error::Unauthorized);
+            }
+        }
         let key = DataKey::ListingEscrow(listing_id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key)
+        Ok(env.storage().persistent().get(&key))
     }
 
     // --- Payments ---
@@ -761,7 +864,8 @@ impl CampusService {
         if amount <= 0 {
             return Err(Error::InvalidAmount);
         }
-        assert_same_university(&env, &sender, &recipient)?;
+        assert_active_profile(&env, &sender)?;
+        assert_active_profile(&env, &recipient)?;
         token_client(&env)?.transfer_from(
             &env.current_contract_address(),
             &sender,
@@ -781,7 +885,8 @@ impl CampusService {
         if amount <= 0 {
             return Err(Error::InvalidAmount);
         }
-        assert_same_university(&env, &sender, &recipient)?;
+        assert_active_profile(&env, &sender)?;
+        assert_active_profile(&env, &recipient)?;
         let native = get_address(&env, DataKey::NativeTokenContract)?;
         soroban_sdk::token::Client::new(&env, &native).transfer_from(
             &env.current_contract_address(),
@@ -962,6 +1067,7 @@ impl CampusService {
         approved: bool,
     ) -> Result<(), Error> {
         university.require_auth();
+        assert_active_role(&env, &university, IdentityUserRole::UniversityAdmin)?;
         
         let app_key = DataKey::ScholarshipApplication(application_id);
         let mut application: ScholarshipApplication = env.storage().persistent().get(&app_key).ok_or(Error::NotFound)?;
@@ -1004,7 +1110,15 @@ impl CampusService {
         Ok(())
     }
 
-    pub fn get_scholarships(env: Env) -> Vec<Scholarship> {
+    pub fn get_scholarships(env: Env, caller: Address) -> Result<Vec<Scholarship>, Error> {
+        caller.require_auth();
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        let caller_code = if caller != platform_admin {
+            Some(active_code(&env, &caller)?)
+        } else {
+            None
+        };
+
         let upper = env
             .storage()
             .instance()
@@ -1014,20 +1128,47 @@ impl CampusService {
         let mut id = 0u64;
         while id < upper {
             id += 1;
-            if let Some(record) = env.storage().persistent().get(&DataKey::ScholarshipKey(id)) {
-                records.push_back(record);
+            if let Some(record) = env.storage().persistent().get::<DataKey, Scholarship>(&DataKey::ScholarshipKey(id)) {
+                if let Some(ref code) = caller_code {
+                    if let Ok(scholarship_univ) = active_code(&env, &record.created_by) {
+                        if scholarship_univ == *code {
+                            records.push_back(record);
+                        }
+                    }
+                } else {
+                    records.push_back(record);
+                }
             }
         }
-        records
+        Ok(records)
     }
 
-    pub fn get_scholarship(env: Env, id: u64) -> Result<Scholarship, Error> {
+    pub fn get_scholarship(env: Env, id: u64, caller: Address) -> Result<Scholarship, Error> {
+        caller.require_auth();
         let key = DataKey::ScholarshipKey(id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+        let scholarship: Scholarship = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let caller_code = active_code(&env, &caller)?;
+            let scholarship_univ = active_code(&env, &scholarship.created_by)?;
+            if caller_code != scholarship_univ {
+                return Err(Error::Unauthorized);
+            }
+        }
+        Ok(scholarship)
     }
 
-    pub fn get_scholarship_applications(env: Env) -> Vec<ScholarshipApplication> {
+    pub fn get_scholarship_applications(env: Env, caller: Address) -> Result<Vec<ScholarshipApplication>, Error> {
+        caller.require_auth();
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        let caller_code = if caller != platform_admin {
+            Some(active_code(&env, &caller)?)
+        } else {
+            None
+        };
+
         let upper = env
             .storage()
             .instance()
@@ -1037,17 +1178,36 @@ impl CampusService {
         let mut id = 0u64;
         while id < upper {
             id += 1;
-            if let Some(record) = env.storage().persistent().get(&DataKey::ScholarshipApplication(id)) {
-                records.push_back(record);
+            if let Some(record) = env.storage().persistent().get::<DataKey, ScholarshipApplication>(&DataKey::ScholarshipApplication(id)) {
+                if let Some(ref code) = caller_code {
+                    if let Ok(student_univ) = active_code(&env, &record.student) {
+                        if student_univ == *code {
+                            records.push_back(record);
+                        }
+                    }
+                } else {
+                    records.push_back(record);
+                }
             }
         }
-        records
+        Ok(records)
     }
 
-    pub fn get_scholarship_application(env: Env, id: u64) -> Result<ScholarshipApplication, Error> {
+    pub fn get_scholarship_application(env: Env, id: u64, caller: Address) -> Result<ScholarshipApplication, Error> {
+        caller.require_auth();
         let key = DataKey::ScholarshipApplication(id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+        let application: ScholarshipApplication = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let caller_code = active_code(&env, &caller)?;
+            let student_univ = active_code(&env, &application.student)?;
+            if caller_code != student_univ {
+                return Err(Error::Unauthorized);
+            }
+        }
+        Ok(application)
     }
 
     pub fn create_utility_reward(
@@ -1213,10 +1373,20 @@ impl CampusService {
         Ok(())
     }
 
-    pub fn get_menu_item(env: Env, item_id: u64) -> Result<MenuItem, Error> {
+    pub fn get_menu_item(env: Env, item_id: u64, caller: Address) -> Result<MenuItem, Error> {
+        caller.require_auth();
         let key = DataKey::MenuItem(item_id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+        let item: MenuItem = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let caller_code = active_code(&env, &caller)?;
+            if caller_code != item.university_code {
+                return Err(Error::Unauthorized);
+            }
+        }
+        Ok(item)
     }
 
     pub fn place_order(
@@ -1358,10 +1528,20 @@ impl CampusService {
         Ok(())
     }
 
-    pub fn get_food_order(env: Env, order_id: u64) -> Result<FoodOrder, Error> {
+    pub fn get_food_order(env: Env, order_id: u64, caller: Address) -> Result<FoodOrder, Error> {
+        caller.require_auth();
         let key = DataKey::FoodOrder(order_id);
         extend_persistent(&env, &key);
-        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+        let order: FoodOrder = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        
+        let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+        if caller != platform_admin {
+            let caller_code = active_code(&env, &caller)?;
+            if caller_code != order.university_code {
+                return Err(Error::Unauthorized);
+            }
+        }
+        Ok(order)
     }
 
     pub fn upgrade(env: Env, new_wasm_hash: BytesN<32>) -> Result<(), Error> {

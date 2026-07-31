@@ -10,9 +10,9 @@ fn text(env: &Env, value: &str) -> String {
     String::from_str(env, value)
 }
 
-fn student_details(env: &Env) -> ProfileDetails {
+fn student_details(env: &Env, hash_val: u8) -> ProfileDetails {
     ProfileDetails::Student(StudentDetails {
-        student_identifier_hash: BytesN::from_array(env, &[9; 32]),
+        student_identifier_hash: BytesN::from_array(env, &[hash_val; 32]),
         department: text(env, "Engineering"),
         program: text(env, "Computer Science"),
         graduation_year: 2027,
@@ -48,8 +48,6 @@ fn deployed(env: &Env) -> Contracts<'_> {
     let identity = CampusIdentityClient::new(env, &identity_id);
     identity.initialize(&platform_admin, &text(env, "Campus Platform"));
 
-    // Token initialization needs the service address, so reserve it before both
-    // immutable contract links are initialized.
     let service_id = env.register_contract(None, CampusService);
     let token_id = env.register_contract(None, CampusToken);
     let token = CampusTokenClient::new(env, &token_id);
@@ -120,7 +118,7 @@ fn pending_profiles_are_blocked_from_marketplace_actions() {
         &text(&env, "Pending Student"),
         &text(&env, "UNI-A"),
         &UserRole::Student,
-        &student_details(&env),
+        &student_details(&env, 1),
     );
 
     assert!(contracts
@@ -151,7 +149,7 @@ fn verified_student_and_merchant_can_both_create_marketplace_listings() {
         &student,
         "UNI-A",
         UserRole::Student,
-        student_details(&env),
+        student_details(&env, 1),
     );
     register_and_verify(
         &contracts,
@@ -180,11 +178,11 @@ fn verified_student_and_merchant_can_both_create_marketplace_listings() {
         &false,
     );
     assert_eq!(
-        contracts.service.get_listing(&student_listing).seller,
+        contracts.service.get_listing(&student_listing, &student).seller,
         student
     );
     assert_eq!(
-        contracts.service.get_listing(&merchant_listing).seller,
+        contracts.service.get_listing(&merchant_listing, &merchant).seller,
         merchant
     );
 }
@@ -209,7 +207,7 @@ fn university_boundaries_block_cross_campus_actions_and_allow_same_campus_action
         &student_a,
         "UNI-A",
         UserRole::Student,
-        student_details(&env),
+        student_details(&env, 1),
     );
     register_and_verify(
         &contracts,
@@ -218,7 +216,7 @@ fn university_boundaries_block_cross_campus_actions_and_allow_same_campus_action
         &student_b,
         "UNI-B",
         UserRole::Student,
-        student_details(&env),
+        student_details(&env, 2),
     );
     register_and_verify(
         &contracts,
@@ -256,24 +254,27 @@ fn university_boundaries_block_cross_campus_actions_and_allow_same_campus_action
         &1u32,
         &false,
     );
+    
+    // Student B (UNI-B) trying to buy listing from UNI-A fails
     assert!(contracts
         .service
         .try_buy_listing(&listing_id, &student_b)
         .is_err());
 
-    assert!(contracts
-        .service
-        .try_pay_camp(&student_b, &retail_merchant_a, &1i128)
-        .is_err());
     contracts.token.mint(&student_a, &100i128);
     contracts
         .token
         .approve(&student_a, &contracts.service.address, &100i128, &1000u32);
+    
+    // Cross-university wallet transfer (pay_camp) should SUCCEED
     contracts
         .service
-        .pay_camp(&student_a, &retail_merchant_a, &10i128);
+        .pay_camp(&student_a, &student_b, &10i128);
+    assert_eq!(contracts.token.balance(&student_b), 10i128);
+
+    // Same university buy listing succeeds
     contracts.service.buy_listing(&listing_id, &student_a);
-    assert_eq!(contracts.service.get_listing(&listing_id).status, 2);
+    assert_eq!(contracts.service.get_listing(&listing_id, &student_a).status, 2);
 
     let event_id = contracts.service.create_event(&organizer_a, &0i128, &10u32);
     assert!(contracts
@@ -281,7 +282,7 @@ fn university_boundaries_block_cross_campus_actions_and_allow_same_campus_action
         .try_buy_ticket(&event_id, &student_b)
         .is_err());
     let ticket_id = contracts.service.buy_ticket(&event_id, &student_a);
-    assert_eq!(contracts.service.get_ticket(&ticket_id).owner, student_a);
+    assert_eq!(contracts.service.get_ticket(&ticket_id, &student_a).owner, student_a);
 
     let menu_item_id = contracts.service.publish_menu_item(
         &food_merchant_a,
@@ -312,7 +313,7 @@ fn food_ordering_enforces_ownership_cancellation_and_sequential_transitions() {
         &student,
         "UNI-A",
         UserRole::Student,
-        student_details(&env),
+        student_details(&env, 1),
     );
     register_and_verify(
         &contracts,
@@ -349,7 +350,7 @@ fn food_ordering_enforces_ownership_cancellation_and_sequential_transitions() {
         .place_order(&student, &menu_item_id, &1u32);
     contracts.service.cancel_order(&student, &cancelled_order);
     assert_eq!(
-        contracts.service.get_food_order(&cancelled_order).status,
+        contracts.service.get_food_order(&cancelled_order, &student).status,
         FoodOrderStatus::Cancelled
     );
 
@@ -380,7 +381,7 @@ fn food_ordering_enforces_ownership_cancellation_and_sequential_transitions() {
         .service
         .update_order_status(&food_merchant, &order_id, &FoodOrderStatus::Completed);
     assert_eq!(
-        contracts.service.get_food_order(&order_id).status,
+        contracts.service.get_food_order(&order_id, &student).status,
         FoodOrderStatus::Completed
     );
 }
@@ -401,7 +402,7 @@ fn test_scholarship_flow_and_getters() {
         &student,
         "UNI-A",
         UserRole::Student,
-        student_details(&env),
+        student_details(&env, 1),
     );
 
     // Mint and approve tokens
@@ -421,7 +422,7 @@ fn test_scholarship_flow_and_getters() {
     );
 
     // Get and list scholarships
-    let scholarship = contracts.service.get_scholarship(&scholarship_id);
+    let scholarship = contracts.service.get_scholarship(&scholarship_id, &admin);
     assert_eq!(scholarship.id, scholarship_id);
     assert_eq!(scholarship.title, text(&env, "Science Scholarship"));
     assert_eq!(scholarship.amount, 1000i128);
@@ -431,20 +432,20 @@ fn test_scholarship_flow_and_getters() {
 
     // Approve the scholarship as platform admin
     contracts.service.admin_approve_scholarship(&platform_admin, &scholarship_id);
-    let scholarship = contracts.service.get_scholarship(&scholarship_id);
+    let scholarship = contracts.service.get_scholarship(&scholarship_id, &admin);
     assert_eq!(scholarship.admin_approval_status, ApprovalStatus::Approved);
 
     // Apply for scholarship
     let app_id = contracts.service.apply_scholarship(&student, &scholarship_id);
 
     // Get and list applications
-    let app = contracts.service.get_scholarship_application(&app_id);
+    let app = contracts.service.get_scholarship_application(&app_id, &admin);
     assert_eq!(app.id, app_id);
     assert_eq!(app.scholarship_id, scholarship_id);
     assert_eq!(app.student, student);
     assert_eq!(app.status, ApprovalStatus::Pending);
 
-    let apps = contracts.service.get_scholarship_applications();
+    let apps = contracts.service.get_scholarship_applications(&admin);
     assert_eq!(apps.len(), 1);
     assert_eq!(apps.get(0).unwrap().id, app_id);
 
@@ -452,13 +453,92 @@ fn test_scholarship_flow_and_getters() {
     contracts.service.decide_application(&admin, &app_id, &true);
 
     // Verify application status and slot decrement
-    let app = contracts.service.get_scholarship_application(&app_id);
+    let app = contracts.service.get_scholarship_application(&app_id, &student);
     assert_eq!(app.status, ApprovalStatus::Approved);
 
-    let scholarship = contracts.service.get_scholarship(&scholarship_id);
+    let scholarship = contracts.service.get_scholarship(&scholarship_id, &student);
     assert_eq!(scholarship.slots, 1);
 
     // Verify that the student received the scholarship amount
     let balance = contracts.token.balance(&student);
     assert_eq!(balance, 1000i128);
+}
+
+#[test]
+fn test_cross_university_reads_fail() {
+    let env = Env::default();
+    let contracts = deployed(&env);
+    let admin_a = Address::generate(&env);
+    let admin_b = Address::generate(&env);
+    let student_a = Address::generate(&env);
+    let student_b = Address::generate(&env);
+
+    claim_and_approve(&contracts, &env, &admin_a, "UNI-A");
+    claim_and_approve(&contracts, &env, &admin_b, "UNI-B");
+
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_a,
+        &student_a,
+        "UNI-A",
+        UserRole::Student,
+        student_details(&env, 1),
+    );
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_b,
+        &student_b,
+        "UNI-B",
+        UserRole::Student,
+        student_details(&env, 2),
+    );
+
+    // Create a listing in University A
+    let listing_id = contracts.service.create_listing(
+        &student_a,
+        &text(&env, "Book"),
+        &text(&env, "Desc"),
+        &100i128,
+        &1u32,
+        &false,
+    );
+
+    // Student A can read listing
+    assert!(contracts.service.try_get_listing(&listing_id, &student_a).is_ok());
+
+    // Student B (UNI-B) trying to read UNI-A listing fails on-chain
+    assert!(contracts.service.try_get_listing(&listing_id, &student_b).is_err());
+}
+
+#[test]
+fn test_platform_admin_reads_bypass_isolation() {
+    let env = Env::default();
+    let contracts = deployed(&env);
+    let admin_a = Address::generate(&env);
+    let student_a = Address::generate(&env);
+
+    claim_and_approve(&contracts, &env, &admin_a, "UNI-A");
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_a,
+        &student_a,
+        "UNI-A",
+        UserRole::Student,
+        student_details(&env, 1),
+    );
+
+    let listing_id = contracts.service.create_listing(
+        &student_a,
+        &text(&env, "Book"),
+        &text(&env, "Desc"),
+        &100i128,
+        &1u32,
+        &false,
+    );
+
+    // Platform admin (who has no university_code) can successfully read
+    assert!(contracts.service.try_get_listing(&listing_id, &contracts.platform_admin).is_ok());
 }
