@@ -1,14 +1,12 @@
 import {
   addressToScVal,
-  getRpcServer,
   invokeContractMethod,
   NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
   readContract,
   stringToScVal,
   u32ToScVal,
-  getEventsSafe,
 } from "@/shared/stellar/client";
-import { nativeToScVal, scValToNative, xdr } from "@stellar/stellar-sdk";
+import { nativeToScVal, xdr } from "@stellar/stellar-sdk";
 
 export const UserRole = {
   Student: 1,
@@ -193,40 +191,16 @@ export async function executeRejectProfile(caller: string, targetAddress: string
 
 export async function fetchUniversityProfiles(universityCode: string): Promise<UserProfile[]> {
   try {
-    const server = getRpcServer();
-    const latestLedger = await server.getLatestLedger();
-    const startLedger = Math.max(1, latestLedger.sequence - 15000); // Look back 15k ledgers for events
-
-    const res = (await getEventsSafe(server, {
-      startLedger,
-      filters: [
-        {
-          type: "contract",
-          contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID],
-        },
-      ],
-      limit: 100,
-    })) as { events: { topic: unknown[]; value: unknown }[] };
-
-    const addresses = new Set<string>();
-
-    for (const evt of res.events) {
-      try {
-        const topicNative = evt.topic.map((t: unknown) => scValToNative(evt.value ? (t as never) : (t as never)));
-        const eventName = typeof topicNative[0] === "string" ? topicNative[0] : String(topicNative[0] || "");
-        if (eventName === "ProfileSubmittedForVerification") {
-          const address = topicNative[1];
-          if (typeof address === "string") {
-            addresses.add(address);
-          }
-        }
-      } catch {
-        // ignore parsing issues
-      }
-    }
+    const rawAddresses = await readContract(
+      NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
+      "list_profiles",
+      []
+    );
+    if (!rawAddresses || !Array.isArray(rawAddresses)) return [];
 
     const profiles: UserProfile[] = [];
-    for (const addr of addresses) {
+    for (const addr of rawAddresses) {
+      if (typeof addr !== "string") continue;
       try {
         const profile = await fetchUserProfile(addr);
         if (profile && profile.universityCode?.toUpperCase() === universityCode.toUpperCase()) {

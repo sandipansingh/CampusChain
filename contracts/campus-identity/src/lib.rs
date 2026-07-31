@@ -149,6 +149,7 @@ pub enum DataKey {
     /// intentionally not paginated; introduce a bounded index before a large
     /// production registry makes a full response too expensive.
     UniversityCodes,
+    Profiles,
 }
 
 const LEDGER_THRESHOLD_INSTANCE: u32 = 1_000;
@@ -314,6 +315,16 @@ impl CampusIdentity {
         );
         extend_persistent(&env, &admin_key);
         extend_persistent(&env, &profile_key);
+        
+        let mut profiles: Vec<Address> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Profiles)
+            .unwrap_or(Vec::new(&env));
+        profiles.push_back(platform_admin.clone());
+        env.storage().persistent().set(&DataKey::Profiles, &profiles);
+        extend_persistent(&env, &DataKey::Profiles);
+
         extend_instance(&env);
         Ok(())
     }
@@ -379,23 +390,33 @@ impl CampusIdentity {
             created_at: now,
             updated_at: now,
         };
-        env.storage().persistent().set(&profile_key, &profile);
-        env.storage().persistent().set(&university_key, &university);
-        env.storage().persistent().set(&owner_key, &code);
-        let mut university_codes: Vec<String> = env
-            .storage()
-            .persistent()
-            .get(&university_codes_key)
-            .unwrap_or(Vec::new(&env));
-        university_codes.push_back(code.clone());
-        env.storage()
-            .persistent()
-            .set(&university_codes_key, &university_codes);
-        extend_persistent(&env, &profile_key);
-        extend_persistent(&env, &university_key);
-        extend_persistent(&env, &owner_key);
-        extend_persistent(&env, &university_codes_key);
-        extend_instance(&env);
+         env.storage().persistent().set(&profile_key, &profile);
+         env.storage().persistent().set(&university_key, &university);
+         env.storage().persistent().set(&owner_key, &code);
+
+         let mut profiles: Vec<Address> = env
+             .storage()
+             .persistent()
+             .get(&DataKey::Profiles)
+             .unwrap_or(Vec::new(&env));
+         profiles.push_back(admin.clone());
+         env.storage().persistent().set(&DataKey::Profiles, &profiles);
+         extend_persistent(&env, &DataKey::Profiles);
+
+         let mut university_codes: Vec<String> = env
+             .storage()
+             .persistent()
+             .get(&university_codes_key)
+             .unwrap_or(Vec::new(&env));
+         university_codes.push_back(code.clone());
+         env.storage()
+             .persistent()
+             .set(&university_codes_key, &university_codes);
+         extend_persistent(&env, &profile_key);
+         extend_persistent(&env, &university_key);
+         extend_persistent(&env, &owner_key);
+         extend_persistent(&env, &university_codes_key);
+         extend_instance(&env);
         env.events().publish(
             (Symbol::new(&env, "UniversityRegistered"), admin),
             university,
@@ -497,6 +518,16 @@ impl CampusIdentity {
         };
         env.storage().persistent().set(&profile_key, &profile);
         extend_persistent(&env, &profile_key);
+
+        let mut profiles: Vec<Address> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Profiles)
+            .unwrap_or(Vec::new(&env));
+        profiles.push_back(address.clone());
+        env.storage().persistent().set(&DataKey::Profiles, &profiles);
+        extend_persistent(&env, &DataKey::Profiles);
+
         extend_instance(&env);
         env.events().publish(
             (
@@ -585,6 +616,16 @@ impl CampusIdentity {
         extend_persistent(&env, &codes_key);
         extend_instance(&env);
         universities
+    }
+
+    pub fn list_profiles(env: Env) -> Vec<Address> {
+        let profiles_key = DataKey::Profiles;
+        extend_persistent(&env, &profiles_key);
+        extend_instance(&env);
+        env.storage()
+            .persistent()
+            .get(&profiles_key)
+            .unwrap_or(Vec::new(&env))
     }
 
     /// Returns false for Platform Admin or profiles without a university. It does not
