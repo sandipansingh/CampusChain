@@ -13,7 +13,7 @@ import {
   ShoppingBag,
   Calendar,
   GraduationCap,
-  Receipt,
+  History,
   Settings,
   Bell,
   ArrowUpRight,
@@ -91,7 +91,7 @@ export function WalletDashboard() {
     { value: "marketplace", label: "Marketplace", icon: ShoppingBag },
     { value: "events", label: "Events", icon: Calendar },
     { value: "scholarships", label: "Scholarships", icon: GraduationCap },
-    { value: "activity-feed", label: "Activity Feed", icon: Receipt },
+    { value: "activity", label: "Activity Feed", icon: History },
   ];
 
   const isFoodMerchant = profile?.role === 2 && (
@@ -160,7 +160,7 @@ export function WalletDashboard() {
         return <Events />;
       case "scholarships":
         return <Scholarships />;
-      case "activity-feed":
+      case "activity":
         return <ActivityFeed />;
       case "merchant":
         return <MerchantDashboard />;
@@ -292,7 +292,7 @@ export function WalletDashboard() {
               <div className="p-4 md:p-6 border-b border-border flex justify-between items-center">
                 <h3 className="text-base font-bold">Recent Activity Feed</h3>
                 <button
-                  onClick={() => router.push(`/${role}/activity-feed`)}
+                  onClick={() => router.push(`/${role}/activity`)}
                   className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   View All
@@ -316,7 +316,7 @@ export function WalletDashboard() {
                 </div>
               ) : !ledgerEvents || ledgerEvents.length === 0 ? (
                 <div className="p-12 text-center flex flex-col items-center justify-center gap-2">
-                  <Receipt className="h-10 w-10 text-muted-foreground/50" />
+                  <History className="h-10 w-10 text-muted-foreground/50" />
                   <p className="text-sm font-semibold text-muted-foreground">
                     No ledger activity found
                   </p>
@@ -328,14 +328,14 @@ export function WalletDashboard() {
                 <div className="divide-y divide-border">
                   {ledgerEvents.slice(0, 5).map((evt) => (
                     <div
-                      key={evt.id}
-                      className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors text-xs"
-                    >
-                      <div className="flex items-center gap-4 min-w-0">
-                        <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground shrink-0">
-                          <Receipt className="h-5 w-5" />
-                        </div>
-                        <div className="min-w-0">
+                       key={evt.id}
+                       className="p-4 flex items-center justify-between hover:bg-muted/40 transition-colors text-xs"
+                     >
+                       <div className="flex items-center gap-4 min-w-0">
+                         <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground shrink-0">
+                           <History className="h-5 w-5" />
+                         </div>
+                         <div className="min-w-0">
                           <p className="font-bold text-foreground truncate">{evt.title}</p>
                           <p className="text-muted-foreground truncate">{evt.message}</p>
                         </div>

@@ -159,7 +159,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   window.dispatchEvent(new CustomEvent("campuschain:navigate", { detail: "requests" }));
                   onClose();
                 } else if (evt.eventName === "transfer" || evt.eventName === "mint_purchase") {
-                  window.dispatchEvent(new CustomEvent("campuschain:navigate", { detail: "activity-feed" }));
+                  window.dispatchEvent(new CustomEvent("campuschain:navigate", { detail: "activity" }));
                   onClose();
                 } else if (evt.eventName === "OrderPlaced") {
                   window.dispatchEvent(new CustomEvent("campuschain:navigate", { detail: "incoming-orders" }));

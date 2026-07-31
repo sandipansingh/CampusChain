@@ -15,7 +15,7 @@ import {
   Bell,
   CheckCircle2,
   XCircle,
-  ClipboardList,
+  History,
 } from "lucide-react";
 
 import {
@@ -105,7 +105,7 @@ export function UniversityDashboard() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
             { label: "Total Members", value: verifiedMembers.length, icon: Users },
-            { label: "Pending Approvals", value: pendingRequests.length, icon: ClipboardList },
+            { label: "Pending Approvals", value: pendingRequests.length, icon: History },
             { label: "Verified Merchants", value: universityMerchants.length, icon: Store },
             { label: "Scholarship Programs", value: programs.length, icon: GraduationCap },
           ].map((stat) => {
@@ -596,7 +596,7 @@ export function UniversityDashboard() {
         <div className="flex-1 space-y-1">
           {[
             { value: "overview", label: "Overview", icon: LayoutDashboard },
-            { value: "requests", label: "Approvals Queue", icon: ClipboardList },
+            { value: "requests", label: "Approvals Queue", icon: History },
             { value: "members", label: "Members", icon: Users },
             { value: "scholarships", label: "Scholarships", icon: GraduationCap },
             { value: "merchants", label: "Merchants", icon: Store },
