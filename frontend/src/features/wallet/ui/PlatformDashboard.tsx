@@ -13,6 +13,7 @@ import {
   Settings,
   Coins,
   Bell,
+  GraduationCap,
 } from "lucide-react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -26,6 +27,7 @@ import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
 import { Settings as SettingsView } from "./Settings";
 import { NotificationPanel } from "@/shared/ui/NotificationPanel";
 import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
+import { useScholarshipPrograms, useAdminReviewScholarshipMutation } from "@/features/scholarships/hooks/useScholarships";
 
 export function PlatformDashboard() {
   const { address, disconnect } = useWallet();
@@ -37,6 +39,10 @@ export function PlatformDashboard() {
   const [isFeedOpen, setIsFeedOpen] = useState(false);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const queryClient = useQueryClient();
+
+  // Scholarships approvals
+  const scholarshipsQuery = useScholarshipPrograms(address ?? undefined);
+  const reviewScholarship = useAdminReviewScholarshipMutation();
 
   useEffect(() => {
     const handleNavigate = (e: Event) => {
@@ -267,12 +273,84 @@ export function PlatformDashboard() {
     return <ActivityFeed global />;
   };
 
+  const renderScholarshipsList = () => {
+    const pendingScholarships = (scholarshipsQuery.data ?? []).filter((s) => s.adminApprovalStatus === "pending");
+
+    return (
+      <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
+        <h3 className="text-base font-bold text-foreground">Pending Scholarships Approval</h3>
+        <p className="text-xs text-muted-foreground font-normal">
+          Review and approve scholarship programs created by registered universities before they become visible to students.
+        </p>
+
+        {scholarshipsQuery.isLoading ? (
+          <Skeleton className="h-24 w-full animate-pulse" />
+        ) : pendingScholarships.length === 0 ? (
+          <div className="text-center py-12 border border-border border-dashed rounded-lg bg-muted/5">
+            <GraduationCap className="h-10 w-10 mx-auto text-muted-foreground animate-none" />
+            <p className="mt-3 text-sm font-bold text-foreground">All caught up!</p>
+            <p className="text-xs text-muted-foreground mt-1">No pending scholarship programs awaiting approval.</p>
+          </div>
+        ) : (
+          <div className="space-y-4">
+            {pendingScholarships.map((s) => (
+              <div key={s.id} className="p-5 border border-border rounded-lg bg-muted/10 space-y-3">
+                <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                  <div className="space-y-1">
+                    <h4 className="font-bold text-sm text-foreground">{s.title}</h4>
+                    <p className="text-xs text-muted-foreground leading-relaxed">{s.description}</p>
+                  </div>
+                  <div className="shrink-0 flex items-center gap-1 bg-primary/10 text-primary font-bold px-2.5 py-1 rounded-lg text-xs border border-primary/20">
+                    {s.amount.toLocaleString()} CAMP
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-2 gap-4 text-xs pt-3 border-t border-border">
+                  <div className="space-y-1">
+                    <span className="text-muted-foreground font-semibold block">Eligibility Criteria</span>
+                    <span className="text-foreground">{s.criteria}</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    <p className="text-muted-foreground">Deadline: <strong className="text-foreground">{s.deadline}</strong></p>
+                    <p className="text-muted-foreground">Slots: <strong className="text-foreground">{s.slots}</strong></p>
+                  </div>
+                </div>
+
+                <div className="flex flex-col sm:flex-row justify-between sm:items-center pt-3 border-t border-border gap-3">
+                  <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[250px]" title={s.createdByUniversityId}>
+                    University: {s.createdByUniversityId}
+                  </span>
+                  <div className="flex gap-2">
+                    <button
+                      onClick={() => reviewScholarship.mutate({ adminId: address!, scholarshipId: s.id, approved: true })}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <CheckCircle2 className="size-3.5" /> Approve
+                    </button>
+                    <button
+                      onClick={() => reviewScholarship.mutate({ adminId: address!, scholarshipId: s.id, approved: false })}
+                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                    >
+                      <XCircle className="size-3.5" /> Reject
+                    </button>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   const renderContentView = () => {
     switch (activeTab) {
       case "queue":
         return renderQueue();
       case "universities":
         return renderUniversitiesList();
+      case "scholarships":
+        return renderScholarshipsList();
       case "activity":
         return renderActivityFeed();
       case "settings":
@@ -302,6 +380,7 @@ export function PlatformDashboard() {
             { value: "overview", label: "Overview", icon: LayoutDashboard },
             { value: "queue", label: "Approval Queue", icon: Clock3 },
             { value: "universities", label: "Universities", icon: Building2 },
+            { value: "scholarships", label: "Scholarships", icon: GraduationCap },
             { value: "activity", label: "Activity Feed", icon: Coins },
           ].map((item) => {
             const Icon = item.icon;

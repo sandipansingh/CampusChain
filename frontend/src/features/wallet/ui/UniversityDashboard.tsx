@@ -29,7 +29,6 @@ import {
   useScholarshipApplications,
   useCreateScholarshipProgramMutation,
   useReviewScholarshipApplicationMutation,
-  useDisburseScholarshipMutation,
 } from "@/features/scholarships/hooks/useScholarships";
 import { Settings as SettingsView } from "./Settings";
 
@@ -46,9 +45,12 @@ export function UniversityDashboard() {
   const unreadCount = useNotificationStore((s) => s.unreadCount);
 
   // Scholarship form state
-  const [progName, setProgName] = useState("");
+  const [progTitle, setProgTitle] = useState("");
+  const [progDesc, setProgDesc] = useState("");
+  const [progCriteria, setProgCriteria] = useState("");
   const [progAmount, setProgAmount] = useState("");
-  const [progMinGpa, setProgMinGpa] = useState("");
+  const [progDeadline, setProgDeadline] = useState("");
+  const [progSlots, setProgSlots] = useState("");
 
   const { data: profile } = useCampusProfile(address);
   const universityCode = profile?.universityCode ?? "";
@@ -64,7 +66,6 @@ export function UniversityDashboard() {
   const rejectProfile = useRejectProfileMutation();
   const createProgram = useCreateScholarshipProgramMutation();
   const reviewApp = useReviewScholarshipApplicationMutation();
-  const disburseSch = useDisburseScholarshipMutation();
 
   const pendingRequests = members.filter((m) => m.verificationStatus === 1);
   const verifiedMembers = members.filter((m) => m.verificationStatus === 2);
@@ -72,18 +73,23 @@ export function UniversityDashboard() {
 
   const handleCreateProgram = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!address || !progName || !progAmount || !progMinGpa) return;
+    if (!address || !progTitle || !progDesc || !progCriteria || !progAmount || !progDeadline || !progSlots) return;
     try {
       await createProgram.mutateAsync({
-        admin: address,
-        universityCode,
-        name: progName,
+        universityId: address,
+        title: progTitle,
+        description: progDesc,
+        criteria: progCriteria,
         amount: Number(progAmount),
-        minGpa: Number(progMinGpa) * 100, // convert e.g. 3.50 to 350
+        deadline: progDeadline,
+        slots: Number(progSlots),
       });
-      setProgName("");
+      setProgTitle("");
+      setProgDesc("");
+      setProgCriteria("");
       setProgAmount("");
-      setProgMinGpa("");
+      setProgDeadline("");
+      setProgSlots("");
     } catch (err) {
       console.error(err);
     }
@@ -292,126 +298,187 @@ export function UniversityDashboard() {
   };
 
   const renderScholarships = () => {
+    const myPrograms = programs.filter((p) => p.createdByUniversityId === address);
+
     return (
       <div className="space-y-6">
         {/* Create Scholarship Program Form */}
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-          <h3 className="text-base font-bold mb-4">Create Scholarship Program</h3>
-          <form onSubmit={handleCreateProgram} className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
+          <h3 className="text-base font-bold text-foreground">Create Scholarship Program</h3>
+          <form onSubmit={handleCreateProgram} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div>
+                <label className="block text-xs font-semibold mb-1">Scholarship Title</label>
+                <input
+                  type="text"
+                  required
+                  value={progTitle}
+                  onChange={(e) => setProgTitle(e.target.value)}
+                  placeholder="e.g. Dean's Excellence Grant"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">Amount (CAMP)</label>
+                <input
+                  type="number"
+                  required
+                  value={progAmount}
+                  onChange={(e) => setProgAmount(e.target.value)}
+                  placeholder="e.g. 1000"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">Slots (Capacity)</label>
+                <input
+                  type="number"
+                  required
+                  value={progSlots}
+                  onChange={(e) => setProgSlots(e.target.value)}
+                  placeholder="e.g. 5"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground"
+                />
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-xs font-semibold mb-1">Eligibility Criteria</label>
+                <input
+                  type="text"
+                  required
+                  value={progCriteria}
+                  onChange={(e) => setProgCriteria(e.target.value)}
+                  placeholder="e.g. CS major, GPA >= 3.8"
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground"
+                />
+              </div>
+              <div>
+                <label className="block text-xs font-semibold mb-1">Deadline Date</label>
+                <input
+                  type="date"
+                  required
+                  value={progDeadline}
+                  onChange={(e) => setProgDeadline(e.target.value)}
+                  className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground"
+                />
+              </div>
+            </div>
+
             <div>
-              <label className="block text-xs font-semibold mb-1">Program Name</label>
-              <input
-                type="text"
+              <label className="block text-xs font-semibold mb-1">Description</label>
+              <textarea
                 required
-                value={progName}
-                onChange={(e) => setProgName(e.target.value)}
-                placeholder="e.g. Dean's List Award"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground animate-none"
+                value={progDesc}
+                onChange={(e) => setProgDesc(e.target.value)}
+                placeholder="Provide a detailed description of the scholarship, program timeline, and funding sources."
+                rows={3}
+                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground resize-none"
               />
             </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1">Amount (CAMP)</label>
-              <input
-                type="number"
-                required
-                value={progAmount}
-                onChange={(e) => setProgAmount(e.target.value)}
-                placeholder="e.g. 500"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground animate-none"
-              />
+
+            <div className="flex justify-end pt-2">
+              <button
+                type="submit"
+                disabled={createProgram.isPending}
+                className="bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-6 text-xs cursor-pointer disabled:opacity-50 h-10"
+              >
+                {createProgram.isPending ? "Creating..." : "Create Scholarship"}
+              </button>
             </div>
-            <div>
-              <label className="block text-xs font-semibold mb-1">Min GPA (e.g. 3.5)</label>
-              <input
-                type="number"
-                step="0.01"
-                required
-                value={progMinGpa}
-                onChange={(e) => setProgMinGpa(e.target.value)}
-                placeholder="e.g. 3.50"
-                className="w-full bg-background border border-border rounded-lg px-3 py-2 text-sm focus:outline-none focus:border-foreground animate-none"
-              />
-            </div>
-            <button
-              type="submit"
-              disabled={createProgram.isPending}
-              className="bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-4 text-xs cursor-pointer disabled:opacity-50 h-10"
-            >
-              {createProgram.isPending ? "Creating..." : "Create Program"}
-            </button>
           </form>
         </div>
 
-        {/* Programs List */}
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-          <h3 className="text-base font-bold mb-4">Scholarship Programs</h3>
+        {/* Programs & Applicant Management */}
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
+          <h3 className="text-base font-bold text-foreground">Scholarship Management</h3>
           {isLoadingProgs ? (
             <Skeleton className="h-20 w-full" />
-          ) : programs.length === 0 ? (
+          ) : myPrograms.length === 0 ? (
             <p className="text-sm text-muted-foreground">No scholarship programs created yet.</p>
           ) : (
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              {programs.map((p) => (
-                <div key={p.id} className="p-4 border border-border rounded-lg space-y-2 bg-muted/15">
-                  <div className="flex justify-between items-center">
-                    <h4 className="font-bold text-sm">{p.name}</h4>
-                    <span className="px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200">
-                      Active
-                    </span>
-                  </div>
-                  <p className="text-xs text-muted-foreground">
-                    Award: <strong className="text-foreground">{p.amount.toLocaleString()} CAMP</strong> · Min GPA: <strong className="text-foreground">{(p.min_gpa / 100).toFixed(2)}</strong>
-                  </p>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+            <div className="space-y-6">
+              {myPrograms.map((p) => {
+                const programApps = applications.filter((app) => app.scholarshipId === p.id);
+                return (
+                  <div key={p.id} className="p-5 border border-border rounded-xl bg-muted/10 space-y-4 shadow-sm">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-2 pb-3 border-b border-border">
+                      <div>
+                        <h4 className="font-bold text-sm text-foreground">{p.title}</h4>
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          Award: <strong>{p.amount.toLocaleString()} CAMP</strong> · Slots: <strong>{p.slots}</strong> · Deadline: <strong>{p.deadline}</strong>
+                        </p>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <span
+                          className={`px-2.5 py-0.5 rounded-full text-[10px] font-bold border ${
+                            p.adminApprovalStatus === "approved"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                              : p.adminApprovalStatus === "rejected"
+                              ? "bg-rose-50 text-rose-700 border-rose-200"
+                              : "bg-amber-50 text-amber-700 border-amber-200"
+                          }`}
+                        >
+                          Admin: {p.adminApprovalStatus.toUpperCase()}
+                        </span>
+                      </div>
+                    </div>
 
-        {/* Applications List */}
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-          <h3 className="text-base font-bold mb-4">Scholarship Applications</h3>
-          {isLoadingApps ? (
-            <Skeleton className="h-20 w-full" />
-          ) : applications.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No applications submitted yet.</p>
-          ) : (
-            <div className="space-y-3">
-              {applications.map((app) => (
-                <div key={app.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-lg gap-4 bg-muted/5">
-                  <div>
-                    <p className="text-xs text-muted-foreground">App #{app.id} for Program #{app.program_id}</p>
-                    <p className="text-sm font-semibold mt-1">Applicant: <span className="font-mono text-xs">{app.applicant}</span></p>
-                    <p className="text-xs text-muted-foreground mt-0.5">GPA: {(app.gpa / 100).toFixed(2)} · Status: <strong>{app.status === 0 ? "Pending" : app.status === 1 ? "Approved" : app.status === 2 ? "Denied" : "Disbursed"}</strong></p>
+                    <div className="space-y-3">
+                      <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Applicant Queue</h5>
+                      {isLoadingApps ? (
+                        <Skeleton className="h-10 w-full" />
+                      ) : programApps.length === 0 ? (
+                        <p className="text-xs text-muted-foreground">No applications submitted yet.</p>
+                      ) : (
+                        <div className="space-y-2">
+                          {programApps.map((app) => (
+                            <div key={app.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 border border-border rounded-lg bg-card gap-4">
+                              <div>
+                                <p className="text-xs font-semibold text-foreground">
+                                  Student: <span className="font-mono">{app.studentId}</span>
+                                </p>
+                                <p className="text-[10px] text-muted-foreground mt-1">
+                                  Applied on: {new Date(app.appliedAt).toLocaleDateString()}
+                                </p>
+                              </div>
+                              <div className="flex items-center gap-2">
+                                {app.status === "pending" ? (
+                                  <>
+                                    <button
+                                      onClick={() => reviewApp.mutate({ universityId: address!, applicationId: app.id, approved: true })}
+                                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer"
+                                    >
+                                      Approve
+                                    </button>
+                                    <button
+                                      onClick={() => reviewApp.mutate({ universityId: address!, applicationId: app.id, approved: false })}
+                                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold cursor-pointer"
+                                    >
+                                      Reject
+                                    </button>
+                                  </>
+                                ) : (
+                                  <span
+                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                      app.status === "approved"
+                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                        : "bg-rose-50 text-rose-700 border-rose-200"
+                                    }`}
+                                  >
+                                    {app.status.toUpperCase()}
+                                  </span>
+                                )}
+                              </div>
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    {app.status === 0 && (
-                      <>
-                        <button
-                          onClick={() => reviewApp.mutate({ admin: address!, applicationId: app.id, approved: true })}
-                          className="px-2.5 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold"
-                        >
-                          Approve
-                        </button>
-                        <button
-                          onClick={() => reviewApp.mutate({ admin: address!, applicationId: app.id, approved: false })}
-                          className="px-2.5 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold"
-                        >
-                          Deny
-                        </button>
-                      </>
-                    )}
-                    {app.status === 1 && (
-                      <button
-                        onClick={() => disburseSch.mutate({ admin: address!, applicationId: app.id })}
-                        className="px-3 py-1.5 bg-zinc-950 hover:bg-zinc-800 text-white rounded-lg text-xs font-bold"
-                      >
-                        Disburse Funds
-                      </button>
-                    )}
-                  </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           )}
         </div>

@@ -7,7 +7,7 @@ import {
   executeCreateScholarshipProgram,
   executeApplyForScholarship,
   executeReviewScholarshipApplication,
-  executeDisburseScholarship,
+  executeAdminReviewScholarship,
 } from "../service/scholarships";
 
 export function useScholarshipProgram(programId: number | null, address?: string) {
@@ -43,30 +43,48 @@ export function useScholarshipApplication(applicationId: number | null, address?
 }
 
 export function useScholarshipPrograms(address?: string) {
-  return useQuery({ queryKey: ["scholarship-programs", address], queryFn: () => fetchScholarshipPrograms(0, 50, address) });
+  return useQuery({
+    queryKey: ["scholarship-programs", address],
+    queryFn: () => fetchScholarshipPrograms(0, 50, address),
+  });
 }
 
 export function useScholarshipApplications(address?: string) {
-  return useQuery({ queryKey: ["scholarship-applications", address], queryFn: () => fetchScholarshipApplications(0, 50, address) });
+  return useQuery({
+    queryKey: ["scholarship-applications", address],
+    queryFn: () => fetchScholarshipApplications(0, 50, address),
+  });
 }
 
 export function useCreateScholarshipProgramMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      admin,
-      universityCode,
-      name,
+      universityId,
+      title,
+      description,
+      criteria,
       amount,
-      minGpa,
+      deadline,
+      slots,
     }: {
-      admin: string;
-      universityCode: string;
-      name: string;
+      universityId: string;
+      title: string;
+      description: string;
+      criteria: string;
       amount: number;
-      minGpa: number;
+      deadline: string;
+      slots: number;
     }) => {
-      return executeCreateScholarshipProgram(admin, universityCode, name, amount, minGpa);
+      return executeCreateScholarshipProgram(
+        universityId,
+        title,
+        description,
+        criteria,
+        amount,
+        deadline,
+        slots
+      );
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scholarship-programs"] });
@@ -78,15 +96,13 @@ export function useApplyForScholarshipMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      applicant,
-      programId,
-      gpa,
+      studentId,
+      scholarshipId,
     }: {
-      applicant: string;
-      programId: number;
-      gpa: number;
+      studentId: string;
+      scholarshipId: number;
     }) => {
-      return executeApplyForScholarship(applicant, programId, gpa);
+      return executeApplyForScholarship(studentId, scholarshipId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scholarship-applications"] });
@@ -98,38 +114,38 @@ export function useReviewScholarshipApplicationMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      admin,
+      universityId,
       applicationId,
       approved,
     }: {
-      admin: string;
+      universityId: string;
       applicationId: number;
       approved: boolean;
     }) => {
-      return executeReviewScholarshipApplication(admin, applicationId, approved);
+      return executeReviewScholarshipApplication(universityId, applicationId, approved);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["scholarship-application", variables.applicationId] });
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scholarship-applications"] });
     },
   });
 }
 
-export function useDisburseScholarshipMutation() {
+export function useAdminReviewScholarshipMutation() {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: async ({
-      admin,
-      applicationId,
+      adminId,
+      scholarshipId,
+      approved,
     }: {
-      admin: string;
-      applicationId: number;
+      adminId: string;
+      scholarshipId: number;
+      approved: boolean;
     }) => {
-      return executeDisburseScholarship(admin, applicationId);
+      return executeAdminReviewScholarship(adminId, scholarshipId, approved);
     },
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: ["scholarship-application", variables.applicationId] });
-      queryClient.invalidateQueries({ queryKey: ["campus-balance"] });
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scholarship-programs"] });
     },
   });
 }
