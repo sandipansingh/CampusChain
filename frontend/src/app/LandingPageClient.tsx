@@ -17,7 +17,7 @@ export function LandingPageClient() {
     let cancelled = false;
     void fetchUserProfile(storedAddress)
       .then((profile) => {
-        if (!cancelled && profile) router.replace("/dashboard");
+        if (!cancelled && profile) router.replace("/connect");
       })
       .catch(() => {
         // A public landing page remains available if the RPC is unavailable.
@@ -35,7 +35,7 @@ export function LandingPageClient() {
     try {
       const profile = await fetchUserProfile(activeAddress);
       if (profile) {
-        router.push("/dashboard");
+        router.push("/connect");
       } else {
         router.push("/connect");
       }

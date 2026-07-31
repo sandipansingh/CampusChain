@@ -28,6 +28,14 @@ export function WalletAccess({
   const universityCode = profile?.role === 4 ? profile.universityCode : null;
   const { data: university, isLoading: isLoadingUniv } = useCampusUniversity(universityCode, address);
 
+  const ROLE_STRINGS: Record<number, string> = {
+    1: "student",
+    2: "merchant",
+    3: "organizer",
+    4: "university",
+    5: "platform",
+  };
+
   useEffect(() => { initialize(); }, [initialize]);
   
   useEffect(() => {
@@ -37,18 +45,19 @@ export function WalletAccess({
       // Determine correct path based on role
       let targetPath = "";
       if (isPlatformAdmin) {
-        targetPath = "/platform";
+        targetPath = "/platform/overview";
       } else if (profile) {
-        if (profile.role === 4) {
-          targetPath = "/university";
-        } else if (profile.role === 1 || profile.role === 2 || profile.role === 3) {
-          targetPath = "/dashboard";
+        const roleStr = ROLE_STRINGS[profile.role];
+        if (roleStr) {
+          const defaultSlug = (profile.role === 4 || profile.role === 5) ? "overview" : "dashboard";
+          targetPath = `/${roleStr}/${defaultSlug}`;
         }
       }
 
       // If redirectExistingProfile is true, or if current path is not allowed, redirect them!
       if (targetPath) {
-        const isPathAllowed = allowedRoles?.includes(isPlatformAdmin ? 5 : profile?.role ?? 0);
+        const currentRole = isPlatformAdmin ? 5 : profile?.role ?? 0;
+        const isPathAllowed = allowedRoles?.includes(currentRole);
         if (redirectExistingProfile || !isPathAllowed) {
           router.replace(targetPath);
         }

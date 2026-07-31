@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { NotificationPanel } from "@/shared/ui/NotificationPanel";
@@ -50,9 +51,10 @@ import { OrderTracking } from "@/features/food-ordering/ui/OrderTracking";
 
 export function WalletDashboard() {
   const { address, disconnect } = useWallet();
-
-  // Navigation active state
-  const [activeTab, setActiveTab] = useState<string>("dashboard");
+  const params = useParams();
+  const router = useRouter();
+  const role = params?.role as string;
+  const activeTab = (params?.slug as string) || "dashboard";
 
   // Activity Feed panel state
   const [isFeedOpen, setIsFeedOpen] = useState(false);
@@ -62,13 +64,13 @@ export function WalletDashboard() {
   useEffect(() => {
     const handleNavigate = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
-      if (customEvent.detail) {
-        setActiveTab(customEvent.detail);
+      if (customEvent.detail && role) {
+        router.push(`/${role}/${customEvent.detail}`);
       }
     };
     window.addEventListener("campuschain:navigate", handleNavigate);
     return () => window.removeEventListener("campuschain:navigate", handleNavigate);
-  }, []);
+  }, [role, router]);
 
   // Marketplace sub-views state
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
@@ -201,14 +203,14 @@ export function WalletDashboard() {
                 </div>
                 <div className="flex gap-3 mt-8">
                   <button
-                    onClick={() => setActiveTab("wallet")}
+                    onClick={() => router.push(`/${role}/wallet`)}
                     className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
                   >
                     <ArrowUpRight className="h-4 w-4" />
                     Send
                   </button>
                   <button
-                    onClick={() => setActiveTab("wallet")}
+                    onClick={() => router.push(`/${role}/wallet`)}
                     className="flex-1 bg-muted hover:bg-muted/80 text-foreground font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-all border border-border cursor-pointer"
                   >
                     <ArrowDownLeft className="h-4 w-4" />
@@ -229,7 +231,7 @@ export function WalletDashboard() {
                   return (
                     <button
                       key={act.label}
-                      onClick={() => setActiveTab(act.target)}
+                      onClick={() => router.push(`/${role}/${act.target}`)}
                       className="bg-card rounded-xl p-4 border border-border hover:border-foreground hover:shadow-md transition-all flex flex-col items-center justify-center gap-2.5 text-center cursor-pointer group"
                     >
                       <div className="w-12 h-12 rounded-full bg-muted group-hover:bg-primary group-hover:text-primary-foreground flex items-center justify-center transition-colors">
@@ -296,7 +298,7 @@ export function WalletDashboard() {
               <div className="p-4 md:p-6 border-b border-border flex justify-between items-center">
                 <h3 className="text-base font-bold">Recent Activity Feed</h3>
                 <button
-                  onClick={() => setActiveTab("activity-feed")}
+                  onClick={() => router.push(`/${role}/activity-feed`)}
                   className="text-xs font-semibold text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
                 >
                   View All
@@ -380,7 +382,7 @@ export function WalletDashboard() {
               <button
                 key={item.value}
                 onClick={() => {
-                  setActiveTab(item.value);
+                  router.push(`/${role}/${item.value}`);
                   setSelectedListingId(null);
                   setShowSellForm(false);
                 }}
@@ -399,7 +401,7 @@ export function WalletDashboard() {
 
         <div className="border-t border-border pt-4 mt-auto">
           <button
-            onClick={() => setActiveTab("settings")}
+            onClick={() => router.push(`/${role}/settings`)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-all cursor-pointer ${
               activeTab === "settings"
                 ? "text-foreground font-bold border-l-2 border-foreground rounded-none"
@@ -472,7 +474,7 @@ export function WalletDashboard() {
               <button
                 key={item.value}
                 onClick={() => {
-                  setActiveTab(item.value);
+                  router.push(`/${role}/${item.value}`);
                   setSelectedListingId(null);
                   setShowSellForm(false);
                 }}

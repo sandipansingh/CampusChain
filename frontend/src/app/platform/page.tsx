@@ -1,10 +1,5 @@
-import { WalletAccess } from "@/features/wallet/ui/WalletAccess";
-import { PlatformDashboard } from "@/features/wallet/ui/PlatformDashboard";
+import { redirect } from "next/navigation";
 
 export default function PlatformPage() {
-  return (
-    <WalletAccess allowedRoles={[5]}>
-      <PlatformDashboard />
-    </WalletAccess>
-  );
+  redirect("/connect");
 }

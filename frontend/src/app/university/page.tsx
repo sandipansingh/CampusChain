@@ -1,10 +1,5 @@
-import { WalletAccess } from "@/features/wallet/ui/WalletAccess";
-import { UniversityDashboard } from "@/features/wallet/ui/UniversityDashboard";
+import { redirect } from "next/navigation";
 
 export default function UniversityPage() {
-  return (
-    <WalletAccess allowedRoles={[4]}>
-      <UniversityDashboard />
-    </WalletAccess>
-  );
+  redirect("/connect");
 }

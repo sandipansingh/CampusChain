@@ -20,6 +20,8 @@ import {
   UserCheck,
   Building,
   Shield,
+  ArrowDown,
+  ArrowUp,
 } from "lucide-react";
 
 function getEventIcon(icon: string) {
@@ -56,6 +58,8 @@ export function ActivityFeed({ global = false }: { global?: boolean } = {}) {
     setSearchQuery,
     typeFilter,
     setTypeFilter,
+    sortBy,
+    setSortBy,
     loadMore,
   } = useActivityFeed(global ? undefined : (address ?? undefined));
 
@@ -108,10 +112,22 @@ export function ActivityFeed({ global = false }: { global?: boolean } = {}) {
                 { value: "ticket", label: "Ticketing", icon: <Ticket className="h-4 w-4 text-indigo-500" /> },
                 { value: "faucet", label: "Faucet", icon: <Coins className="h-4 w-4 text-emerald-500" /> },
                 { value: "role", label: "Verifications", icon: <UserCheck className="h-4 w-4 text-purple-500" /> },
-                { value: "university", label: "Universities", icon: <Building className="h-4 w-4 text-indigo-500" /> },
+                { value: "university", label: "Universities", icon: <Building className="h-4 w-4 text-pink-500" /> },
               ]}
               value={typeFilter}
-              onChange={(val) => setTypeFilter(val)}
+              onChange={setTypeFilter}
+            />
+          </div>
+
+          {/* Sort By */}
+          <div className="w-full sm:w-40">
+            <Dropdown<string>
+              options={[
+                { value: "newest", label: "Newest First", icon: <ArrowDown className="h-4 w-4 text-muted-foreground" /> },
+                { value: "oldest", label: "Oldest First", icon: <ArrowUp className="h-4 w-4 text-muted-foreground" /> },
+              ]}
+              value={sortBy}
+              onChange={(val) => setSortBy(val as "newest" | "oldest")}
             />
           </div>
         </div>

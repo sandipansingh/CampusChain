@@ -21,6 +21,7 @@ export function useActivityFeed(address?: string) {
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
   const [typeFilter, setTypeFilter] = useState("all");
+  const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
 
   const fetchEvents = useCallback(async (nextCursor: string | null, isLoadMore = false) => {
     try {
@@ -71,9 +72,17 @@ export function useActivityFeed(address?: string) {
     return matchesSearch && matchesType;
   });
 
+  const sortedEvents = [...filteredEvents].sort((a, b) => {
+    if (sortBy === "newest") {
+      return b.ledger - a.ledger;
+    } else {
+      return a.ledger - b.ledger;
+    }
+  });
+
   return {
     events,
-    filteredEvents,
+    filteredEvents: sortedEvents,
     loading,
     loadingMore,
     hasMore,
@@ -81,6 +90,8 @@ export function useActivityFeed(address?: string) {
     setSearchQuery,
     typeFilter,
     setTypeFilter,
+    sortBy,
+    setSortBy,
     loadMore: () => {
       if (!loadingMore && hasMore) void fetchEvents(cursor, true);
     },

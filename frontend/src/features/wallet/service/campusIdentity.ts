@@ -112,9 +112,54 @@ async function profileDetailsScVal(registration: ProfileRegistration): Promise<x
   ));
 }
 
+export function bufToHex(buffer: ArrayBuffer | Uint8Array): string {
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export function normalizeProfileDetails(detailsRaw: unknown): Record<string, any> {
+  if (!Array.isArray(detailsRaw) || detailsRaw.length === 0) return {};
+  const type = detailsRaw[0];
+  const payload = (detailsRaw[1] as Record<string, any>) || {};
+
+  if (type === "Student") {
+    return {
+      department: String(payload.department ?? ""),
+      program: String(payload.program ?? ""),
+      graduationYear: Number(payload.graduation_year ?? 0),
+      studentIdentifierHash: payload.student_identifier_hash
+        ? (payload.student_identifier_hash instanceof Uint8Array || payload.student_identifier_hash instanceof ArrayBuffer
+            ? bufToHex(payload.student_identifier_hash)
+            : bufToHex(new Uint8Array(payload.student_identifier_hash as ArrayBufferLike)))
+        : "",
+    };
+  }
+  if (type === "Merchant") {
+    return {
+      businessName: String(payload.business_name ?? ""),
+      category: Number(payload.category ?? 0),
+      businessDescription: String(payload.business_description ?? ""),
+    };
+  }
+  if (type === "EventOrganizer") {
+    return {
+      organizationName: String(payload.organization_name ?? ""),
+      organizationDescription: String(payload.organization_description ?? ""),
+    };
+  }
+  if (type === "UniversityAdmin") {
+    return {
+      ownedUniversityCode: String(payload.owned_university_code ?? ""),
+      title: String(payload.title ?? ""),
+    };
+  }
+  return {};
+}
+
 export async function fetchUserProfile(address: string): Promise<UserProfile | null> {
   try {
-    const result = await readContract(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "get_profile", [addressToScVal(address)], address);
+    const result = await readContract(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "get_profile", [addressToScVal(address)]);
     if (!result || typeof result !== "object") return null;
     const profile = result as Record<string, unknown>;
     return {
@@ -123,7 +168,7 @@ export async function fetchUserProfile(address: string): Promise<UserProfile | n
       universityCode: profile.university_code == null ? null : String(profile.university_code),
       role: enumValue(profile.role),
       verificationStatus: enumValue(profile.verification_status),
-      details: (profile.details as Record<string, unknown>) ?? {},
+      details: normalizeProfileDetails(profile.details),
       createdAt: Number(profile.created_at ?? 0),
     };
   } catch (error) {
@@ -221,12 +266,6 @@ export async function fetchUniversityProfiles(universityCode: string): Promise<U
 export async function executeSuspendUniversity(caller: string, code: string): Promise<string> {
   const { signTx } = await import("./wallet");
   return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "suspend_university", [addressToScVal(caller), stringToScVal(code)], caller, signTx);
-}
-
-export function bufToHex(buffer: ArrayBuffer | Uint8Array): string {
-  return Array.from(new Uint8Array(buffer))
-    .map((b) => b.toString(16).padStart(2, "0"))
-    .join("");
 }
 
 export async function fetchUniversityStudentIds(universityCode: string, address?: string): Promise<string[]> {

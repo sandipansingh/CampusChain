@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
+import { useParams, useRouter } from "next/navigation";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { NotificationPanel } from "@/shared/ui/NotificationPanel";
@@ -36,7 +37,11 @@ import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
 
 export function UniversityDashboard() {
   const { address, disconnect } = useWallet();
-  const [activeTab, setActiveTab] = useState<string>("overview");
+  const params = useParams();
+  const router = useRouter();
+  const role = params?.role as string;
+  const activeTab = (params?.slug as string) || "overview";
+
   const [isFeedOpen, setIsFeedOpen] = useState(false);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
 
@@ -148,13 +153,13 @@ export function UniversityDashboard() {
   useEffect(() => {
     const handleNavigate = (e: Event) => {
       const customEvent = e as CustomEvent<string>;
-      if (customEvent.detail) {
-        setActiveTab(customEvent.detail);
+      if (customEvent.detail && role) {
+        router.push(`/${role}/${customEvent.detail}`);
       }
     };
     window.addEventListener("campuschain:navigate", handleNavigate);
     return () => window.removeEventListener("campuschain:navigate", handleNavigate);
-  }, []);
+  }, [role, router]);
 
   const renderRequests = () => {
     return (
@@ -501,7 +506,7 @@ export function UniversityDashboard() {
             return (
               <button
                 key={item.value}
-                onClick={() => setActiveTab(item.value)}
+                onClick={() => router.push(`/${role}/${item.value}`)}
                 className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-all text-left cursor-pointer ${
                   isActive
                     ? "text-foreground font-bold border-l-2 border-foreground rounded-none"
@@ -517,7 +522,7 @@ export function UniversityDashboard() {
 
         <div className="border-t border-border pt-4 mt-auto">
           <button
-            onClick={() => setActiveTab("settings")}
+            onClick={() => router.push(`/${role}/settings`)}
             className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm text-left transition-all cursor-pointer ${
               activeTab === "settings"
                 ? "text-foreground font-bold border-l-2 border-foreground rounded-none"
