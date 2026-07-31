@@ -13,6 +13,8 @@ import {
   type OnboardingRole,
   type UniversityRecord,
   UniversityApprovalStatus,
+  fetchUniversityStudentIds,
+  bufToHex,
 } from "@/features/wallet/service/campusIdentity";
 import { useRegisterProfileMutation, useRegisterUniversityMutation } from "@/features/wallet/hooks/useWallet";
 
@@ -76,6 +78,15 @@ export function Login({ showOnboarding = false }: LoginProps) {
       if (!universityCode) throw new globalThis.Error("Choose an approved university.");
       if (role === "Student") {
         if (!department.trim() || !program.trim() || !studentIdentifier.trim()) throw new globalThis.Error("Complete your student details.");
+        const digest = new Uint8Array(await crypto.subtle.digest(
+          "SHA-256",
+          new TextEncoder().encode(studentIdentifier.trim()).buffer as ArrayBuffer
+        ));
+        const currentHashHex = bufToHex(digest);
+        const existingHashes = await fetchUniversityStudentIds(universityCode, address);
+        if (existingHashes.includes(currentHashHex)) {
+          throw new globalThis.Error("This Student ID is already registered at this university.");
+        }
         await registerProfile.mutateAsync({ address, fullName: fullName.trim(), universityCode, registration: { role, department: department.trim(), program: program.trim(), graduationYear: Number(graduationYear), studentIdentifier: studentIdentifier.trim() } });
       } else if (role === "Merchant") {
         if (!businessName.trim() || !businessDescription.trim()) throw new globalThis.Error("Complete your business details.");

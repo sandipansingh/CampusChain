@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
+import { Dropdown } from "@/shared/ui/Dropdown";
 import {
   Plus,
   Edit2,
@@ -258,16 +259,17 @@ export function MenuManagement() {
               type="text"
             />
           </div>
-          <select
+          <Dropdown<string>
+            options={[
+              { value: "All Categories", label: "All Categories" },
+              { value: "Meals", label: "Meals" },
+              { value: "Drinks", label: "Drinks" },
+              { value: "Snacks", label: "Snacks" },
+            ]}
             value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="px-3 py-2 rounded-lg border border-border bg-background focus:outline-none focus:ring-1 focus:ring-foreground text-xs text-foreground cursor-pointer"
-          >
-            <option>All Categories</option>
-            <option>Meals</option>
-            <option>Drinks</option>
-            <option>Snacks</option>
-          </select>
+            onChange={(val) => setSelectedCategory(val)}
+            className="w-44 shrink-0"
+          />
         </div>
 
         {/* Menu List */}

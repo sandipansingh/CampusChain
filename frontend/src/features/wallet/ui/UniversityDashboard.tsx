@@ -71,6 +71,7 @@ export function UniversityDashboard() {
     try {
       await createProgram.mutateAsync({
         admin: address,
+        universityCode,
         name: progName,
         amount: Number(progAmount),
         minGpa: Number(progMinGpa) * 100, // convert e.g. 3.50 to 350

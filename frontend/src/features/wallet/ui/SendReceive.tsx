@@ -10,7 +10,10 @@ import { executeTransfer } from "@/features/wallet/service/campusToken";
 import { sendNativePayment } from "@/shared/stellar/client";
 import { signTx } from "@/features/wallet/service/wallet";
 import { encodePaymentRequest, PaymentAsset } from "@/features/wallet/service/paymentRequest";
-import { useCampusProfile, useUniversityProfiles } from "@/features/wallet/hooks/useWallet";
+import { useCampusBalance, useCampusProfile, useUniversityProfiles } from "@/features/wallet/hooks/useWallet";
+import { useBuyCampTokensMutation } from "@/features/rewards/hooks/useRewards";
+import { Dropdown } from "@/shared/ui/Dropdown";
+import { Skeleton } from "@/shared/ui/Skeleton";
 
 export function SendReceive() {
   const { address } = useWallet();
@@ -30,6 +33,25 @@ export function SendReceive() {
   const { data: profile } = useCampusProfile(address ?? null);
   const myUnivCode = profile?.universityCode ?? "";
   const { data: members = [] } = useUniversityProfiles(myUnivCode);
+
+  // CAMP Balance and Buy states
+  const { data: campBalance, isLoading: isBalanceLoading } = useCampusBalance(address ?? null);
+  const buyCamp = useBuyCampTokensMutation();
+  const [xlm, setXlm] = useState("");
+  const [buyNotice, setBuyNotice] = useState<string | null>(null);
+
+  const buy = async () => {
+    if (!address) return;
+    try {
+      const stroops = BigInt(Math.round(Number(xlm) * 10_000_000));
+      if (stroops < BigInt(10_000_000)) throw new Error("Minimum purchase is 1 XLM.");
+      const hash = await buyCamp.mutateAsync({ recipient: address, xlmAmount: stroops.toString() });
+      setBuyNotice(`CAMP purchase confirmed: ${hash}`);
+      setXlm("");
+    } catch (error) {
+      setBuyNotice(error instanceof Error ? error.message : "Purchase failed.");
+    }
+  };
 
   const payment = useMutation({
     mutationFn: async () => {
@@ -121,189 +143,242 @@ export function SendReceive() {
       )
     : [];
 
+  const assetOptions = [
+    { value: "CAMP" as PaymentAsset, label: "CAMP" },
+    { value: "XLM" as PaymentAsset, label: "XLM" },
+  ];
+
   return (
-    <div className="bg-card rounded-xl border border-border w-full max-w-md p-6 shadow-sm mx-auto">
-      <div className="flex border-b border-border mb-6">
-        <button
-          onClick={() => setTab("send")}
-          className={
-            tab === "send"
-              ? "flex-1 py-2 text-sm font-bold border-b-2 border-foreground cursor-pointer"
-              : "flex-1 py-2 text-sm text-muted-foreground cursor-pointer"
-          }
-        >
-          Send
-        </button>
-        <button
-          onClick={() => setTab("receive")}
-          className={
-            tab === "receive"
-              ? "flex-1 py-2 text-sm font-bold border-b-2 border-foreground cursor-pointer"
-              : "flex-1 py-2 text-sm text-muted-foreground cursor-pointer"
-          }
-        >
-          Receive
-        </button>
-      </div>
-
-      {tab === "send" ? (
-        <div className="space-y-5">
-          <div className="relative">
-            <label className="block text-xs font-bold text-muted-foreground">
-              Recipient Stellar address
-              <input
-                value={recipient}
-                onChange={(event) => {
-                  setRecipient(event.target.value);
-                  setShowDropdown(true);
-                  setLocalError(null);
-                }}
-                onFocus={() => setShowDropdown(true)}
-                onBlur={() => window.setTimeout(() => setShowDropdown(false), 200)}
-                placeholder="G..."
-                className="mt-1.5 h-12 w-full border border-border rounded-lg px-3 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-foreground bg-transparent"
-              />
-            </label>
-
-            {/* Recipient Dropdown Autocomplete */}
-            {showDropdown && matchingMembers.length > 0 && (
-              <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card border border-border rounded-lg shadow-lg z-50 divide-y divide-border/60">
-                {matchingMembers.map((m) => (
-                  <button
-                    key={m.address}
-                    type="button"
-                    onMouseDown={() => {
-                      setRecipient(m.address);
-                      setShowDropdown(false);
-                      setLocalError(null);
-                    }}
-                    className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors flex flex-col cursor-pointer"
-                  >
-                    <span className="text-xs font-bold text-foreground">
-                      {m.fullName}{" "}
-                      <span className="text-[10px] text-muted-foreground font-normal">
-                        ({m.role === 1 ? "Student" : m.role === 2 ? "Merchant" : "Organizer"})
-                      </span>
-                    </span>
-                    <span className="text-[10px] text-muted-foreground font-mono truncate">
-                      {m.address}
-                    </span>
-                  </button>
-                ))}
-              </div>
-            )}
-          </div>
-
-          <label className="block text-xs font-bold text-muted-foreground">
-            Amount
-            <div className="mt-1.5 flex gap-2">
-              <input
-                value={amount}
-                onChange={(event) => {
-                  setAmount(event.target.value);
-                  setLocalError(null);
-                }}
-                type="number"
-                min="0"
-                step="0.0000001"
-                placeholder="0.00"
-                className="h-12 flex-1 border border-border rounded-lg px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-foreground bg-transparent"
-              />
-              <select
-                value={asset}
-                onChange={(event) => setAsset(event.target.value as PaymentAsset)}
-                className="h-12 border border-border rounded-lg px-3 text-sm text-foreground focus:outline-none bg-transparent"
-              >
-                <option value="CAMP">CAMP</option>
-                <option value="XLM">XLM</option>
-              </select>
-            </div>
-          </label>
-
-          <button
-            onClick={handleSend}
-            disabled={payment.isPending}
-            className="h-12 w-full bg-primary text-primary-foreground rounded-lg font-bold text-sm disabled:opacity-50 inline-flex justify-center items-center gap-2 cursor-pointer transition-colors"
-          >
-            {payment.isPending ? "Confirming payment" : "Send payment"}
-            <ArrowUpRight className="h-4 w-4" />
-          </button>
-
-          {localError && (
-            <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
-              {localError}
-            </p>
-          )}
-          {payment.isSuccess && (
-            <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 p-2 rounded break-all">
-              Payment confirmed: {payment.data}
-            </p>
-          )}
-          {payment.isError && (
-            <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded break-words">
-              {payment.error instanceof Error ? payment.error.message : "Payment failed."}
+    <div className="w-full max-w-5xl mx-auto grid lg:grid-cols-12 gap-6 items-start animate-in fade-in duration-300">
+      {/* Left Column: CAMP Balance Card & Buy CAMP Card */}
+      <section className="lg:col-span-5 space-y-6">
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Available CAMP</p>
+          {isBalanceLoading ? (
+            <Skeleton className="h-10 w-40 mt-3" />
+          ) : (
+            <p className="mt-2 text-3xl font-bold text-foreground">
+              {campBalance?.toLocaleString() ?? "0"} CAMP
             </p>
           )}
         </div>
-      ) : (
-        <div className="space-y-5">
-          <p className="text-xs text-muted-foreground">
-            Generate an encoded Testnet payment request. It can be scanned or pasted into Scan & Pay.
-          </p>
-          <label className="block text-xs font-bold text-muted-foreground">
-            Requested amount
-            <div className="mt-1.5 flex gap-2">
-              <input
-                value={amount}
-                onChange={(event) => setAmount(event.target.value)}
-                type="number"
-                min="0"
-                step="0.0000001"
-                placeholder="0.00"
-                className="h-12 flex-1 border border-border rounded-lg px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-foreground bg-transparent"
-              />
-              <select
-                value={asset}
-                onChange={(event) => setAsset(event.target.value as PaymentAsset)}
-                className="h-12 border border-border rounded-lg px-3 text-sm text-foreground focus:outline-none bg-transparent"
-              >
-                <option value="CAMP">CAMP</option>
-                <option value="XLM">XLM</option>
-              </select>
-            </div>
-          </label>
 
-          {qrDataUrl ? (
-            <Image
-              src={qrDataUrl}
-              width={256}
-              height={256}
-              unoptimized
-              alt="CampusChain payment request QR code"
-              className="mx-auto border border-border rounded-lg"
-            />
-          ) : (
-            <div className="h-56 border border-dashed border-border rounded-lg flex flex-col items-center justify-center text-muted-foreground">
-              <QrCode className="h-10 w-10" />
-              <p className="mt-2 text-xs">Enter a valid amount to generate a QR request.</p>
+        <div className="bg-card border border-border rounded-xl p-6 space-y-4 shadow-sm">
+          <h3 className="font-bold text-base text-foreground">Buy CAMP with XLM</h3>
+          <p className="text-xs text-muted-foreground">
+            The contract rate is 1 XLM = 100 CAMP. This flow approves the native XLM Stellar Asset Contract, then confirms the CampusService purchase.
+          </p>
+          {buyNotice && (
+            <div className={buyNotice.includes("confirmed") ? "text-xs text-emerald-700 break-all bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg" : "text-xs text-destructive break-words bg-destructive/5 border border-destructive/20 p-2.5 rounded-lg"}>
+              {buyNotice}
             </div>
           )}
+          <label className="block text-xs font-bold text-muted-foreground">
+            XLM amount
+            <input
+              value={xlm}
+              onChange={(event) => {
+                setXlm(event.target.value);
+                setBuyNotice(null);
+              }}
+              type="number"
+              min="1"
+              step="0.0000001"
+              className="mt-1.5 h-11 w-full rounded-lg border border-border px-3 text-sm text-foreground bg-transparent focus:outline-none focus:ring-1 focus:ring-foreground"
+            />
+          </label>
+          <button
+            onClick={buy}
+            disabled={!address || buyCamp.isPending}
+            className="h-11 w-full bg-primary text-primary-foreground rounded-lg text-sm font-bold disabled:opacity-50 cursor-pointer transition-colors hover:opacity-90"
+          >
+            {buyCamp.isPending ? "Confirming purchase" : "Buy CAMP"}
+          </button>
+        </div>
+      </section>
 
-          <div className="flex items-center gap-2 bg-muted/40 p-2 rounded-lg border border-border">
-            <span className="flex-1 text-xs font-mono truncate" title={address ?? undefined}>
-              {address ?? "Wallet not connected"}
-            </span>
+      {/* Right Column: Send/Receive Card */}
+      <section className="lg:col-span-7 w-full">
+        <div className="bg-card rounded-xl border border-border p-6 shadow-sm w-full">
+          <div className="flex border-b border-border mb-6">
             <button
-              onClick={copyAddress}
-              disabled={!address}
-              className="p-1.5 border border-border bg-card rounded-md cursor-pointer"
+              onClick={() => setTab("send")}
+              className={
+                tab === "send"
+                  ? "flex-1 py-2 text-sm font-bold border-b-2 border-foreground cursor-pointer"
+                  : "flex-1 py-2 text-sm text-muted-foreground cursor-pointer"
+              }
             >
-              {copyState ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+              Send
+            </button>
+            <button
+              onClick={() => setTab("receive")}
+              className={
+                tab === "receive"
+                  ? "flex-1 py-2 text-sm font-bold border-b-2 border-foreground cursor-pointer"
+                  : "flex-1 py-2 text-sm text-muted-foreground cursor-pointer"
+              }
+            >
+              Receive
             </button>
           </div>
-          {requestError && <p className="text-xs text-destructive">{requestError}</p>}
+
+          {tab === "send" ? (
+            <div className="space-y-5">
+              <div className="relative">
+                <label className="block text-xs font-bold text-muted-foreground">
+                  Recipient Stellar address
+                  <input
+                    value={recipient}
+                    onChange={(event) => {
+                      setRecipient(event.target.value);
+                      setShowDropdown(true);
+                      setLocalError(null);
+                    }}
+                    onFocus={() => setShowDropdown(true)}
+                    onBlur={() => window.setTimeout(() => setShowDropdown(false), 200)}
+                    placeholder="G..."
+                    className="mt-1.5 h-12 w-full border border-border rounded-lg px-3 text-sm font-mono text-foreground focus:outline-none focus:ring-1 focus:ring-foreground bg-transparent"
+                  />
+                </label>
+
+                {/* Recipient Dropdown Autocomplete */}
+                {showDropdown && matchingMembers.length > 0 && (
+                  <div className="absolute left-0 right-0 mt-1 max-h-48 overflow-y-auto bg-card border border-border rounded-lg shadow-lg z-50 divide-y divide-border/60">
+                    {matchingMembers.map((m) => (
+                      <button
+                        key={m.address}
+                        type="button"
+                        onMouseDown={() => {
+                          setRecipient(m.address);
+                          setShowDropdown(false);
+                          setLocalError(null);
+                        }}
+                        className="w-full text-left px-3 py-2 hover:bg-muted/50 transition-colors flex flex-col cursor-pointer"
+                      >
+                        <span className="text-xs font-bold text-foreground">
+                          {m.fullName}{" "}
+                          <span className="text-[10px] text-muted-foreground font-normal">
+                            ({m.role === 1 ? "Student" : m.role === 2 ? "Merchant" : m.role === 3 ? "Organizer" : m.role === 4 ? "University Admin" : m.role === 5 ? "Platform Admin" : "Member"})
+                          </span>
+                        </span>
+                        <span className="text-[10px] text-muted-foreground font-mono truncate">
+                          {m.address}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <label className="block text-xs font-bold text-muted-foreground">
+                Amount
+                <div className="mt-1.5 flex gap-2">
+                  <input
+                    value={amount}
+                    onChange={(event) => {
+                      setAmount(event.target.value);
+                      setLocalError(null);
+                    }}
+                    type="number"
+                    min="0"
+                    step="0.0000001"
+                    placeholder="0.00"
+                    className="h-12 flex-1 border border-border rounded-lg px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-foreground bg-transparent"
+                  />
+                  <Dropdown<PaymentAsset>
+                    options={assetOptions}
+                    value={asset}
+                    onChange={(val) => setAsset(val)}
+                    className="w-28 shrink-0"
+                  />
+                </div>
+              </label>
+
+              <button
+                onClick={handleSend}
+                disabled={payment.isPending}
+                className="h-12 w-full bg-primary text-primary-foreground rounded-lg font-bold text-sm disabled:opacity-50 inline-flex justify-center items-center gap-2 cursor-pointer transition-colors"
+              >
+                {payment.isPending ? "Confirming payment" : "Send payment"}
+                <ArrowUpRight className="h-4 w-4" />
+              </button>
+
+              {localError && (
+                <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
+                  {localError}
+                </p>
+              )}
+              {payment.isSuccess && (
+                <p className="text-xs text-emerald-700 bg-emerald-50 border border-emerald-200 p-2 rounded break-all">
+                  Payment confirmed: {payment.data}
+                </p>
+              )}
+              {payment.isError && (
+                <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded break-words">
+                  {payment.error instanceof Error ? payment.error.message : "Payment failed."}
+                </p>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-5">
+              <p className="text-xs text-muted-foreground">
+                Generate an encoded Testnet payment request. It can be scanned or pasted into Scan & Pay.
+              </p>
+              <label className="block text-xs font-bold text-muted-foreground">
+                Requested amount
+                <div className="mt-1.5 flex gap-2">
+                  <input
+                    value={amount}
+                    onChange={(event) => setAmount(event.target.value)}
+                    type="number"
+                    min="0"
+                    step="0.0000001"
+                    placeholder="0.00"
+                    className="h-12 flex-1 border border-border rounded-lg px-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-foreground bg-transparent"
+                  />
+                  <Dropdown<PaymentAsset>
+                    options={assetOptions}
+                    value={asset}
+                    onChange={(val) => setAsset(val)}
+                    className="w-28 shrink-0"
+                  />
+                </div>
+              </label>
+
+              {qrDataUrl ? (
+                <Image
+                  src={qrDataUrl}
+                  width={256}
+                  height={256}
+                  unoptimized
+                  alt="CampusChain payment request QR code"
+                  className="mx-auto border border-border rounded-lg"
+                />
+              ) : (
+                <div className="h-56 border border-dashed border-border rounded-lg flex flex-col items-center justify-center text-muted-foreground">
+                  <QrCode className="h-10 w-10" />
+                  <p className="mt-2 text-xs">Enter a valid amount to generate a QR request.</p>
+                </div>
+              )}
+
+              <div className="flex items-center gap-2 bg-muted/40 p-2 rounded-lg border border-border">
+                <span className="flex-1 text-xs font-mono truncate" title={address ?? undefined}>
+                  {address ?? "Wallet not connected"}
+                </span>
+                <button
+                  onClick={copyAddress}
+                  disabled={!address}
+                  className="p-1.5 border border-border bg-card rounded-md cursor-pointer"
+                >
+                  {copyState ? <Check className="h-3.5 w-3.5" /> : <Copy className="h-3.5 w-3.5" />}
+                </button>
+              </div>
+              {requestError && <p className="text-xs text-destructive">{requestError}</p>}
+            </div>
+          )}
         </div>
-      )}
+      </section>
     </div>
   );
 }
