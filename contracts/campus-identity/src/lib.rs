@@ -612,8 +612,72 @@ impl CampusIdentity {
         Ok(())
     }
 
-    pub fn get_profile(env: Env, address: Address) -> Result<Profile, Error> {
-        get_profile_internal(&env, &address)
+    pub fn admin_set_profile(
+        env: Env,
+        caller: Address,
+        target: Address,
+        full_name: String,
+        university_code: String,
+        role: UserRole,
+        details: ProfileDetails,
+    ) -> Result<(), Error> {
+        require_platform_admin(&env, &caller)?;
+        if !details_match_role(role, &details) {
+            return Err(Error::InvalidRole);
+        }
+        validate_code(&university_code)?;
+        
+        let now = env.ledger().timestamp();
+        let profile_key = DataKey::Profile(target.clone());
+        let existing = env.storage().persistent().has(&profile_key);
+        
+        let profile = Profile {
+            address: target.clone(),
+            full_name,
+            university_code: Some(university_code.clone()),
+            role,
+            verification_status: VerificationStatus::Verified,
+            details,
+            created_at: if existing {
+                let old: Profile = env.storage().persistent().get(&profile_key).unwrap();
+                old.created_at
+            } else {
+                now
+            },
+            updated_at: now,
+        };
+        env.storage().persistent().set(&profile_key, &profile);
+        extend_persistent(&env, &profile_key);
+        
+        if !existing {
+            let mut profiles: Vec<Address> = env
+                .storage()
+                .persistent()
+                .get(&DataKey::Profiles)
+                .unwrap_or(Vec::new(&env));
+            profiles.push_back(target.clone());
+            env.storage().persistent().set(&DataKey::Profiles, &profiles);
+            extend_persistent(&env, &DataKey::Profiles);
+        }
+        extend_instance(&env);
+        Ok(())
+    }
+
+    pub fn get_profile(env: Env, address: Address, caller: Address) -> Result<Profile, Error> {
+        caller.require_auth();
+        let platform_admin = get_platform_admin(&env)?;
+        if caller == platform_admin {
+            return get_profile_internal(&env, &address);
+        }
+        let target = get_profile_internal(&env, &address)?;
+        if caller == address {
+            return Ok(target);
+        }
+        let caller_profile = get_profile_internal(&env, &caller)?;
+        if profile_code(&caller_profile)? != profile_code(&target)? {
+            return Err(Error::Unauthorized);
+        }
+        Ok(target)
     }
 
     pub fn get_university(env: Env, code: String) -> Result<University, Error> {
@@ -643,24 +707,55 @@ impl CampusIdentity {
         universities
     }
 
-    pub fn list_profiles(env: Env) -> Vec<Address> {
+    pub fn list_profiles(env: Env, caller: Address) -> Result<Vec<Address>, Error> {
+        caller.require_auth();
         let profiles_key = DataKey::Profiles;
         extend_persistent(&env, &profiles_key);
         extend_instance(&env);
-        env.storage()
+        let all_profiles: Vec<Address> = env
+            .storage()
             .persistent()
             .get(&profiles_key)
-            .unwrap_or(Vec::new(&env))
+            .unwrap_or(Vec::new(&env));
+        
+        let platform_admin = get_platform_admin(&env)?;
+        if caller == platform_admin {
+            return Ok(all_profiles);
+        }
+        
+        let caller_profile = get_profile_internal(&env, &caller)?;
+        let caller_univ = profile_code(&caller_profile)?;
+        
+        let mut filtered = Vec::new(&env);
+        for addr in all_profiles.iter() {
+            if let Ok(profile) = get_profile_internal(&env, &addr) {
+                if let Ok(code) = profile_code(&profile) {
+                    if code == caller_univ {
+                        filtered.push_back(addr);
+                    }
+                }
+            }
+        }
+        Ok(filtered)
     }
 
-    pub fn list_student_ids(env: Env, university_code: String) -> Vec<BytesN<32>> {
+    pub fn list_student_ids(env: Env, caller: Address, university_code: String) -> Result<Vec<BytesN<32>>, Error> {
+        caller.require_auth();
+        let platform_admin = get_platform_admin(&env)?;
+        if caller != platform_admin {
+            let caller_profile = get_profile_internal(&env, &caller)?;
+            let caller_univ = profile_code(&caller_profile)?;
+            if caller_univ != university_code {
+                return Err(Error::Unauthorized);
+            }
+        }
         let student_ids_key = DataKey::UniversityStudentIds(university_code);
         extend_persistent(&env, &student_ids_key);
         extend_instance(&env);
-        env.storage()
+        Ok(env.storage()
             .persistent()
             .get(&student_ids_key)
-            .unwrap_or(Vec::new(&env))
+            .unwrap_or(Vec::new(&env)))
     }
 
     /// Returns false for Platform Admin or profiles without a university. It does not

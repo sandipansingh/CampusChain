@@ -219,7 +219,7 @@ fn scoped_profiles_require_an_approved_university_and_start_pending() {
     );
     for address in [&student, &merchant, &organizer] {
         assert_eq!(
-            client.get_profile(address).verification_status,
+            client.get_profile(address, address).verification_status,
             VerificationStatus::Pending
         );
     }
@@ -257,7 +257,7 @@ fn only_matching_university_admin_can_verify_or_reject_profiles() {
     assert!(client.try_verify_profile(&non_admin, &student_a).is_err());
     client.verify_profile(&admin_a, &student_a);
     assert_eq!(
-        client.get_profile(&student_a).verification_status,
+        client.get_profile(&student_a, &student_a).verification_status,
         VerificationStatus::Verified
     );
 
@@ -267,7 +267,7 @@ fn only_matching_university_admin_can_verify_or_reject_profiles() {
     client.reject_profile(&admin_a, &student_for_rejection);
     assert_eq!(
         client
-            .get_profile(&student_for_rejection)
+            .get_profile(&student_for_rejection, &student_for_rejection)
             .verification_status,
         VerificationStatus::Rejected
     );
@@ -279,7 +279,7 @@ fn platform_admin_is_bootstrapped_once_and_cannot_be_assigned() {
     let (client, platform_admin) = initialized_identity(&env);
     let other_address = Address::generate(&env);
 
-    let profile = client.get_profile(&platform_admin);
+    let profile = client.get_profile(&platform_admin, &platform_admin);
     assert_eq!(profile.role, UserRole::PlatformAdmin);
     assert_eq!(profile.verification_status, VerificationStatus::Verified);
     assert!(profile.university_code.is_none());
@@ -325,7 +325,7 @@ fn student_id_must_be_unique_in_university() {
     );
 
     // Assert that the list of student IDs contains our registered student's ID hash
-    let ids = client.list_student_ids(&text(&env, "UNI-A"));
+    let ids = client.list_student_ids(&university_admin, &text(&env, "UNI-A"));
     assert_eq!(ids.len(), 1);
     assert_eq!(ids.get(0).unwrap(), BytesN::from_array(&env, &[1; 32]));
 
