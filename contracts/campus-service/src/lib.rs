@@ -968,6 +968,10 @@ impl CampusService {
 
         env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
+        env.events().publish(
+            (Symbol::new(&env, "ScholarshipCreated"), id, scholarship.created_by),
+            scholarship.amount,
+        );
         Ok(id)
     }
 
@@ -987,6 +991,10 @@ impl CampusService {
         scholarship.admin_approval_status = ApprovalStatus::Approved;
         env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
+        env.events().publish(
+            (Symbol::new(&env, "ScholarshipApproved"), id, admin),
+            (),
+        );
         Ok(())
     }
 
@@ -1004,9 +1012,12 @@ impl CampusService {
         }
 
         scholarship.admin_approval_status = ApprovalStatus::Rejected;
-        
         env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
+        env.events().publish(
+            (Symbol::new(&env, "ScholarshipRejected"), id, admin),
+            (),
+        );
         Ok(())
     }
 
