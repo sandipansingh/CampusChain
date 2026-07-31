@@ -23,6 +23,7 @@ import {
   useUniversityProfiles,
   useVerifyProfileMutation,
   useRejectProfileMutation,
+  useCampusBalance,
 } from "@/features/wallet/hooks/useWallet";
 import {
   useScholarshipPrograms,
@@ -61,6 +62,7 @@ export function UniversityDashboard() {
   // Scholarships data
   const { data: programs = [], isLoading: isLoadingProgs } = useScholarshipPrograms(address ?? undefined);
   const { data: applications = [], isLoading: isLoadingApps } = useScholarshipApplications(address ?? undefined);
+  const { data: balance = 0 } = useCampusBalance(address);
 
   // Mutations
   const verifyProfile = useVerifyProfileMutation();
@@ -75,6 +77,15 @@ export function UniversityDashboard() {
   const handleCreateProgram = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!address || !progTitle || !progDesc || !progCriteria || !progAmount || !progDeadline || !progSlots) return;
+    
+    const amountNum = Number(progAmount);
+    const slotsNum = Number(progSlots);
+    const totalRequired = amountNum * slotsNum;
+    if (balance < totalRequired) {
+      setSchNotice(`Insufficient CAMP balance. You need at least ${totalRequired.toLocaleString()} CAMP to fund this scholarship program (currently have ${balance.toLocaleString()} CAMP).`);
+      return;
+    }
+
     try {
       setSchNotice(null);
       const txHash = await createProgram.mutateAsync({
@@ -82,9 +93,9 @@ export function UniversityDashboard() {
         title: progTitle,
         description: progDesc,
         criteria: progCriteria,
-        amount: Number(progAmount),
+        amount: amountNum,
         deadline: progDeadline,
-        slots: Number(progSlots),
+        slots: slotsNum,
       });
       setSchNotice(`Scholarship created successfully! Transaction hash: ${txHash}`);
       setProgTitle("");
@@ -320,7 +331,12 @@ export function UniversityDashboard() {
 
         {/* Create Scholarship Program Form */}
         <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
-          <h3 className="text-base font-bold text-foreground">Create Scholarship Program</h3>
+          <h3 className="text-base font-bold text-foreground flex justify-between items-center">
+            <span>Create Scholarship Program</span>
+            <span className="text-xs font-normal text-muted-foreground">
+              Balance: <strong>{balance.toLocaleString()} CAMP</strong>
+            </span>
+          </h3>
           <form onSubmit={handleCreateProgram} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               <div>
