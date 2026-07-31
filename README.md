@@ -473,13 +473,13 @@ NEXT_PUBLIC_STELLAR_PASSPHRASE="Test SDF Network ; September 2015"
 
 # Deployed contract addresses (Testnet)
 # CampusIdentity (on-chain profile registry)
-NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID=CCVI36KVD27FDYSE4QODG6HOKRKFR46P2V55KY5DPKZVZ53MZJNPB7RH
+NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID=CBQL723J25F4PN7MZV6ADTLW2U3L5NOAP572VOC3TW3TJOCXCFEG26SK
 
 # CampusToken (CAMP fungible token)
-NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID=CD4HG73FUKPFB3S5SYKK6QGMOJ2CYMD6P7DMU3GP5NBUYZDADKZZGQZW
+NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID=CAAUDO66DNKRE5YWIL6PDMMILAKGAYHAZ66E4NAG4Z7FSEV7E5CCLVOJ
 
 # CampusService (escrow, events, marketplace, scholarships, rewards)
-NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID=CDND23QIOX3UXMMSHXLRNSMSOMTURRVC4IRGJ524UJLOSL4SMYR7N4LZ
+NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID=CA2VH33N247ELB4KH4OAJVONC4EBTPPXVOJECVQFGK3LRHV4TW7BPDQ5
 
 # Admin account
 # Admin Stellar address — receives XLM during CAMP purchase, issues roles
@@ -684,9 +684,9 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 | Contract | Address | Explorer |
 |---|---|---|
-| **CampusIdentity** | `CCVI36KVD27FDYSE4QODG6HOKRKFR46P2V55KY5DPKZVZ53MZJNPB7RH` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CCVI36KVD27FDYSE4QODG6HOKRKFR46P2V55KY5DPKZVZ53MZJNPB7RH) |
-| **CampusToken** (CAMP) | `CD4HG73FUKPFB3S5SYKK6QGMOJ2CYMD6P7DMU3GP5NBUYZDADKZZGQZW` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CD4HG73FUKPFB3S5SYKK6QGMOJ2CYMD6P7DMU3GP5NBUYZDADKZZGQZW) |
-| **CampusService** | `CDND23QIOX3UXMMSHXLRNSMSOMTURRVC4IRGJ524UJLOSL4SMYR7N4LZ` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CDND23QIOX3UXMMSHXLRNSMSOMTURRVC4IRGJ524UJLOSL4SMYR7N4LZ) |
+| **CampusIdentity** | `CBQL723J25F4PN7MZV6ADTLW2U3L5NOAP572VOC3TW3TJOCXCFEG26SK` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CBQL723J25F4PN7MZV6ADTLW2U3L5NOAP572VOC3TW3TJOCXCFEG26SK) |
+| **CampusToken** (CAMP) | `CAAUDO66DNKRE5YWIL6PDMMILAKGAYHAZ66E4NAG4Z7FSEV7E5CCLVOJ` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CAAUDO66DNKRE5YWIL6PDMMILAKGAYHAZ66E4NAG4Z7FSEV7E5CCLVOJ) |
+| **CampusService** | `CA2VH33N247ELB4KH4OAJVONC4EBTPPXVOJECVQFGK3LRHV4TW7BPDQ5` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CA2VH33N247ELB4KH4OAJVONC4EBTPPXVOJECVQFGK3LRHV4TW7BPDQ5) |
 | **Native XLM SAC** | `CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CDLZFC3SYJYDZT7K67VZ75HPJVIEUVNIXF47ZG2FB2RMQQVU2HHGCYSC) |
 
 #### CampusIdentity
@@ -695,7 +695,7 @@ CampusChain uses a multi-layered, role-based security architecture:
 |---|---|---|
 | WASM Upload | `` | [View ↗](https://stellar.expert/explorer/testnet/tx/) |
 | Contract Instantiate | `0eacab0255f705b44d67329f0d580660aedb7dc49c0ac798e8ab18d4a31e1bc5` | [View ↗](https://stellar.expert/explorer/testnet/tx/0eacab0255f705b44d67329f0d580660aedb7dc49c0ac798e8ab18d4a31e1bc5) |
-| `initialize()` | `17061d46862db3fa0efe736a3a0443aeb16270a663df06620b1dc872c4b103b2` | [View ↗](https://stellar.expert/explorer/testnet/tx/17061d46862db3fa0efe736a3a0443aeb16270a663df06620b1dc872c4b103b2) |
+| `initialize()` | `0750a90b4eff5ec8f6ba63da21b5458029ef93c706b85cd337db3671c19cd096` | [View ↗](https://stellar.expert/explorer/testnet/tx/0750a90b4eff5ec8f6ba63da21b5458029ef93c706b85cd337db3671c19cd096) |
 
 #### CampusToken
 
@@ -703,15 +703,15 @@ CampusChain uses a multi-layered, role-based security architecture:
 |---|---|---|
 | WASM Upload | `` | [View ↗](https://stellar.expert/explorer/testnet/tx/) |
 | Contract Instantiate | `e62a36b28b908aaac0668e4364366b9b4f4245c2b1c39b95b4f21bb42701cef1` | [View ↗](https://stellar.expert/explorer/testnet/tx/e62a36b28b908aaac0668e4364366b9b4f4245c2b1c39b95b4f21bb42701cef1) |
-| `initialize()` | `23399830d0365bc1d0c5d4516d5adc2332ccad80ff0581f4992873d58cc57097` | [View ↗](https://stellar.expert/explorer/testnet/tx/23399830d0365bc1d0c5d4516d5adc2332ccad80ff0581f4992873d58cc57097) |
+| `initialize()` | `782ae16921934048af800f5c9f132b89c037648d1932856bb1f584c438cf5960` | [View ↗](https://stellar.expert/explorer/testnet/tx/782ae16921934048af800f5c9f132b89c037648d1932856bb1f584c438cf5960) |
 
 #### CampusService
 
 | Action | Transaction Hash | Explorer |
 |---|---|---|
 | WASM Upload | `` | [View ↗](https://stellar.expert/explorer/testnet/tx/) |
-| Contract Instantiate | `63a0b23f7a14ddb57ee842200037487381a0d67fa87a8d4a278312ccd0099cde` | [View ↗](https://stellar.expert/explorer/testnet/tx/63a0b23f7a14ddb57ee842200037487381a0d67fa87a8d4a278312ccd0099cde) |
-| `initialize()` | `f991fb90d4f48accfaa42e31d8f166a2847a431eeea404d38a7ed9880c5209ff` | [View ↗](https://stellar.expert/explorer/testnet/tx/f991fb90d4f48accfaa42e31d8f166a2847a431eeea404d38a7ed9880c5209ff) |
+| Contract Instantiate | `2e0bce3e5fa12aa176619b24e09dee4af6c6de3d151ed7f69df0b2964ededbf8` | [View ↗](https://stellar.expert/explorer/testnet/tx/2e0bce3e5fa12aa176619b24e09dee4af6c6de3d151ed7f69df0b2964ededbf8) |
+| `initialize()` | `953219c96e605410bb68edfb09417b9c2565af15a803f662f504e70858a174ef` | [View ↗](https://stellar.expert/explorer/testnet/tx/953219c96e605410bb68edfb09417b9c2565af15a803f662f504e70858a174ef) |
 
 ### WASM Hashes
 
@@ -719,7 +719,7 @@ CampusChain uses a multi-layered, role-based security architecture:
 |---|---|
 | CampusIdentity | `0eacab0255f705b44d67329f0d580660aedb7dc49c0ac798e8ab18d4a31e1bc5` |
 | CampusToken | `e62a36b28b908aaac0668e4364366b9b4f4245c2b1c39b95b4f21bb42701cef1` |
-| CampusService | `63a0b23f7a14ddb57ee842200037487381a0d67fa87a8d4a278312ccd0099cde` |
+| CampusService | `2e0bce3e5fa12aa176619b24e09dee4af6c6de3d151ed7f69df0b2964ededbf8` |
 
 ---
 
