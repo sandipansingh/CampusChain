@@ -1,9 +1,14 @@
 import { redirect } from "next/navigation";
 
-export default function RolePage({ params }: { params: { role: string } }) {
+interface RolePageProps {
+  params: Promise<{ role: string }>;
+}
+
+export default async function RolePage({ params }: RolePageProps) {
+  const { role } = await params;
   const defaultSlug =
-    params.role === "university" || params.role === "platform"
+    role === "university" || role === "platform"
       ? "overview"
       : "dashboard";
-  redirect(`/${params.role}/${defaultSlug}`);
+  redirect(`/${role}/${defaultSlug}`);
 }

@@ -118,9 +118,11 @@ export function bufToHex(buffer: ArrayBuffer | Uint8Array): string {
     .join("");
 }
 
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function normalizeProfileDetails(detailsRaw: unknown): Record<string, any> {
   if (!Array.isArray(detailsRaw) || detailsRaw.length === 0) return {};
   const type = detailsRaw[0];
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const payload = (detailsRaw[1] as Record<string, any>) || {};
 
   if (type === "Student") {

@@ -237,6 +237,7 @@ export function WalletDashboard() {
                     </button>
                   );
                 })}
+              </div>
             </div>
 
             {/* Stats Cards Row */}
@@ -252,7 +253,7 @@ export function WalletDashboard() {
                   label: "CAMP Balance",
                   value: `${campBalance || 0} CAMP`,
                   emptyVal: "0 CAMP",
-                  icon: Award,
+                  icon: Wallet,
                 },
                 {
                   label: "On-Chain Activity Logs",

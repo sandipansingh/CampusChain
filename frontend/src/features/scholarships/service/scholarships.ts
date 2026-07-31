@@ -82,22 +82,22 @@ function saveApplications(list: ScholarshipApplication[]) {
   localStorage.setItem("campuschain_applications", JSON.stringify(list));
 }
 
-export async function fetchScholarshipProgram(id: number, _address?: string): Promise<Scholarship | null> {
+export async function fetchScholarshipProgram(id: number): Promise<Scholarship | null> {
   await new Promise((r) => setTimeout(r, 200));
   return getScholarships().find((s) => s.id === id) || null;
 }
 
-export async function fetchScholarshipPrograms(_startAfter = 0, _limit = 50, _address?: string): Promise<Scholarship[]> {
+export async function fetchScholarshipPrograms(): Promise<Scholarship[]> {
   await new Promise((r) => setTimeout(r, 200));
   return getScholarships();
 }
 
-export async function fetchScholarshipApplications(_startAfter = 0, _limit = 50, _address?: string): Promise<ScholarshipApplication[]> {
+export async function fetchScholarshipApplications(): Promise<ScholarshipApplication[]> {
   await new Promise((r) => setTimeout(r, 200));
   return getApplications();
 }
 
-export async function fetchScholarshipApplication(id: number, _address?: string): Promise<ScholarshipApplication | null> {
+export async function fetchScholarshipApplication(id: number): Promise<ScholarshipApplication | null> {
   await new Promise((r) => setTimeout(r, 200));
   return getApplications().find((a) => a.id === id) || null;
 }
