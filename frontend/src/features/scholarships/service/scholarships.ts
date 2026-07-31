@@ -35,6 +35,9 @@ export interface ScholarshipApplication {
 }
 
 function parseStatus(statusVal: any): "pending" | "approved" | "rejected" {
+  if (statusVal === 0 || statusVal === "0") return "pending";
+  if (statusVal === 1 || statusVal === "1") return "approved";
+  if (statusVal === 2 || statusVal === "2") return "rejected";
   if (!statusVal) return "pending";
   let statusStr = "";
   if (typeof statusVal === "string") {
