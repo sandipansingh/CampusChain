@@ -4,8 +4,12 @@ import { UniversityDashboard } from "@/features/wallet/ui/UniversityDashboard";
 import { PlatformDashboard } from "@/features/wallet/ui/PlatformDashboard";
 import { notFound } from "next/navigation";
 
-export default function RoleSlugPage({ params }: { params: { role: string; slug: string } }) {
-  const role = params.role;
+interface PageParams {
+  params: Promise<{ role: string; slug: string }>;
+}
+
+export default async function RoleSlugPage({ params }: PageParams) {
+  const { role } = await params;
 
   if (role === "student" || role === "merchant" || role === "organizer") {
     const allowed = role === "student" ? [1] : role === "merchant" ? [2] : [3];
