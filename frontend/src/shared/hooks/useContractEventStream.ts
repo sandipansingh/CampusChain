@@ -56,6 +56,11 @@ function getCacheKeysForEvent(eventName: string): string[][] {
     case "OrderStatusChanged":
       return [["food-orders"], ["campus-balance"], ["ledger-events"]];
 
+    case "ScholarshipCreated":
+    case "ScholarshipApproved":
+    case "ScholarshipRejected":
+      return [["scholarship-programs"], ["ledger-events"]];
+
     default:
       return [];
   }
@@ -163,6 +168,10 @@ export function useContractEventStream(address: string | null | undefined) {
             if (evt.eventName === "UniversityRegistered") {
               evt.title = "University Registration Claim";
               evt.message = `New university registered: ${evt.details}`;
+              filteredDecoded.push(evt);
+            } else if (evt.eventName === "ScholarshipCreated") {
+              evt.title = "New Scholarship Awaiting Approval";
+              evt.message = `Scholarship submitted by ${shortAddr(evt.details)}`;
               filteredDecoded.push(evt);
             }
             continue;

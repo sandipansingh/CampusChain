@@ -272,6 +272,26 @@ export function decodeEvent(evt: {
     };
   }
 
+  if (eventName === "ScholarshipCreated") {
+    const id = decodeNative(topicNative[1]) ?? 0;
+    const university = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    const amountI128 = decodeNative(valueNative) ?? 0;
+    const amount = Number(amountI128) / 10_000_000;
+    return { ...baseEvent, type: "role", title: "Scholarship Created", message: `#${id} submitted by ${shortAddr(university)}`, details: university, color: "amber", icon: "role" };
+  }
+
+  if (eventName === "ScholarshipApproved") {
+    const id = decodeNative(topicNative[1]) ?? 0;
+    const admin = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    return { ...baseEvent, type: "role", title: "Scholarship Approved", message: `Scholarship #${id} was approved by admin`, details: admin, color: "emerald", icon: "role" };
+  }
+
+  if (eventName === "ScholarshipRejected") {
+    const id = decodeNative(topicNative[1]) ?? 0;
+    const admin = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    return { ...baseEvent, type: "role", title: "Scholarship Rejected", message: `Scholarship #${id} was rejected by admin`, details: admin, color: "orange", icon: "role" };
+  }
+
   return { ...baseEvent, type: "system", title: eventName || "Contract Event", message: `Ledger ${evt.ledger}`, details: evt.txHash.slice(0, 8), color: "gray", icon: "system" };
 }
 
