@@ -48,13 +48,13 @@ function getCacheKeysForEvent(eventName: string): string[][] {
     case "ProfileSubmittedForVerification":
     case "ProfileVerified":
     case "ProfileRejected":
-      return [["university-profiles"], ["campus-profile"], ["campus-role"]];
+      return [["university-profiles"], ["campus-profile"], ["campus-role"], ["ledger-events"]];
 
     case "OrderPlaced":
-      return [["food-orders"]];
+      return [["food-orders"], ["ledger-events"]];
 
     case "OrderStatusChanged":
-      return [["food-orders"], ["campus-balance"]];
+      return [["food-orders"], ["campus-balance"], ["ledger-events"]];
 
     default:
       return [];

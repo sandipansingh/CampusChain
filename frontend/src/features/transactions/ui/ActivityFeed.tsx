@@ -41,7 +41,7 @@ function getEventIcon(icon: string) {
   }
 }
 
-export function ActivityFeed() {
+export function ActivityFeed({ global = false }: { global?: boolean } = {}) {
   const { address } = useWallet();
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
@@ -57,7 +57,7 @@ export function ActivityFeed() {
     typeFilter,
     setTypeFilter,
     loadMore,
-  } = useActivityFeed(address ?? undefined);
+  } = useActivityFeed(global ? undefined : (address ?? undefined));
 
   // Toggle detail rows
   const handleToggleDetails = (id: string) => {

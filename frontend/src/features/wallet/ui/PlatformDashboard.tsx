@@ -21,7 +21,7 @@ import {
   executeSuspendUniversity,
   fetchUniversities,
 } from "@/features/wallet/service/campusIdentity";
-import { useLedgerEvents } from "@/features/transactions/hooks/useActivityFeed";
+import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
 import { Settings as SettingsView } from "./Settings";
 import { NotificationPanel } from "@/shared/ui/NotificationPanel";
 import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
@@ -50,7 +50,6 @@ export function PlatformDashboard() {
     queryFn: () => fetchUniversities(address ?? undefined),
     refetchInterval: 20000,
   });
-  const ledgerEventsQuery = useLedgerEvents();
 
   // Mutations
   const approveUniv = useMutation({
@@ -260,37 +259,7 @@ export function PlatformDashboard() {
   };
 
   const renderActivityFeed = () => {
-    const events = ledgerEventsQuery.data ?? [];
-    return (
-      <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
-        <h3 className="text-lg font-bold">Cross-University Activity Feed</h3>
-        {ledgerEventsQuery.isLoading ? (
-          <Skeleton className="h-40 w-full" />
-        ) : events.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-6 text-center">No platform-wide events found.</p>
-        ) : (
-          <div className="divide-y divide-border">
-            {events.map((evt) => (
-              <div key={evt.id} className="py-3 flex items-center justify-between hover:bg-muted/10 px-2 rounded-lg text-xs">
-                <div className="flex items-center gap-4 min-w-0">
-                  <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center shrink-0">
-                    <Building2 className="h-4 w-4" />
-                  </div>
-                  <div className="min-w-0">
-                    <p className="font-bold text-foreground truncate">{evt.title}</p>
-                    <p className="text-muted-foreground truncate">{evt.message}</p>
-                  </div>
-                </div>
-                <div className="text-right shrink-0">
-                  <p className="font-bold text-foreground">{evt.details}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{evt.timestamp}</p>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-    );
+    return <ActivityFeed global />;
   };
 
   const renderContentView = () => {
