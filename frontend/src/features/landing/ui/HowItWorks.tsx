@@ -1,17 +1,17 @@
-import { Award, BadgeCheck, CreditCard, ReceiptText, ShoppingBag, Wallet } from "lucide-react";
+import { GraduationCap, BadgeCheck, CreditCard, ReceiptText, ShoppingBag, Wallet } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const desktopSteps: Array<{ icon: LucideIcon; title: string; description: string }> = [
   { icon: Wallet, title: "Connect Wallet", description: "Link your existing Stellar-compatible wallet or create a new one in seconds." },
   { icon: BadgeCheck, title: "Get Verified", description: "Securely verify your student status using campus-issued credentials." },
-  { icon: ShoppingBag, title: "Start Transacting", description: "Pay at shops, trade with peers, and earn CAMP rewards on campus." },
+  { icon: ShoppingBag, title: "Start Transacting", description: "Pay at shops, trade with peers, and apply for scholarships on campus." },
   { icon: ReceiptText, title: "Track Assets", description: "Monitor your history and manage digital assets in one clean dashboard." },
 ];
 
 const mobileSteps: Array<{ icon: LucideIcon; title: string; description: string }> = [
   { icon: Wallet, title: "Onboard", description: "Connect your university ID to generate a secure Stellar-based wallet instantly." },
   { icon: CreditCard, title: "Fund & Pay", description: "Load credits via bank or scholarship funds and tap to pay at any campus merchant." },
-  { icon: Award, title: "Earn Rewards", description: "Receive automated rewards and cashback for on-campus spending and activities." },
+  { icon: GraduationCap, title: "Scholarships", description: "Apply to approved scholarships and get direct-to-wallet student funding." },
 ];
 
 export function HowItWorks() {

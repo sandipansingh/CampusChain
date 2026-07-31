@@ -1,11 +1,11 @@
-import { BadgeCheck, QrCode, ReceiptText, School, ShieldCheck, Store, Ticket, Trophy } from "lucide-react";
+import { BadgeCheck, QrCode, ReceiptText, School, ShieldCheck, Store, Ticket, Coins } from "lucide-react";
 import type { LucideIcon } from "lucide-react";
 
 const desktopFeatures: Array<{ icon: LucideIcon; title: string; description: string }> = [
   { icon: QrCode, title: "QR Payments", description: "Lightning-fast scan-to-pay at campus kiosks, cafeterias, and bookstores." },
   { icon: Store, title: "Escrow Marketplace", description: "Peer-to-peer textbook and supply trading with secure smart-contract escrow." },
   { icon: Ticket, title: "Event Ticketing", description: "Digital-first entry for sports, concerts, and workshops. Fraud-proof and instant." },
-  { icon: Trophy, title: "CAMP Rewards", description: "Earn native utility tokens for volunteer work, high grades, or eco-friendly habits." },
+  { icon: Coins, title: "Testnet Faucet", description: "Get started instantly with 100 free CAMP tokens upon wallet connection." },
   { icon: School, title: "Scholarships", description: "Direct-to-wallet disbursements with zero intermediary delays or processing fees." },
   { icon: ReceiptText, title: "Transaction History", description: "Transparent, immutable logs for all campus financial interactions." },
 ];

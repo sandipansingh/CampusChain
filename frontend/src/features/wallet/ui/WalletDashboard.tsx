@@ -12,7 +12,6 @@ import {
   QrCode,
   ShoppingBag,
   Calendar,
-  Award,
   GraduationCap,
   Receipt,
   Settings,
@@ -20,7 +19,6 @@ import {
   ArrowUpRight,
   ArrowDownLeft,
   Send,
-  Landmark,
   Store,
   User,
   CalendarCheck,
@@ -41,7 +39,6 @@ import { MarketplaceGrid } from "@/features/marketplace/ui/MarketplaceGrid";
 import { MarketplaceDetail } from "@/features/marketplace/ui/MarketplaceDetail";
 import { MarketplaceSell } from "@/features/marketplace/ui/MarketplaceSell";
 import { Events } from "@/features/events/ui/Events";
-import { Rewards } from "@/features/rewards/ui/Rewards";
 import { Scholarships } from "@/features/scholarships/ui/Scholarships";
 import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
 import { MerchantDashboard } from "@/features/transactions/ui/MerchantDashboard";
@@ -93,7 +90,6 @@ export function WalletDashboard() {
     { value: "pay", label: "Pay (QR)", icon: QrCode },
     { value: "marketplace", label: "Marketplace", icon: ShoppingBag },
     { value: "events", label: "Events", icon: Calendar },
-    { value: "rewards", label: "Rewards", icon: Award },
     { value: "scholarships", label: "Scholarships", icon: GraduationCap },
     { value: "activity-feed", label: "Activity Feed", icon: Receipt },
   ];
@@ -162,8 +158,6 @@ export function WalletDashboard() {
         );
       case "events":
         return <Events />;
-      case "rewards":
-        return <Rewards />;
       case "scholarships":
         return <Scholarships />;
       case "activity-feed":
@@ -224,7 +218,7 @@ export function WalletDashboard() {
                 {[
                   { label: "Scan & Pay", icon: QrCode, target: "pay" },
                   { label: "Send Money", icon: Send, target: "wallet" },
-                  { label: "Rewards Hub", icon: Landmark, target: "rewards" },
+                  { label: "Scholarships", icon: GraduationCap, target: "scholarships" },
                   { label: "Marketplace", icon: Store, target: "marketplace" },
                 ].map((act) => {
                   const Icon = act.icon;
@@ -243,7 +237,6 @@ export function WalletDashboard() {
                     </button>
                   );
                 })}
-              </div>
             </div>
 
             {/* Stats Cards Row */}
