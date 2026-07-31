@@ -74,73 +74,98 @@ fund_if_needed "$ADMIN_ADDR"
 fund_if_needed "$UNIV_ADDR"
 fund_if_needed "$STUDENT_ADDR"
 
-echo ""
-echo "Step 1: Registering University 'DEMO-UNI'..."
-# Register university
-# Signature: register_university(admin, code, name, address, title)
-# Requires authentication of the university administrator, so we sign with UNIV_ADMIN_KEY.
-stellar contract invoke \
-    --id "$IDENTITY_ID" \
-    --source-account "$UNIV_ADMIN_KEY" \
-    --network "$NETWORK" \
-    -- \
-    register_university \
-    --admin "$UNIV_ADDR" \
-    --code "DEMO-UNI" \
-    --name "Demo State University" \
-    --address "456 Learning Blvd" \
-    --title "Demo Registrar"
+# Helper to run CLI invocation with idempotency
+run_idempotent() {
+    local step_name="$1"
+    local skip_patterns="$2"
+    shift 2
+    
+    echo "---------------------------------------------------------"
+    echo "Running $step_name..."
+    set +e
+    local output
+    output=$( "$@" 2>&1 )
+    local status=$?
+    set -e
+    
+    if [ $status -eq 0 ]; then
+        echo "$output"
+        echo "✅ Success"
+    else
+        if echo "$output" | grep -q -E "$skip_patterns"; then
+            echo "ℹ️ Already done / skipped (Status code or condition match)"
+        else
+            echo "ERROR: $step_name failed:" >&2
+            echo "$output" >&2
+            exit $status
+        fi
+    fi
+}
 
-echo "Step 2: Approving University 'DEMO-UNI'..."
-# Approve university
-# Signature: approve_university(caller, code)
-# Requires platform admin authentication, so we sign with ADMIN_KEY.
-stellar contract invoke \
-    --id "$IDENTITY_ID" \
-    --source-account "$ADMIN_KEY" \
-    --network "$NETWORK" \
-    -- \
-    approve_university \
-    --caller "$ADMIN_ADDR" \
-    --code "DEMO-UNI"
+# Step 1: Register University
+run_idempotent \
+    "Step 1: Registering University 'DEMO-UNI'" \
+    "Error\(Contract, #5\)|Error\(Contract, #7\)|ProfileAlreadyExists|UniversityAlreadyExists" \
+    stellar contract invoke \
+        --id "$IDENTITY_ID" \
+        --source-account "$UNIV_ADMIN_KEY" \
+        --network "$NETWORK" \
+        -- \
+        register_university \
+        --admin "$UNIV_ADDR" \
+        --code "DEMO-UNI" \
+        --name "Demo State University" \
+        --address "456 Learning Blvd" \
+        --title "Demo Registrar"
 
-echo "Step 3: Registering Student Profile..."
-# Details structure for Student in JSON format
+# Step 2: Approve University
+run_idempotent \
+    "Step 2: Approving University 'DEMO-UNI'" \
+    "Error\(Contract, #13\)|InvalidUniversityStatus" \
+    stellar contract invoke \
+        --id "$IDENTITY_ID" \
+        --source-account "$ADMIN_KEY" \
+        --network "$NETWORK" \
+        -- \
+        approve_university \
+        --caller "$ADMIN_ADDR" \
+        --code "DEMO-UNI"
+
+# Step 3: Register Student Profile
 DUMMY_HASH="0101010101010101010101010101010101010101010101010101010101010101"
 DETAILS_JSON="{\"Student\":{\"student_identifier_hash\":\"$DUMMY_HASH\",\"department\":\"Engineering\",\"program\":\"Computer Science\",\"graduation_year\":2027}}"
 
-# Register student profile
-# Signature: register_profile(address, full_name, university_code, role, details)
-# Requires profile address authentication, so we sign with STUDENT_KEY.
-stellar contract invoke \
-    --id "$IDENTITY_ID" \
-    --source-account "$STUDENT_KEY" \
-    --network "$NETWORK" \
-    -- \
-    register_profile \
-    --address "$STUDENT_ADDR" \
-    --full_name "Demo Student" \
-    --university_code "DEMO-UNI" \
-    --role 1 \
-    --details "$DETAILS_JSON"
+run_idempotent \
+    "Step 3: Registering Student Profile" \
+    "Error\(Contract, #5\)|ProfileAlreadyExists" \
+    stellar contract invoke \
+        --id "$IDENTITY_ID" \
+        --source-account "$STUDENT_KEY" \
+        --network "$NETWORK" \
+        -- \
+        register_profile \
+        --address "$STUDENT_ADDR" \
+        --full_name "Demo Student" \
+        --university_code "DEMO-UNI" \
+        --role 1 \
+        --details "$DETAILS_JSON"
 
-echo "Step 4: Verifying Student Profile..."
-# Verify student profile (by University Admin)
-# Signature: verify_profile(caller, target_address)
-# Requires university admin authentication, so we sign with UNIV_ADMIN_KEY.
-stellar contract invoke \
-    --id "$IDENTITY_ID" \
-    --source-account "$UNIV_ADMIN_KEY" \
-    --network "$NETWORK" \
-    -- \
-    verify_profile \
-    --caller "$UNIV_ADDR" \
-    --target_address "$STUDENT_ADDR"
+# Step 4: Verify Student Profile
+run_idempotent \
+    "Step 4: Verifying Student Profile" \
+    "Error\(Contract, #12\)|InvalidVerificationStatus" \
+    stellar contract invoke \
+        --id "$IDENTITY_ID" \
+        --source-account "$UNIV_ADMIN_KEY" \
+        --network "$NETWORK" \
+        -- \
+        verify_profile \
+        --caller "$UNIV_ADDR" \
+        --target_address "$STUDENT_ADDR"
 
-echo "Step 5: Querying verified student profile..."
-# Get student profile (passing caller)
-# Signature: get_profile(address, caller)
-# Requires caller authentication, so we sign with STUDENT_KEY.
+# Step 5: Query Profile (Naturally idempotent query)
+echo "---------------------------------------------------------"
+echo "Running Step 5: Querying verified student profile..."
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$STUDENT_KEY" \
