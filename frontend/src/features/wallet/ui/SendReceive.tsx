@@ -3,15 +3,21 @@
 import { useEffect, useState } from "react";
 import Image from "next/image";
 import QRCode from "qrcode";
-import { ArrowUpRight, Check, Copy, QrCode } from "lucide-react";
+import { ArrowUpRight, Check, Copy, QrCode, Coins } from "lucide-react";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { executeTransfer } from "@/features/wallet/service/campusToken";
 import { sendNativePayment } from "@/shared/stellar/client";
 import { signTx } from "@/features/wallet/service/wallet";
 import { encodePaymentRequest, PaymentAsset } from "@/features/wallet/service/paymentRequest";
-import { useCampusBalance, useCampusProfile, useUniversityProfiles } from "@/features/wallet/hooks/useWallet";
-import { useBuyCampTokensMutation } from "@/features/rewards/hooks/useRewards";
+import {
+  useCampusBalance,
+  useCampusProfile,
+  useUniversityProfiles,
+  useBuyCampTokensMutation,
+  useClaimFaucetMutation,
+  useHasClaimedFaucet,
+} from "@/features/wallet/hooks/useWallet";
 import { Dropdown } from "@/shared/ui/Dropdown";
 import { Skeleton } from "@/shared/ui/Skeleton";
 
@@ -39,6 +45,22 @@ export function SendReceive() {
   const buyCamp = useBuyCampTokensMutation();
   const [xlm, setXlm] = useState("");
   const [buyNotice, setBuyNotice] = useState<string | null>(null);
+
+  // Faucet state
+  const faucet = useHasClaimedFaucet(address ?? undefined);
+  const claim = useClaimFaucetMutation();
+  const [faucetNotice, setFaucetNotice] = useState<string | null>(null);
+
+  const handleClaimFaucet = async () => {
+    if (!address) return;
+    try {
+      setFaucetNotice(null);
+      const hash = await claim.mutateAsync({ recipient: address });
+      setFaucetNotice(`Claim confirmed: ${hash}`);
+    } catch (error) {
+      setFaucetNotice(error instanceof Error ? error.message : "Claim failed.");
+    }
+  };
 
   const buy = async () => {
     if (!address) return;
@@ -161,6 +183,26 @@ export function SendReceive() {
               {campBalance?.toLocaleString() ?? "0"} CAMP
             </p>
           )}
+        </div>
+
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+          <h3 className="font-bold text-base text-foreground">Testnet Faucet</h3>
+          <p className="text-xs text-muted-foreground">
+            Claim test CAMP tokens. One 100 CAMP claim per wallet under the current contract.
+          </p>
+          {faucetNotice && (
+            <div className={faucetNotice.includes("confirmed") ? "text-xs text-emerald-700 break-all bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg" : "text-xs text-destructive break-words bg-destructive/5 border border-destructive/20 p-2.5 rounded-lg"}>
+              {faucetNotice}
+            </div>
+          )}
+          <button
+            onClick={handleClaimFaucet}
+            disabled={!address || faucet.data || faucet.isLoading || claim.isPending}
+            className="h-11 w-full border border-border rounded-lg text-sm font-bold disabled:opacity-50 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-muted"
+          >
+            <Coins className="h-4 w-4" />
+            {faucet.data ? "Already claimed" : claim.isPending ? "Confirming claim" : "Claim 100 CAMP"}
+          </button>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6 space-y-4 shadow-sm">

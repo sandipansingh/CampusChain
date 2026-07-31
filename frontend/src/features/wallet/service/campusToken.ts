@@ -6,6 +6,7 @@ import {
   u32ToScVal,
   u64ToScVal,
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+  NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
 } from "@/shared/stellar/client";
 import { signTx } from "./wallet";
 
@@ -130,3 +131,54 @@ export async function fetchPendingRoleRequests(address?: string) {
     status: Number(r.status),
   }));
 }
+
+export async function fetchNativeToken(address?: string): Promise<string | null> {
+  const res = await readContract(NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, "native_token_contract", [], address);
+  return res ? String(res) : null;
+}
+
+export async function executeClaimFaucet(recipient: string): Promise<string> {
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "claim_faucet",
+    [addressToScVal(recipient)],
+    recipient,
+    signTx
+  );
+}
+
+export async function fetchHasClaimedFaucet(address: string): Promise<boolean> {
+  const res = await readContract(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "has_claimed_faucet",
+    [addressToScVal(address)],
+    address
+  );
+  return Boolean(res);
+}
+
+export async function executeBuyCampTokens(recipient: string, xlmAmount: string): Promise<string> {
+  const nativeToken = await fetchNativeToken(recipient);
+  if (!nativeToken) throw new Error("The CAMP purchase contract has no configured native XLM token.");
+  const latestLedger = await (await import("@/shared/stellar/client")).getRpcServer().getLatestLedger();
+  await invokeContractMethod(
+    nativeToken,
+    "approve",
+    [
+      addressToScVal(recipient),
+      addressToScVal(NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID),
+      i128ToScVal(xlmAmount),
+      u32ToScVal(latestLedger.sequence + 10_000),
+    ],
+    recipient,
+    signTx
+  );
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "buy_camp_tokens",
+    [addressToScVal(recipient), i128ToScVal(xlmAmount)],
+    recipient,
+    signTx
+  );
+}
+

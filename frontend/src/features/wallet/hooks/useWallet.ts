@@ -9,6 +9,9 @@ import {
   executeApproveRoleChange,
   executeDenyRoleChange,
   fetchPendingRoleRequests,
+  executeClaimFaucet,
+  fetchHasClaimedFaucet,
+  executeBuyCampTokens,
 } from "../service/campusToken";
 import {
   fetchUserProfile,
@@ -276,3 +279,47 @@ export function useSuspendUniversityMutation() {
     },
   });
 }
+
+export function useClaimFaucetMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ recipient }: { recipient: string }) => {
+      return executeClaimFaucet(recipient);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
+      queryClient.invalidateQueries({ queryKey: ["has-claimed-faucet", variables.recipient] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
+    },
+  });
+}
+
+export function useHasClaimedFaucet(address?: string) {
+  return useQuery({
+    queryKey: ["has-claimed-faucet", address],
+    queryFn: async () => {
+      if (!address) return false;
+      try {
+        return await fetchHasClaimedFaucet(address);
+      } catch {
+        return false;
+      }
+    },
+    enabled: !!address,
+    refetchInterval: 30000,
+  });
+}
+
+export function useBuyCampTokensMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ recipient, xlmAmount }: { recipient: string; xlmAmount: string }) => {
+      return executeBuyCampTokens(recipient, xlmAmount);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
+    },
+  });
+}
+
