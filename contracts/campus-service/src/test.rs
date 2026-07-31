@@ -391,7 +391,7 @@ fn test_scholarship_flow_and_getters() {
     let contracts = deployed(&env);
     let admin = Address::generate(&env);
     let student = Address::generate(&env);
-    let univ_code = text(&env, "UNI-A");
+    let platform_admin = contracts.platform_admin.clone();
 
     claim_and_approve(&contracts, &env, &admin, "UNI-A");
     register_and_verify(
@@ -405,46 +405,60 @@ fn test_scholarship_flow_and_getters() {
     );
 
     // Mint and approve tokens
-    let amount = 1000i128;
+    let amount = 2000i128;
     contracts.token.mint(&admin, &amount);
     contracts.token.approve(&admin, &contracts.service.address, &amount, &10000u32);
 
-    // Create scholarship program
-    let program_id = contracts.service.create_scholarship_program(
+    // Create scholarship
+    let scholarship_id = contracts.service.create_scholarship(
         &admin,
-        &univ_code,
         &text(&env, "Science Scholarship"),
-        &500i128,
-        &300u32, // GPA 3.00
+        &text(&env, "Science Department Funding"),
+        &text(&env, "GPA >= 3.5"),
+        &1000i128,
+        &text(&env, "2026-12-31"),
+        &2u32,
     );
 
-    // Get and list programs
-    let program = contracts.service.get_scholarship_program(&program_id);
-    assert_eq!(program.id, program_id);
-    assert_eq!(program.name, text(&env, "Science Scholarship"));
-    assert_eq!(program.amount, 500i128);
-    assert_eq!(program.sponsor, admin);
-    assert_eq!(program.university_code, univ_code);
-    assert_eq!(program.min_gpa, 300u32);
-    assert_eq!(program.active, true);
+    // Get and list scholarships
+    let scholarship = contracts.service.get_scholarship(&scholarship_id);
+    assert_eq!(scholarship.id, scholarship_id);
+    assert_eq!(scholarship.title, text(&env, "Science Scholarship"));
+    assert_eq!(scholarship.amount, 1000i128);
+    assert_eq!(scholarship.created_by, admin);
+    assert_eq!(scholarship.slots, 2);
+    assert_eq!(scholarship.admin_approval_status, ApprovalStatus::Pending);
 
-    let programs = contracts.service.list_scholarship_programs(&0u64, &10u32);
-    assert_eq!(programs.len(), 1);
-    assert_eq!(programs.get(0).unwrap().id, program_id);
+    // Approve the scholarship as platform admin
+    contracts.service.admin_approve_scholarship(&platform_admin, &scholarship_id);
+    let scholarship = contracts.service.get_scholarship(&scholarship_id);
+    assert_eq!(scholarship.admin_approval_status, ApprovalStatus::Approved);
 
     // Apply for scholarship
-    let app_id = contracts.service.apply_for_scholarship(&student, &program_id, &350u32);
+    let app_id = contracts.service.apply_scholarship(&student, &scholarship_id);
 
     // Get and list applications
     let app = contracts.service.get_scholarship_application(&app_id);
     assert_eq!(app.id, app_id);
-    assert_eq!(app.program_id, program_id);
-    assert_eq!(app.applicant, student);
-    assert_eq!(app.university_code, univ_code);
-    assert_eq!(app.gpa, 350u32);
-    assert_eq!(app.status, 0); // Applied
+    assert_eq!(app.scholarship_id, scholarship_id);
+    assert_eq!(app.student, student);
+    assert_eq!(app.status, ApprovalStatus::Pending);
 
-    let apps = contracts.service.list_scholarship_applications(&0u64, &10u32);
+    let apps = contracts.service.get_scholarship_applications();
     assert_eq!(apps.len(), 1);
     assert_eq!(apps.get(0).unwrap().id, app_id);
+
+    // Decide application (approve)
+    contracts.service.decide_application(&admin, &app_id, &true);
+
+    // Verify application status and slot decrement
+    let app = contracts.service.get_scholarship_application(&app_id);
+    assert_eq!(app.status, ApprovalStatus::Approved);
+
+    let scholarship = contracts.service.get_scholarship(&scholarship_id);
+    assert_eq!(scholarship.slots, 1);
+
+    // Verify that the student received the scholarship amount
+    let balance = contracts.token.balance(&student);
+    assert_eq!(balance, 1000i128);
 }

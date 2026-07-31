@@ -50,8 +50,8 @@ pub enum DataKey {
     ListingCounter,
     Listing(u64),
     ListingEscrow(u64),
-    ScholarshipProgramCounter,
-    ScholarshipProgram(u64),
+    ScholarshipCounter,
+    ScholarshipKey(u64),
     ScholarshipApplicationCounter,
     ScholarshipApplication(u64),
     UtilityRewardCounter,
@@ -113,27 +113,39 @@ pub struct MarketplaceListing {
 }
 
 #[contracttype]
+#[derive(Clone, Copy, Debug, Eq, PartialEq)]
+#[repr(u32)]
+pub enum ApprovalStatus {
+    Pending = 0,
+    Approved = 1,
+    Rejected = 2,
+}
+
+#[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
-pub struct ScholarshipProgram {
+pub struct Scholarship {
     pub id: u64,
-    pub name: String,
+    pub title: String,
+    pub description: String,
+    pub criteria: String,
     pub amount: i128,
-    pub sponsor: Address,
-    pub university_code: String,
-    pub min_gpa: u32,
-    pub active: bool,
+    pub deadline: String,
+    pub slots: u32,
+    pub created_by: Address,
+    pub admin_approval_status: ApprovalStatus,
+    pub created_at: u64,
 }
 
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct ScholarshipApplication {
     pub id: u64,
-    pub program_id: u64,
-    pub applicant: Address,
-    pub university_code: String,
-    pub gpa: u32,
-    /// 0: Applied, 2: Approved, 3: Rejected, 4: Disbursed.
-    pub status: u32,
+    pub scholarship_id: u64,
+    pub student: Address,
+    pub status: ApprovalStatus,
+    pub applied_at: u64,
+    pub decided_at: u64,
+    pub decided_by: Address,
 }
 
 #[contracttype]
@@ -277,17 +289,6 @@ fn assert_same_university(env: &Env, left: &Address, right: &Address) -> Result<
     if matches!(
         identity_client(env)?.try_assert_active_same_university(left, right),
         Ok(Ok(()))
-    ) {
-        Ok(())
-    } else {
-        Err(Error::IdentityCheckFailed)
-    }
-}
-
-fn assert_university_admin(env: &Env, address: &Address, code: &String) -> Result<(), Error> {
-    if matches!(
-        identity_client(env)?.try_assert_active_university_admin(address, code),
-        Ok(Ok(_))
     ) {
         Ok(())
     } else {
@@ -829,155 +830,214 @@ impl CampusService {
 
     // --- Scholarships and merchant rewards are university-scoped too ---
 
-    pub fn create_scholarship_program(
+    pub fn create_scholarship(
         env: Env,
-        admin: Address,
-        university_code: String,
-        name: String,
+        university: Address,
+        title: String,
+        description: String,
+        criteria: String,
         amount: i128,
-        min_gpa: u32,
+        deadline: String,
+        slots: u32,
     ) -> Result<u64, Error> {
-        admin.require_auth();
-        if amount <= 0 || name.len() == 0 {
+        university.require_auth();
+        if amount <= 0 || title.len() == 0 || slots == 0 {
             return Err(Error::InvalidInput);
         }
-        assert_university_admin(&env, &admin, &university_code)?;
+        assert_active_role(&env, &university, IdentityUserRole::UniversityAdmin)?;
+        
+        let total_amount = amount.checked_mul(slots as i128).ok_or(Error::InvalidAmount)?;
         token_client(&env)?.transfer_from(
             &env.current_contract_address(),
-            &admin,
+            &university,
             &env.current_contract_address(),
-            &amount,
+            &total_amount,
         );
-        let id = next_id(&env, DataKey::ScholarshipProgramCounter);
-        let key = DataKey::ScholarshipProgram(id);
-        env.storage().persistent().set(
-            &key,
-            &ScholarshipProgram {
-                id,
-                name,
-                amount,
-                sponsor: admin,
-                university_code,
-                min_gpa,
-                active: true,
-            },
-        );
+
+        let id = next_id(&env, DataKey::ScholarshipCounter);
+        let key = DataKey::ScholarshipKey(id);
+        let scholarship = Scholarship {
+            id,
+            title,
+            description,
+            criteria,
+            amount,
+            deadline,
+            slots,
+            created_by: university,
+            admin_approval_status: ApprovalStatus::Pending,
+            created_at: env.ledger().timestamp(),
+        };
+
+        env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
         Ok(id)
     }
 
-    pub fn apply_for_scholarship(
-        env: Env,
-        applicant: Address,
-        program_id: u64,
-        gpa: u32,
-    ) -> Result<u64, Error> {
-        applicant.require_auth();
-        let program: ScholarshipProgram = env
-            .storage()
-            .persistent()
-            .get(&DataKey::ScholarshipProgram(program_id))
-            .ok_or(Error::NotFound)?;
-        if !program.active || gpa < program.min_gpa {
+    pub fn admin_approve_scholarship(env: Env, admin: Address, id: u64) -> Result<(), Error> {
+        admin.require_auth();
+        let platform_admin = env.storage().instance().get(&DataKey::PlatformAdmin).ok_or(Error::NotInitialized)?;
+        if admin != platform_admin {
+            return Err(Error::Unauthorized);
+        }
+
+        let key = DataKey::ScholarshipKey(id);
+        let mut scholarship: Scholarship = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        if !matches!(scholarship.admin_approval_status, ApprovalStatus::Pending) {
             return Err(Error::InvalidStatus);
         }
-        assert_active_role(&env, &applicant, IdentityUserRole::Student)?;
-        assert_same_university(&env, &applicant, &program.sponsor)?;
+
+        scholarship.admin_approval_status = ApprovalStatus::Approved;
+        env.storage().persistent().set(&key, &scholarship);
+        extend_persistent(&env, &key);
+        Ok(())
+    }
+
+    pub fn admin_reject_scholarship(env: Env, admin: Address, id: u64) -> Result<(), Error> {
+        admin.require_auth();
+        let platform_admin = env.storage().instance().get(&DataKey::PlatformAdmin).ok_or(Error::NotInitialized)?;
+        if admin != platform_admin {
+            return Err(Error::Unauthorized);
+        }
+
+        let key = DataKey::ScholarshipKey(id);
+        let mut scholarship: Scholarship = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        if !matches!(scholarship.admin_approval_status, ApprovalStatus::Pending) {
+            return Err(Error::InvalidStatus);
+        }
+
+        scholarship.admin_approval_status = ApprovalStatus::Rejected;
+        
+        // Refund total amount to university creator
+        let total_amount = scholarship.amount.checked_mul(scholarship.slots as i128).ok_or(Error::InvalidAmount)?;
+        token_client(&env)?.transfer(
+            &env.current_contract_address(),
+            &scholarship.created_by,
+            &total_amount,
+        );
+
+        env.storage().persistent().set(&key, &scholarship);
+        extend_persistent(&env, &key);
+        Ok(())
+    }
+
+    pub fn apply_scholarship(env: Env, student: Address, scholarship_id: u64) -> Result<u64, Error> {
+        student.require_auth();
+        assert_active_role(&env, &student, IdentityUserRole::Student)?;
+
+        let scholarship_key = DataKey::ScholarshipKey(scholarship_id);
+        let scholarship: Scholarship = env.storage().persistent().get(&scholarship_key).ok_or(Error::NotFound)?;
+        
+        if !matches!(scholarship.admin_approval_status, ApprovalStatus::Approved) {
+            return Err(Error::InvalidStatus);
+        }
+        if scholarship.slots == 0 {
+            return Err(Error::CapacityReached);
+        }
+
+        // Student must be at the same university
+        assert_same_university(&env, &student, &scholarship.created_by)?;
+
         let id = next_id(&env, DataKey::ScholarshipApplicationCounter);
         let key = DataKey::ScholarshipApplication(id);
-        env.storage().persistent().set(
-            &key,
-            &ScholarshipApplication {
-                id,
-                program_id,
-                applicant,
-                university_code: program.university_code,
-                gpa,
-                status: 0,
-            },
-        );
+        let application = ScholarshipApplication {
+            id,
+            scholarship_id,
+            student: student.clone(),
+            status: ApprovalStatus::Pending,
+            applied_at: env.ledger().timestamp(),
+            decided_at: 0,
+            decided_by: student,
+        };
+
+        env.storage().persistent().set(&key, &application);
         extend_persistent(&env, &key);
         Ok(id)
     }
 
-    pub fn review_scholarship_application(
+    pub fn decide_application(
         env: Env,
-        admin: Address,
+        university: Address,
         application_id: u64,
         approved: bool,
     ) -> Result<(), Error> {
-        admin.require_auth();
-        let key = DataKey::ScholarshipApplication(application_id);
-        let mut application: ScholarshipApplication = env
-            .storage()
-            .persistent()
-            .get(&key)
-            .ok_or(Error::NotFound)?;
-        if application.status != 0 {
-            return Err(Error::InvalidStatus);
-        }
-        assert_university_admin(&env, &admin, &application.university_code)?;
-        application.status = if approved { 2 } else { 3 };
-        env.storage().persistent().set(&key, &application);
-        extend_persistent(&env, &key);
-        Ok(())
-    }
-
-    pub fn disburse_scholarship(
-        env: Env,
-        admin: Address,
-        application_id: u64,
-    ) -> Result<(), Error> {
-        admin.require_auth();
+        university.require_auth();
+        
         let app_key = DataKey::ScholarshipApplication(application_id);
-        let mut application: ScholarshipApplication = env
-            .storage()
-            .persistent()
-            .get(&app_key)
-            .ok_or(Error::NotFound)?;
-        if application.status != 2 {
+        let mut application: ScholarshipApplication = env.storage().persistent().get(&app_key).ok_or(Error::NotFound)?;
+        
+        if !matches!(application.status, ApprovalStatus::Pending) {
             return Err(Error::InvalidStatus);
         }
-        assert_university_admin(&env, &admin, &application.university_code)?;
-        let program_key = DataKey::ScholarshipProgram(application.program_id);
-        let mut program: ScholarshipProgram = env
-            .storage()
-            .persistent()
-            .get(&program_key)
-            .ok_or(Error::NotFound)?;
-        if !program.active || program.university_code != application.university_code {
-            return Err(Error::InvalidStatus);
+
+        let scholarship_key = DataKey::ScholarshipKey(application.scholarship_id);
+        let mut scholarship: Scholarship = env.storage().persistent().get(&scholarship_key).ok_or(Error::NotFound)?;
+        
+        if university != scholarship.created_by {
+            return Err(Error::Unauthorized);
         }
-        assert_same_university(&env, &program.sponsor, &application.applicant)?;
-        token_client(&env)?.transfer(
-            &env.current_contract_address(),
-            &application.applicant,
-            &program.amount,
-        );
-        application.status = 4;
-        program.active = false;
+
+        if approved {
+            if scholarship.slots == 0 {
+                return Err(Error::CapacityReached);
+            }
+            scholarship.slots -= 1;
+            application.status = ApprovalStatus::Approved;
+
+            // Disburse amount to student
+            token_client(&env)?.transfer(
+                &env.current_contract_address(),
+                &application.student,
+                &scholarship.amount,
+            );
+
+            env.storage().persistent().set(&scholarship_key, &scholarship);
+        } else {
+            application.status = ApprovalStatus::Rejected;
+        }
+
+        application.decided_at = env.ledger().timestamp();
+        application.decided_by = university;
+
         env.storage().persistent().set(&app_key, &application);
-        env.storage().persistent().set(&program_key, &program);
+        extend_persistent(&env, &app_key);
         Ok(())
     }
 
-    pub fn get_scholarship_program(env: Env, id: u64) -> Result<ScholarshipProgram, Error> {
-        let key = DataKey::ScholarshipProgram(id);
+    pub fn get_scholarships(env: Env) -> Vec<Scholarship> {
+        let upper = env
+            .storage()
+            .instance()
+            .get::<DataKey, u64>(&DataKey::ScholarshipCounter)
+            .unwrap_or(0);
+        let mut records = Vec::new(&env);
+        let mut id = 0u64;
+        while id < upper {
+            id += 1;
+            if let Some(record) = env.storage().persistent().get(&DataKey::ScholarshipKey(id)) {
+                records.push_back(record);
+            }
+        }
+        records
+    }
+
+    pub fn get_scholarship(env: Env, id: u64) -> Result<Scholarship, Error> {
+        let key = DataKey::ScholarshipKey(id);
         extend_persistent(&env, &key);
         env.storage().persistent().get(&key).ok_or(Error::NotFound)
     }
 
-    pub fn list_scholarship_programs(env: Env, start_after: u64, limit: u32) -> Vec<ScholarshipProgram> {
+    pub fn get_scholarship_applications(env: Env) -> Vec<ScholarshipApplication> {
         let upper = env
             .storage()
             .instance()
-            .get::<DataKey, u64>(&DataKey::ScholarshipProgramCounter)
+            .get::<DataKey, u64>(&DataKey::ScholarshipApplicationCounter)
             .unwrap_or(0);
         let mut records = Vec::new(&env);
-        let mut id = start_after;
-        while id < upper && records.len() < limit.min(50) {
+        let mut id = 0u64;
+        while id < upper {
             id += 1;
-            if let Some(record) = env.storage().persistent().get(&DataKey::ScholarshipProgram(id)) {
+            if let Some(record) = env.storage().persistent().get(&DataKey::ScholarshipApplication(id)) {
                 records.push_back(record);
             }
         }
@@ -988,23 +1048,6 @@ impl CampusService {
         let key = DataKey::ScholarshipApplication(id);
         extend_persistent(&env, &key);
         env.storage().persistent().get(&key).ok_or(Error::NotFound)
-    }
-
-    pub fn list_scholarship_applications(env: Env, start_after: u64, limit: u32) -> Vec<ScholarshipApplication> {
-        let upper = env
-            .storage()
-            .instance()
-            .get::<DataKey, u64>(&DataKey::ScholarshipApplicationCounter)
-            .unwrap_or(0);
-        let mut records = Vec::new(&env);
-        let mut id = start_after;
-        while id < upper && records.len() < limit.min(50) {
-            id += 1;
-            if let Some(record) = env.storage().persistent().get(&DataKey::ScholarshipApplication(id)) {
-                records.push_back(record);
-            }
-        }
-        records
     }
 
     pub fn create_utility_reward(
