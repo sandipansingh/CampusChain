@@ -10,7 +10,6 @@ import {
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
 } from "@/shared/stellar/client";
 import { nativeToScVal } from "@stellar/stellar-sdk";
-import { executeApprove } from "@/features/wallet/service/campusToken";
 
 export interface Scholarship {
   id: number;
@@ -167,11 +166,6 @@ export async function executeCreateScholarshipProgram(
   deadline: string,
   slots: number
 ): Promise<string> {
-  const totalAmount = amount * slots;
-  // Step 1: Approve service contract to withdraw funds
-  await executeApprove(universityId, NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, totalAmount);
-
-  // Step 2: Invoke create_scholarship
   const rawAmount = BigInt(Math.round(amount * 10_000_000));
   const { signTx } = await import("@/features/wallet/service/wallet");
 

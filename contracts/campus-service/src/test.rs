@@ -405,10 +405,10 @@ fn test_scholarship_flow_and_getters() {
         student_details(&env, 1),
     );
 
-    // Mint and approve tokens
+    // Mint and approve tokens from platform_admin to service contract
     let amount = 2000i128;
-    contracts.token.mint(&admin, &amount);
-    contracts.token.approve(&admin, &contracts.service.address, &amount, &10000u32);
+    contracts.token.mint(&platform_admin, &amount);
+    contracts.token.approve(&platform_admin, &contracts.service.address, &amount, &10000u32);
 
     // Create scholarship
     let scholarship_id = contracts.service.create_scholarship(

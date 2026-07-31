@@ -951,14 +951,6 @@ impl CampusService {
         }
         assert_active_role(&env, &university, IdentityUserRole::UniversityAdmin)?;
         
-        let total_amount = amount.checked_mul(slots as i128).ok_or(Error::InvalidAmount)?;
-        token_client(&env)?.transfer_from(
-            &env.current_contract_address(),
-            &university,
-            &env.current_contract_address(),
-            &total_amount,
-        );
-
         let id = next_id(&env, DataKey::ScholarshipCounter);
         let key = DataKey::ScholarshipKey(id);
         let scholarship = Scholarship {
@@ -1013,14 +1005,6 @@ impl CampusService {
 
         scholarship.admin_approval_status = ApprovalStatus::Rejected;
         
-        // Refund total amount to university creator
-        let total_amount = scholarship.amount.checked_mul(scholarship.slots as i128).ok_or(Error::InvalidAmount)?;
-        token_client(&env)?.transfer(
-            &env.current_contract_address(),
-            &scholarship.created_by,
-            &total_amount,
-        );
-
         env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
         Ok(())
@@ -1090,9 +1074,11 @@ impl CampusService {
             scholarship.slots -= 1;
             application.status = ApprovalStatus::Approved;
 
-            // Disburse amount to student
-            token_client(&env)?.transfer(
+            // Disburse amount from platform admin to student
+            let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
+            token_client(&env)?.transfer_from(
                 &env.current_contract_address(),
+                &platform_admin,
                 &application.student,
                 &scholarship.amount,
             );
