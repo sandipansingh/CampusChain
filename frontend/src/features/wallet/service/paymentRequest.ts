@@ -17,8 +17,13 @@ export function encodePaymentRequest(request: PaymentRequest): string {
 }
 
 export function decodePaymentRequest(payload: string): PaymentRequest {
-  const url = new URL(payload.trim());
-  if (url.protocol !== "campuschain:" || url.pathname !== "pay") throw new Error("This is not a CampusChain payment request.");
+  const trimmed = payload.trim();
+  if (!trimmed.startsWith("campuschain:pay?")) {
+    throw new Error("This is not a CampusChain payment request.");
+  }
+  const parsableUrl = trimmed.replace("campuschain:pay?", "http://localhost/pay?");
+  const url = new URL(parsableUrl);
+  if (url.pathname !== "/pay") throw new Error("This is not a CampusChain payment request.");
   const request: PaymentRequest = { network: url.searchParams.get("network") as "testnet", destination: url.searchParams.get("to") ?? "", asset: url.searchParams.get("asset") as PaymentAsset, amount: url.searchParams.get("amount") ?? "" };
   validatePaymentRequest(request);
   return request;

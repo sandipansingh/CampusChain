@@ -222,3 +222,30 @@ export async function executeSuspendUniversity(caller: string, code: string): Pr
   const { signTx } = await import("./wallet");
   return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "suspend_university", [addressToScVal(caller), stringToScVal(code)], caller, signTx);
 }
+
+export function bufToHex(buffer: ArrayBuffer | Uint8Array): string {
+  return Array.from(new Uint8Array(buffer))
+    .map((b) => b.toString(16).padStart(2, "0"))
+    .join("");
+}
+
+export async function fetchUniversityStudentIds(universityCode: string, address?: string): Promise<string[]> {
+  try {
+    const result = await readContract(
+      NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
+      "list_student_ids",
+      [stringToScVal(universityCode)],
+      address
+    );
+    if (!Array.isArray(result)) return [];
+    return result.map((val) => {
+      if (val instanceof Uint8Array || val instanceof ArrayBuffer) {
+        return bufToHex(val);
+      }
+      return bufToHex(new Uint8Array(val as any));
+    });
+  } catch (error) {
+    console.error("fetchUniversityStudentIds failed", error);
+    return [];
+  }
+}

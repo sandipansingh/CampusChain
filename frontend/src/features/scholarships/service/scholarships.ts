@@ -65,6 +65,7 @@ export async function fetchScholarshipApplication(id: number, address?: string) 
 
 export async function executeCreateScholarshipProgram(
   admin: string,
+  universityCode: string,
   name: string,
   amount: number,
   minGpa: number
@@ -75,6 +76,7 @@ export async function executeCreateScholarshipProgram(
     "create_scholarship_program",
     [
       addressToScVal(admin),
+      stringToScVal(universityCode),
       stringToScVal(name),
       i128ToScVal(rawAmount),
       u32ToScVal(minGpa),

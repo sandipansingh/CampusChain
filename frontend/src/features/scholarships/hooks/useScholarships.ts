@@ -55,16 +55,18 @@ export function useCreateScholarshipProgramMutation() {
   return useMutation({
     mutationFn: async ({
       admin,
+      universityCode,
       name,
       amount,
       minGpa,
     }: {
       admin: string;
+      universityCode: string;
       name: string;
       amount: number;
       minGpa: number;
     }) => {
-      return executeCreateScholarshipProgram(admin, name, amount, minGpa);
+      return executeCreateScholarshipProgram(admin, universityCode, name, amount, minGpa);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scholarship-programs"] });

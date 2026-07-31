@@ -38,7 +38,7 @@ export async function fetchUtilityRewards(startAfter = 0, limit = 50, address?: 
 }
 
 export async function fetchNativeToken(address?: string): Promise<string | null> {
-  const res = await readContract(NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, "native_token", [], address);
+  const res = await readContract(NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, "native_token_contract", [], address);
   return res ? String(res) : null;
 }
 
