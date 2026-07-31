@@ -24,8 +24,8 @@ export function Scholarships() {
     if (!address || !selectedProgram) return;
     try {
       setNotice(null);
-      await apply.mutateAsync({ studentId: address, scholarshipId: selectedProgram.id });
-      setNotice(`Application submitted successfully!`);
+      const txHash = await apply.mutateAsync({ studentId: address, scholarshipId: selectedProgram.id });
+      setNotice(`Application submitted successfully! Transaction hash: ${txHash}`);
       setSelectedProgram(null);
       await applications.refetch();
     } catch (error) {

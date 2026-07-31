@@ -51,6 +51,7 @@ export function UniversityDashboard() {
   const [progAmount, setProgAmount] = useState("");
   const [progDeadline, setProgDeadline] = useState("");
   const [progSlots, setProgSlots] = useState("");
+  const [schNotice, setSchNotice] = useState<string | null>(null);
 
   const { data: profile } = useCampusProfile(address);
   const universityCode = profile?.universityCode ?? "";
@@ -75,7 +76,8 @@ export function UniversityDashboard() {
     e.preventDefault();
     if (!address || !progTitle || !progDesc || !progCriteria || !progAmount || !progDeadline || !progSlots) return;
     try {
-      await createProgram.mutateAsync({
+      setSchNotice(null);
+      const txHash = await createProgram.mutateAsync({
         universityId: address,
         title: progTitle,
         description: progDesc,
@@ -84,6 +86,7 @@ export function UniversityDashboard() {
         deadline: progDeadline,
         slots: Number(progSlots),
       });
+      setSchNotice(`Scholarship created successfully! Transaction hash: ${txHash}`);
       setProgTitle("");
       setProgDesc("");
       setProgCriteria("");
@@ -92,6 +95,7 @@ export function UniversityDashboard() {
       setProgSlots("");
     } catch (err) {
       console.error(err);
+      setSchNotice(err instanceof Error ? err.message : "Creation failed.");
     }
   };
 
@@ -302,6 +306,18 @@ export function UniversityDashboard() {
 
     return (
       <div className="space-y-6">
+        {schNotice && (
+          <div
+            className={`text-xs p-2.5 rounded-lg border ${
+              schNotice.includes("successfully")
+                ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                : "text-destructive bg-destructive/5 border-destructive/20"
+            }`}
+          >
+            {schNotice}
+          </div>
+        )}
+
         {/* Create Scholarship Program Form */}
         <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
           <h3 className="text-base font-bold text-foreground">Create Scholarship Program</h3>
@@ -447,14 +463,32 @@ export function UniversityDashboard() {
                                 {app.status === "pending" ? (
                                   <>
                                     <button
-                                      onClick={() => reviewApp.mutate({ universityId: address!, applicationId: app.id, approved: true })}
-                                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer"
+                                      disabled={reviewApp.isPending}
+                                      onClick={async () => {
+                                        try {
+                                          setSchNotice(null);
+                                          const txHash = await reviewApp.mutateAsync({ universityId: address!, applicationId: app.id, approved: true });
+                                          setSchNotice(`Application approved successfully! Tx: ${txHash}`);
+                                        } catch (err) {
+                                          setSchNotice(err instanceof Error ? err.message : "Approval failed.");
+                                        }
+                                      }}
+                                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
                                     >
                                       Approve
                                     </button>
                                     <button
-                                      onClick={() => reviewApp.mutate({ universityId: address!, applicationId: app.id, approved: false })}
-                                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold cursor-pointer"
+                                      disabled={reviewApp.isPending}
+                                      onClick={async () => {
+                                        try {
+                                          setSchNotice(null);
+                                          const txHash = await reviewApp.mutateAsync({ universityId: address!, applicationId: app.id, approved: false });
+                                          setSchNotice(`Application rejected successfully! Tx: ${txHash}`);
+                                        } catch (err) {
+                                          setSchNotice(err instanceof Error ? err.message : "Rejection failed.");
+                                        }
+                                      }}
+                                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
                                     >
                                       Reject
                                     </button>

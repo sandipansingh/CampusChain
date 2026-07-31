@@ -43,6 +43,7 @@ export function PlatformDashboard() {
   // Scholarships approvals
   const scholarshipsQuery = useScholarshipPrograms(address ?? undefined);
   const reviewScholarship = useAdminReviewScholarshipMutation();
+  const [schNotice, setSchNotice] = useState<string | null>(null);
 
   useEffect(() => {
     const handleNavigate = (e: Event) => {
@@ -283,6 +284,18 @@ export function PlatformDashboard() {
           Review and approve scholarship programs created by registered universities before they become visible to students.
         </p>
 
+        {schNotice && (
+          <div
+            className={`text-xs p-2.5 rounded-lg border ${
+              schNotice.includes("successfully")
+                ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                : "text-destructive bg-destructive/5 border-destructive/20"
+            }`}
+          >
+            {schNotice}
+          </div>
+        )}
+
         {scholarshipsQuery.isLoading ? (
           <Skeleton className="h-24 w-full animate-pulse" />
         ) : pendingScholarships.length === 0 ? (
@@ -322,14 +335,32 @@ export function PlatformDashboard() {
                   </span>
                   <div className="flex gap-2">
                     <button
-                      onClick={() => reviewScholarship.mutate({ adminId: address!, scholarshipId: s.id, approved: true })}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      disabled={reviewScholarship.isPending}
+                      onClick={async () => {
+                        try {
+                          setSchNotice(null);
+                          const txHash = await reviewScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id, approved: true });
+                          setSchNotice(`Scholarship approved successfully! Tx: ${txHash}`);
+                        } catch (err) {
+                          setSchNotice(err instanceof Error ? err.message : "Approval failed.");
+                        }
+                      }}
+                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
                       <CheckCircle2 className="size-3.5" /> Approve
                     </button>
                     <button
-                      onClick={() => reviewScholarship.mutate({ adminId: address!, scholarshipId: s.id, approved: false })}
-                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      disabled={reviewScholarship.isPending}
+                      onClick={async () => {
+                        try {
+                          setSchNotice(null);
+                          const txHash = await reviewScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id, approved: false });
+                          setSchNotice(`Scholarship rejected successfully! Tx: ${txHash}`);
+                        } catch (err) {
+                          setSchNotice(err instanceof Error ? err.message : "Rejection failed.");
+                        }
+                      }}
+                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
                       <XCircle className="size-3.5" /> Reject
                     </button>
