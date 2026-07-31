@@ -175,7 +175,7 @@ export function useContractEventStream(address: string | null | undefined) {
               if (eventCode === myUnivCode) {
                 try {
                   const applicantAddress = typeof evt.topicNative?.[1] === "string" ? evt.topicNative[1] : "";
-                  const applicantProfile = await fetchUserProfile(applicantAddress);
+                  const applicantProfile = await fetchUserProfile(applicantAddress, address || undefined);
                   const applicantName = applicantProfile?.fullName || shortAddr(applicantAddress);
                   evt.title = "Verification Request";
                   evt.message = `New verification request from ${applicantName}`;

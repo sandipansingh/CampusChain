@@ -12,10 +12,11 @@ import { signTx } from "@/features/wallet/service/wallet";
 import { nativeToScVal } from "@stellar/stellar-sdk";
 
 export async function fetchListing(id: number, address?: string) {
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
   const res = (await readContract(
     NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
     "get_listing",
-    [u64ToScVal(id)],
+    [u64ToScVal(id), addressToScVal(caller)],
     address
   )) as unknown as { id: bigint; seller: string; title: string; description: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
 
@@ -48,10 +49,11 @@ function parseListing(res: RawListing) {
 }
 
 export async function fetchListings(startAfter = 0, limit = 50, address?: string) {
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
   const res = await readContract(
     NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
     "list_listings",
-    [u64ToScVal(startAfter), u32ToScVal(limit)],
+    [addressToScVal(caller), u64ToScVal(startAfter), u32ToScVal(limit)],
     address
   );
   if (!Array.isArray(res)) return [];
@@ -59,10 +61,11 @@ export async function fetchListings(startAfter = 0, limit = 50, address?: string
 }
 
 export async function fetchListingEscrow(listingId: number, address?: string): Promise<number | null> {
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
   const res = await readContract(
     NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
     "get_listing_escrow",
-    [u64ToScVal(listingId)],
+    [u64ToScVal(listingId), addressToScVal(caller)],
     address
   );
   return res === null || res === undefined ? null : Number(res);

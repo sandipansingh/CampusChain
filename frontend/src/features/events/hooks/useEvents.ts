@@ -41,7 +41,7 @@ export function useEvents(address?: string) {
       const filtered = [];
       for (const item of events) {
         try {
-          const hostProfile = await fetchUserProfile(item.host);
+          const hostProfile = await fetchUserProfile(item.host, address);
           if (hostProfile && hostProfile.universityCode?.toUpperCase() === myUnivCode) {
             filtered.push(item);
           }

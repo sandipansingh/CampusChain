@@ -159,9 +159,15 @@ export function normalizeProfileDetails(detailsRaw: unknown): Record<string, any
   return {};
 }
 
-export async function fetchUserProfile(address: string): Promise<UserProfile | null> {
+export async function fetchUserProfile(address: string, callerAddress?: string): Promise<UserProfile | null> {
   try {
-    const result = await readContract(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "get_profile", [addressToScVal(address)]);
+    const caller = callerAddress || address;
+    const result = await readContract(
+      NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
+      "get_profile",
+      [addressToScVal(address), addressToScVal(caller)],
+      caller
+    );
     if (!result || typeof result !== "object") return null;
     const profile = result as Record<string, unknown>;
     return {
@@ -236,12 +242,14 @@ export async function executeRejectProfile(caller: string, targetAddress: string
   return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "reject_profile", [addressToScVal(caller), addressToScVal(targetAddress)], caller, signTx);
 }
 
-export async function fetchUniversityProfiles(universityCode: string): Promise<UserProfile[]> {
+export async function fetchUniversityProfiles(universityCode: string, address?: string): Promise<UserProfile[]> {
   try {
+    const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
     const rawAddresses = await readContract(
       NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
       "list_profiles",
-      []
+      [addressToScVal(caller)],
+      caller
     );
     if (!rawAddresses || !Array.isArray(rawAddresses)) return [];
 
@@ -249,7 +257,7 @@ export async function fetchUniversityProfiles(universityCode: string): Promise<U
     for (const addr of rawAddresses) {
       if (typeof addr !== "string") continue;
       try {
-        const profile = await fetchUserProfile(addr);
+        const profile = await fetchUserProfile(addr, caller);
         if (profile && profile.universityCode?.toUpperCase() === universityCode.toUpperCase()) {
           profiles.push(profile);
         }

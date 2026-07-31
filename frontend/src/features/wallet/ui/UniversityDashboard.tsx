@@ -56,7 +56,7 @@ export function UniversityDashboard() {
   const { data: profile } = useCampusProfile(address);
   const universityCode = profile?.universityCode ?? "";
 
-  const { data: members = [], isLoading: isLoadingMembers } = useUniversityProfiles(universityCode);
+  const { data: members = [], isLoading: isLoadingMembers } = useUniversityProfiles(universityCode, address);
 
   // Scholarships data
   const { data: programs = [], isLoading: isLoadingProgs } = useScholarshipPrograms(address ?? undefined);

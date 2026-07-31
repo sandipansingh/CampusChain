@@ -41,7 +41,7 @@ export function useCampusUserRole(address: string | null) {
     queryKey: ["campus-role", address],
     queryFn: async () => {
       if (!address) return 0;
-      const profile = await fetchUserProfile(address);
+      const profile = await fetchUserProfile(address, address);
       return profile?.role ?? null;
     },
     enabled: !!address,
@@ -183,7 +183,7 @@ export function useCampusProfile(address: string | null) {
     queryKey: ["campus-profile", address],
     queryFn: async () => {
       if (!address) return null;
-      return fetchUserProfile(address);
+      return fetchUserProfile(address, address);
     },
     enabled: !!address,
   });
@@ -235,12 +235,12 @@ export function useRegisterUniversityMutation() {
   });
 }
 
-export function useUniversityProfiles(universityCode: string | null) {
+export function useUniversityProfiles(universityCode: string | null, callerAddress?: string | null) {
   return useQuery({
-    queryKey: ["university-profiles", universityCode],
+    queryKey: ["university-profiles", universityCode, callerAddress],
     queryFn: async () => {
       if (!universityCode) return [];
-      return fetchUniversityProfiles(universityCode);
+      return fetchUniversityProfiles(universityCode, callerAddress || undefined);
     },
     enabled: !!universityCode,
     refetchInterval: 15000,

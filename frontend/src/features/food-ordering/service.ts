@@ -16,10 +16,11 @@ import { scValToNative, nativeToScVal } from "@stellar/stellar-sdk";
 
 export async function fetchMenuItem(itemId: number, address?: string): Promise<MenuItem | null> {
   try {
+    const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
     const res = await readContract(
       NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
       "get_menu_item",
-      [u64ToScVal(itemId)],
+      [u64ToScVal(itemId), addressToScVal(caller)],
       address
     ) as Record<string, unknown>;
 
@@ -84,10 +85,11 @@ export async function fetchMenuItems(address?: string): Promise<MenuItem[]> {
 
 export async function fetchFoodOrder(orderId: number, address?: string): Promise<FoodOrder | null> {
   try {
+    const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
     const res = await readContract(
       NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
       "get_food_order",
-      [u64ToScVal(orderId)],
+      [u64ToScVal(orderId), addressToScVal(caller)],
       address
     ) as Record<string, unknown>;
 

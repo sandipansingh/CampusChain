@@ -32,7 +32,7 @@ export function StudentOrdering() {
   const myUnivCode = profile?.universityCode ?? "";
 
   // Queries
-  const { data: members = [], isLoading: membersLoading } = useUniversityProfiles(myUnivCode);
+  const { data: members = [], isLoading: membersLoading } = useUniversityProfiles(myUnivCode, address);
   const { data: menuItems = [], isLoading: menuLoading } = useMenuItems(address ?? undefined);
   const placeOrder = usePlaceOrderMutation();
 

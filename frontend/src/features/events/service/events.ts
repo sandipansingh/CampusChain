@@ -10,10 +10,11 @@ import {
 import { signTx } from "@/features/wallet/service/wallet";
 
 export async function fetchEvent(eventId: number, address?: string) {
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
   const res = (await readContract(
     NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
     "get_event",
-    [u64ToScVal(eventId)],
+    [u64ToScVal(eventId), addressToScVal(caller)],
     address
   )) as unknown as { id: bigint; host: string; price: bigint; capacity: number; tickets_sold: number };
 
@@ -33,15 +34,22 @@ function parseEvent(res: RawEvent) {
 }
 
 export async function fetchEvents(startAfter = 0, limit = 50, address?: string) {
-  const res = await readContract(NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, "list_events", [u64ToScVal(startAfter), u32ToScVal(limit)], address);
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
+  const res = await readContract(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID, 
+    "list_events", 
+    [addressToScVal(caller), u64ToScVal(startAfter), u32ToScVal(limit)], 
+    address
+  );
   return Array.isArray(res) ? (res as RawEvent[]).map(parseEvent) : [];
 }
 
 export async function fetchTicket(ticketId: number, address?: string) {
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
   const res = (await readContract(
     NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
     "get_ticket",
-    [u64ToScVal(ticketId)],
+    [u64ToScVal(ticketId), addressToScVal(caller)],
     address
   )) as unknown as { id: bigint; event_id: bigint; owner: string; redeemed: boolean };
 

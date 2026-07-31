@@ -38,7 +38,7 @@ export function SendReceive() {
   // Scoping queries
   const { data: profile } = useCampusProfile(address ?? null);
   const myUnivCode = profile?.universityCode ?? "";
-  const { data: members = [] } = useUniversityProfiles(myUnivCode);
+  const { data: members = [] } = useUniversityProfiles(myUnivCode, address);
 
   // CAMP Balance and Buy states
   const { data: campBalance, isLoading: isBalanceLoading } = useCampusBalance(address ?? null);

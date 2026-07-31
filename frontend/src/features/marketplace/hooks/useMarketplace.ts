@@ -68,7 +68,7 @@ export function useMarketplaceListings(address?: string) {
       const filtered = [];
       for (const item of listings) {
         try {
-          const sellerProfile = await fetchUserProfile(item.seller);
+          const sellerProfile = await fetchUserProfile(item.seller, address);
           if (sellerProfile && sellerProfile.universityCode?.toUpperCase() === myUnivCode) {
             filtered.push(item);
           }

@@ -15,7 +15,7 @@ export function LandingPageClient() {
     if (!storedAddress) return;
 
     let cancelled = false;
-    void fetchUserProfile(storedAddress)
+    void fetchUserProfile(storedAddress, storedAddress)
       .then((profile) => {
         if (!cancelled && profile) router.replace("/connect");
       })
@@ -33,7 +33,7 @@ export function LandingPageClient() {
     if (!activeAddress) return;
 
     try {
-      const profile = await fetchUserProfile(activeAddress);
+      const profile = await fetchUserProfile(activeAddress, activeAddress);
       if (profile) {
         router.push("/connect");
       } else {

@@ -54,10 +54,11 @@ function parseStatus(statusVal: any): "pending" | "approved" | "rejected" {
 
 export async function fetchScholarshipProgram(id: number, address?: string): Promise<Scholarship | null> {
   try {
+    const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
     const item: any = await readContract(
       NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
       "get_scholarship",
-      [u64ToScVal(id)],
+      [u64ToScVal(id), addressToScVal(caller)],
       address
     );
     if (!item) return null;
@@ -81,10 +82,11 @@ export async function fetchScholarshipProgram(id: number, address?: string): Pro
 
 export async function fetchScholarshipPrograms(address?: string): Promise<Scholarship[]> {
   try {
+    const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
     const list = await readContract(
       NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
       "get_scholarships",
-      [],
+      [addressToScVal(caller)],
       address
     );
     if (!Array.isArray(list)) return [];
@@ -108,10 +110,11 @@ export async function fetchScholarshipPrograms(address?: string): Promise<Schola
 
 export async function fetchScholarshipApplications(address?: string): Promise<ScholarshipApplication[]> {
   try {
+    const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
     const list = await readContract(
       NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
       "get_scholarship_applications",
-      [],
+      [addressToScVal(caller)],
       address
     );
     if (!Array.isArray(list)) return [];
@@ -132,10 +135,11 @@ export async function fetchScholarshipApplications(address?: string): Promise<Sc
 
 export async function fetchScholarshipApplication(id: number, address?: string): Promise<ScholarshipApplication | null> {
   try {
+    const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
     const item: any = await readContract(
       NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
       "get_scholarship_application",
-      [u64ToScVal(id)],
+      [u64ToScVal(id), addressToScVal(caller)],
       address
     );
     if (!item) return null;
