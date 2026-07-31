@@ -33,25 +33,33 @@ echo " - Token:    $TOKEN_ID"
 echo " - Service:  $SERVICE_ID"
 echo ""
 
-# Helper to generate and fund a key if it does not exist
-setup_account() {
+# Helper to verify key alias exists and get address
+get_account_address() {
     local key_alias="$1"
-    echo "Setting up account for '$key_alias'..."
-    if ! stellar keys address "$key_alias" &>/dev/null; then
-        echo "Generating key alias '$key_alias'..."
-        stellar keys generate "$key_alias" --network "$NETWORK"
+    if ! address=$(stellar keys address "$key_alias" 2>/dev/null); then
+        echo "ERROR: Key alias '$key_alias' not found in Stellar CLI."
+        echo "Please generate it first using: stellar keys generate $key_alias --network $NETWORK"
+        exit 1
     fi
-    local address
-    address=$(stellar keys address "$key_alias")
-    echo "Address for '$key_alias': $address"
-    
-    # Fund via Friendbot
+    echo "$address"
+}
+
+# 1. Resolve keys
+ADMIN_KEY="${CAMPUSCHAIN_ADMIN_KEY:-campuschain-admin}"
+ADMIN_ADDR=$(get_account_address "$ADMIN_KEY")
+
+UNIV_ADMIN_KEY="demo-univ-admin"
+UNIV_ADDR=$(get_account_address "$UNIV_ADMIN_KEY")
+
+STUDENT_KEY="demo-student"
+STUDENT_ADDR=$(get_account_address "$STUDENT_KEY")
+
+# Fund them if needed (usually done during key generation, but double check)
+fund_if_needed() {
+    local address="$1"
     if [ "$NETWORK" = "testnet" ]; then
-        echo "Checking if account is funded on Testnet..."
-        if curl -s -f "https://horizon-testnet.stellar.org/accounts/$address" >/dev/null; then
-            echo "Account is already funded."
-        else
-            echo "Account not found on-chain. Funding via Friendbot..."
+        if ! curl -s -f "https://horizon-testnet.stellar.org/accounts/$address" >/dev/null; then
+            echo "Account $address not found on-chain. Funding via Friendbot..."
             if curl -s -f "https://friendbot.stellar.org/?addr=$address" >/dev/null; then
                 echo "Account successfully funded! Waiting 8 seconds for ledger close..."
                 sleep 8
@@ -60,52 +68,47 @@ setup_account() {
             fi
         fi
     fi
-    echo "$address"
 }
 
-# 1. Setup keys
-ADMIN_KEY="${CAMPUSCHAIN_ADMIN_KEY:-campuschain-admin}"
-ADMIN_ADDR=$(stellar keys address "$ADMIN_KEY")
-
-UNIV_ADMIN_KEY="demo-univ-admin"
-UNIV_ADDR=$(setup_account "$UNIV_ADMIN_KEY")
-
-STUDENT_KEY="demo-student"
-STUDENT_ADDR=$(setup_account "$STUDENT_KEY")
+fund_if_needed "$ADMIN_ADDR"
+fund_if_needed "$UNIV_ADDR"
+fund_if_needed "$STUDENT_ADDR"
 
 echo ""
 echo "Step 1: Registering University 'DEMO-UNI'..."
 # Register university
+# Signature: register_university(admin, code, name, address, title)
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$ADMIN_KEY" \
     --network "$NETWORK" \
     -- \
     register_university \
-    --admin_address "$UNIV_ADDR" \
+    --admin "$UNIV_ADDR" \
     --code "DEMO-UNI" \
     --name "Demo State University" \
-    --physical_address "456 Learning Blvd" \
-    --registrar_name "Demo Registrar"
+    --address "456 Learning Blvd" \
+    --title "Demo Registrar"
 
 echo "Step 2: Approving University 'DEMO-UNI'..."
 # Approve university
+# Signature: approve_university(caller, code)
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$ADMIN_KEY" \
     --network "$NETWORK" \
     -- \
     approve_university \
+    --caller "$ADMIN_ADDR" \
     --code "DEMO-UNI"
 
 echo "Step 3: Registering Student Profile..."
 # Details structure for Student in JSON format
-# Note: student_identifier_hash must be a 32-byte hex string (BytesN<32>).
-# We generate a dummy 32-byte hex string.
 DUMMY_HASH="0101010101010101010101010101010101010101010101010101010101010101"
 DETAILS_JSON="{\"Student\":{\"student_identifier_hash\":\"$DUMMY_HASH\",\"department\":\"Engineering\",\"program\":\"Computer Science\",\"graduation_year\":2027}}"
 
 # Register student profile
+# Signature: register_profile(address, full_name, university_code, role, details)
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$STUDENT_KEY" \
@@ -120,16 +123,19 @@ stellar contract invoke \
 
 echo "Step 4: Verifying Student Profile..."
 # Verify student profile (by University Admin)
+# Signature: verify_profile(admin, address)
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$UNIV_ADMIN_KEY" \
     --network "$NETWORK" \
     -- \
     verify_profile \
+    --admin "$UNIV_ADDR" \
     --address "$STUDENT_ADDR"
 
 echo "Step 5: Querying verified student profile..."
 # Get student profile (passing caller)
+# Signature: get_profile(address, caller)
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$STUDENT_KEY" \
