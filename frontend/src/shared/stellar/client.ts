@@ -50,7 +50,7 @@ export async function readContract(
     networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
   })
     .addOperation(operation)
-    .setTimeout(30)
+    .setTimeout(180)
     .build();
 
   const sim = await server.simulateTransaction(tx);
@@ -93,7 +93,7 @@ export async function invokeContractMethod(
         networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
       })
         .addOperation(operation)
-        .setTimeout(60)
+        .setTimeout(300)
         .build();
 
       tx = await server.prepareTransaction(tx);
@@ -156,7 +156,7 @@ export async function sendNativePayment(
         networkPassphrase: NEXT_PUBLIC_STELLAR_PASSPHRASE,
       })
         .addOperation(paymentOp)
-        .setTimeout(60)
+        .setTimeout(300)
         .build();
 
       const signedXdr = await signTxFn(tx.toXDR(), NEXT_PUBLIC_STELLAR_PASSPHRASE, userAddress);
