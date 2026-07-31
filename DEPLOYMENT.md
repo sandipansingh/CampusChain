@@ -31,9 +31,9 @@ STELLAR_RPC_URL=https://soroban-testnet.stellar.org
 STELLAR_NETWORK_PASSPHRASE="Test SDF Network ; September 2015"
 
 # Deployed Contract IDs (Automatically updated by scripts/deploy.sh)
-CAMPUS_IDENTITY_CONTRACT_ID=CCA5LT5XMJPE2AYWHQ24AIAGA252Q4WSFNA7CTBMMR3U7FHJGSY2KNCQ
-CAMPUS_TOKEN_CONTRACT_ID=CDYCYGLA47T7NN7OEUWOEN254UDE7EQHQI7PO4FRLVVMH6XNCXYTYFAV
-CAMPUS_SERVICE_CONTRACT_ID=CAJOSLAI65NN47MQXOWH3TBVL4APJY5HFNBW7FC6K7TGROYXLWMU4EXU
+CAMPUS_IDENTITY_CONTRACT_ID=CDYUOPCSUXLHKTH7K6NWXBQYBY6FKLA6PXLLHBQ52PEUARZW5PAI2HUP
+CAMPUS_TOKEN_CONTRACT_ID=CBYZKZHGP7YUHR6F5XFLVZSQN4NQEUX4RYDN7GCRG6BQK7TH36NJGT3V
+CAMPUS_SERVICE_CONTRACT_ID=CATXLHMKSVQSWMET62HUBBYAZRUBRHOGQ3J7TLFAE44FGEJYU374NK6D
 
 # Platform Admin account (public key only)
 CAMPUS_ADMIN_ADDRESS=GDLYWFB7IOMPWZTFYPTQZND4VCKUDEBXRDHL3DBQHRNV2GVILMNZXRAC
@@ -107,9 +107,9 @@ This is the current active deployment state updated by the deploy script:
 
 | Contract | Address | Explorer |
 |---|---|---|
-| **CampusIdentity** | `CCA5LT5XMJPE2AYWHQ24AIAGA252Q4WSFNA7CTBMMR3U7FHJGSY2KNCQ` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CCA5LT5XMJPE2AYWHQ24AIAGA252Q4WSFNA7CTBMMR3U7FHJGSY2KNCQ) |
-| **CampusToken** (CAMP) | `CDYCYGLA47T7NN7OEUWOEN254UDE7EQHQI7PO4FRLVVMH6XNCXYTYFAV` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CDYCYGLA47T7NN7OEUWOEN254UDE7EQHQI7PO4FRLVVMH6XNCXYTYFAV) |
-| **CampusService** | `CAJOSLAI65NN47MQXOWH3TBVL4APJY5HFNBW7FC6K7TGROYXLWMU4EXU` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CAJOSLAI65NN47MQXOWH3TBVL4APJY5HFNBW7FC6K7TGROYXLWMU4EXU) |
+| **CampusIdentity** | `CDYUOPCSUXLHKTH7K6NWXBQYBY6FKLA6PXLLHBQ52PEUARZW5PAI2HUP` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CDYUOPCSUXLHKTH7K6NWXBQYBY6FKLA6PXLLHBQ52PEUARZW5PAI2HUP) |
+| **CampusToken** (CAMP) | `CBYZKZHGP7YUHR6F5XFLVZSQN4NQEUX4RYDN7GCRG6BQK7TH36NJGT3V` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CBYZKZHGP7YUHR6F5XFLVZSQN4NQEUX4RYDN7GCRG6BQK7TH36NJGT3V) |
+| **CampusService** | `CATXLHMKSVQSWMET62HUBBYAZRUBRHOGQ3J7TLFAE44FGEJYU374NK6D` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CATXLHMKSVQSWMET62HUBBYAZRUBRHOGQ3J7TLFAE44FGEJYU374NK6D) |
 
 ---
 
@@ -147,3 +147,23 @@ If you want to update contract logic while keeping the same contract addresses a
    ```bash
    ./deploy/upgrade.sh <CONTRACT_ID> <NEW_WASM_PATH> campuschain-admin testnet
    ```
+
+---
+
+## 7. Onboarding Demo & Setup
+
+To quickly set up and test the RBAC onboarding workflow on Stellar Testnet, you can run the provided demo onboarding script. 
+
+The script will automatically:
+1. Load contract IDs from your `.env` configuration file.
+2. Generate and fund demo keys: `demo-univ-admin` and `demo-student`.
+3. Register and approve a demo university (`DEMO-UNI`).
+4. Register a student profile for the demo student (`demo-student`).
+5. Verify the student profile using the university admin key (`demo-univ-admin`).
+6. Query the verified student profile using the student key, proving the verified status on-chain.
+
+To execute the onboarding demo:
+```bash
+./scripts/onboard_demo.sh
+```
+
