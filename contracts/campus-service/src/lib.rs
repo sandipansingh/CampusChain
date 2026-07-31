@@ -119,6 +119,7 @@ pub enum ApprovalStatus {
     Pending = 0,
     Approved = 1,
     Rejected = 2,
+    Suspended = 3,
 }
 
 #[contracttype]
@@ -741,7 +742,7 @@ impl CampusService {
         caller.require_auth();
         let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
         let caller_code = if caller != platform_admin {
-            Some(active_code(&env, &caller)?)
+            active_code(&env, &caller).ok()
         } else {
             None
         };
@@ -1016,6 +1017,29 @@ impl CampusService {
         extend_persistent(&env, &key);
         env.events().publish(
             (Symbol::new(&env, "ScholarshipRejected"), id, admin),
+            (),
+        );
+        Ok(())
+    }
+
+    pub fn admin_suspend_scholarship(env: Env, admin: Address, id: u64) -> Result<(), Error> {
+        admin.require_auth();
+        let platform_admin = env.storage().instance().get(&DataKey::PlatformAdmin).ok_or(Error::NotInitialized)?;
+        if admin != platform_admin {
+            return Err(Error::Unauthorized);
+        }
+
+        let key = DataKey::ScholarshipKey(id);
+        let mut scholarship: Scholarship = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
+        if !matches!(scholarship.admin_approval_status, ApprovalStatus::Approved) {
+            return Err(Error::InvalidStatus);
+        }
+
+        scholarship.admin_approval_status = ApprovalStatus::Suspended;
+        env.storage().persistent().set(&key, &scholarship);
+        extend_persistent(&env, &key);
+        env.events().publish(
+            (Symbol::new(&env, "ScholarshipSuspended"), id, admin),
             (),
         );
         Ok(())
