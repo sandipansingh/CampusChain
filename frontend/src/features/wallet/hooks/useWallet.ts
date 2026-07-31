@@ -84,7 +84,7 @@ export function useApproveMutation() {
       from,
       spender,
       amount,
-      expirationLedger = 1000000,
+      expirationLedger,
     }: {
       from: string;
       spender: string;

@@ -142,6 +142,7 @@ dependencies = [
 name = "campus-token"
 version = "0.1.0"
 dependencies = [
+ "campus-identity",
  "soroban-sdk",
 ]
 

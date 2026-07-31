@@ -7,6 +7,7 @@ import {
   u64ToScVal,
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+  getRpcServer,
 } from "@/shared/stellar/client";
 import { signTx } from "./wallet";
 
@@ -59,8 +60,19 @@ export async function executeApprove(
   from: string,
   spender: string,
   amount: number,
-  expirationLedger = 1000000
+  expirationLedger?: number
 ): Promise<string> {
+  let finalLedger = expirationLedger;
+  if (!finalLedger || finalLedger === 1000000) {
+    try {
+      const latest = await getRpcServer().getLatestLedger();
+      finalLedger = latest.sequence + 10000;
+    } catch (e) {
+      console.warn("Failed to get latest ledger sequence, falling back to 100000000", e);
+      finalLedger = 100000000; // Large fallback value to avoid immediate expiration
+    }
+  }
+
   const rawAmount = BigInt(Math.round(amount * 10_000_000));
   return invokeContractMethod(
     NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
@@ -69,7 +81,7 @@ export async function executeApprove(
       addressToScVal(from),
       addressToScVal(spender),
       i128ToScVal(rawAmount),
-      u32ToScVal(expirationLedger),
+      u32ToScVal(finalLedger),
     ],
     from,
     signTx
