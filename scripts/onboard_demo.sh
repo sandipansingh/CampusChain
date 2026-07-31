@@ -126,7 +126,7 @@ stellar contract invoke \
 
 echo "Step 4: Verifying Student Profile..."
 # Verify student profile (by University Admin)
-# Signature: verify_profile(admin, address)
+# Signature: verify_profile(caller, target_address)
 # Requires university admin authentication, so we sign with UNIV_ADMIN_KEY.
 stellar contract invoke \
     --id "$IDENTITY_ID" \
@@ -134,8 +134,8 @@ stellar contract invoke \
     --network "$NETWORK" \
     -- \
     verify_profile \
-    --admin "$UNIV_ADDR" \
-    --address "$STUDENT_ADDR"
+    --caller "$UNIV_ADDR" \
+    --target_address "$STUDENT_ADDR"
 
 echo "Step 5: Querying verified student profile..."
 # Get student profile (passing caller)
