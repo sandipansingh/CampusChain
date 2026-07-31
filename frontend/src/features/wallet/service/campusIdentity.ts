@@ -242,7 +242,7 @@ export async function fetchUniversityStudentIds(universityCode: string, address?
       if (val instanceof Uint8Array || val instanceof ArrayBuffer) {
         return bufToHex(val);
       }
-      return bufToHex(new Uint8Array(val as any));
+      return bufToHex(new Uint8Array(val as ArrayBufferLike));
     });
   } catch (error) {
     console.error("fetchUniversityStudentIds failed", error);
