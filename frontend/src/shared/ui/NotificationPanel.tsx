@@ -178,31 +178,28 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   } ${!evt.read ? "bg-muted/10" : ""}`}
                   onClick={isActionable ? handleClick : undefined}
                 >
-                  {/* Unread indicator dot */}
-                  {!evt.read && (
-                    <span className="absolute left-1.5 top-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-primary" />
-                  )}
-
-                  {/* Icon */}
-                  <div
-                    className={`mt-0.5 w-8 h-8 rounded-lg border flex items-center justify-center shrink-0 ${
-                      ICON_COLORS[evt.color]
-                    }`}
-                  >
-                    <EventIcon icon={evt.icon} />
+                  {/* Icon container with unread badge */}
+                  <div className="relative shrink-0 mt-0.5">
+                    <div
+                      className={`w-8 h-8 rounded-lg border flex items-center justify-center ${
+                        ICON_COLORS[evt.color]
+                      }`}
+                    >
+                      <EventIcon icon={evt.icon} />
+                    </div>
+                    {!evt.read && (
+                      <span className="absolute -top-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-primary border-2 border-card" />
+                    )}
                   </div>
 
                   {/* Content */}
-                  <div className="flex-1 min-w-0 pr-10">
+                  <div className="flex-1 min-w-0">
                     <div className="flex items-start justify-between gap-2">
                       <p className={`text-xs font-bold text-foreground leading-snug truncate ${!evt.read ? "font-extrabold" : ""}`}>
                         {evt.title}
                       </p>
-                      <span className="text-[10px] text-muted-foreground whitespace-nowrap shrink-0">
-                        {evt.timestamp}
-                      </span>
                     </div>
-                    <p className="text-[11px] text-muted-foreground mt-0.5 truncate">
+                    <p className="text-[11px] text-muted-foreground mt-0.5 break-words line-clamp-2">
                       {evt.message}
                     </p>
                     <div className="flex items-center justify-between mt-1.5 gap-2 min-w-0">
@@ -223,30 +220,37 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                     </div>
                   </div>
 
-                  {/* Action buttons (Visible on hover on desktop, or absolute placed) */}
-                  <div className="absolute right-3 top-3.5 flex gap-1 items-center opacity-0 group-hover:opacity-100 transition-opacity bg-transparent">
-                    {!evt.read && (
+                  {/* Right Column (Time & Action Buttons) */}
+                  <div className="flex flex-col items-end justify-between shrink-0 self-stretch min-w-[50px] gap-2 min-h-[50px] relative">
+                    <span className="text-[10px] text-muted-foreground whitespace-nowrap group-hover:opacity-0 transition-opacity duration-150">
+                      {evt.timestamp}
+                    </span>
+                    
+                    {/* Action buttons (Appear on hover on desktop, always visible on mobile) */}
+                    <div className="absolute right-0 top-0 flex gap-1 items-center opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-all duration-200 bg-transparent">
+                      {!evt.read && (
+                        <button
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            markRead(evt.id);
+                          }}
+                          className="p-1 rounded-md border border-border bg-card text-muted-foreground hover:text-emerald-600 hover:border-emerald-600 transition-colors cursor-pointer shadow-sm"
+                          title="Mark as read"
+                        >
+                          <Check className="h-3.5 w-3.5" />
+                        </button>
+                      )}
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          markRead(evt.id);
+                          dismiss(evt.id);
                         }}
-                        className="p-1 rounded-md border border-border bg-card text-muted-foreground hover:text-emerald-600 transition-colors cursor-pointer hover:border-emerald-600"
-                        title="Mark as read"
+                        className="p-1 rounded-md border border-border bg-card text-muted-foreground hover:text-destructive hover:border-destructive transition-colors cursor-pointer shadow-sm"
+                        title="Dismiss notification"
                       >
-                        <Check className="h-3 w-3" />
+                        <X className="h-3.5 w-3.5" />
                       </button>
-                    )}
-                    <button
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        dismiss(evt.id);
-                      }}
-                      className="p-1 rounded-md border border-border bg-card text-muted-foreground hover:text-destructive transition-colors cursor-pointer hover:border-destructive"
-                      title="Dismiss notification"
-                    >
-                      <X className="h-3 w-3" />
-                    </button>
+                    </div>
                   </div>
                 </div>
               );
