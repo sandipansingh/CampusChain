@@ -14,6 +14,7 @@ import {
   Coins,
   Bell,
   GraduationCap,
+  History,
 } from "lucide-react";
 
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
@@ -412,7 +413,7 @@ export function PlatformDashboard() {
             { value: "queue", label: "Approval Queue", icon: Clock3 },
             { value: "universities", label: "Universities", icon: Building2 },
             { value: "scholarships", label: "Scholarships", icon: GraduationCap },
-            { value: "activity", label: "Activity Feed", icon: Coins },
+            { value: "activity", label: "Activity Feed", icon: History },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.value;
