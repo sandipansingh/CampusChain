@@ -16,7 +16,7 @@ export function useScholarshipProgram(programId: number | null, address?: string
     queryFn: async () => {
       if (programId === null) return null;
       try {
-        return await fetchScholarshipProgram(programId);
+        return await fetchScholarshipProgram(programId, address);
       } catch (err) {
         console.warn("Failed to fetch scholarship program, returning null", err);
         return null;
@@ -32,7 +32,7 @@ export function useScholarshipApplication(applicationId: number | null, address?
     queryFn: async () => {
       if (applicationId === null) return null;
       try {
-        return await fetchScholarshipApplication(applicationId);
+        return await fetchScholarshipApplication(applicationId, address);
       } catch (err) {
         console.warn("Failed to fetch scholarship application, returning null", err);
         return null;
@@ -45,14 +45,14 @@ export function useScholarshipApplication(applicationId: number | null, address?
 export function useScholarshipPrograms(address?: string) {
   return useQuery({
     queryKey: ["scholarship-programs", address],
-    queryFn: () => fetchScholarshipPrograms(),
+    queryFn: () => fetchScholarshipPrograms(address),
   });
 }
 
 export function useScholarshipApplications(address?: string) {
   return useQuery({
     queryKey: ["scholarship-applications", address],
-    queryFn: () => fetchScholarshipApplications(),
+    queryFn: () => fetchScholarshipApplications(address),
   });
 }
 
