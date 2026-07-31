@@ -54,7 +54,7 @@ UNIV_ADDR=$(get_account_address "$UNIV_ADMIN_KEY")
 STUDENT_KEY="demo-student"
 STUDENT_ADDR=$(get_account_address "$STUDENT_KEY")
 
-# Fund them if needed (usually done during key generation, but double check)
+# Fund them if needed
 fund_if_needed() {
     local address="$1"
     if [ "$NETWORK" = "testnet" ]; then
@@ -78,9 +78,10 @@ echo ""
 echo "Step 1: Registering University 'DEMO-UNI'..."
 # Register university
 # Signature: register_university(admin, code, name, address, title)
+# Requires authentication of the university administrator, so we sign with UNIV_ADMIN_KEY.
 stellar contract invoke \
     --id "$IDENTITY_ID" \
-    --source-account "$ADMIN_KEY" \
+    --source-account "$UNIV_ADMIN_KEY" \
     --network "$NETWORK" \
     -- \
     register_university \
@@ -93,6 +94,7 @@ stellar contract invoke \
 echo "Step 2: Approving University 'DEMO-UNI'..."
 # Approve university
 # Signature: approve_university(caller, code)
+# Requires platform admin authentication, so we sign with ADMIN_KEY.
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$ADMIN_KEY" \
@@ -109,6 +111,7 @@ DETAILS_JSON="{\"Student\":{\"student_identifier_hash\":\"$DUMMY_HASH\",\"depart
 
 # Register student profile
 # Signature: register_profile(address, full_name, university_code, role, details)
+# Requires profile address authentication, so we sign with STUDENT_KEY.
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$STUDENT_KEY" \
@@ -124,6 +127,7 @@ stellar contract invoke \
 echo "Step 4: Verifying Student Profile..."
 # Verify student profile (by University Admin)
 # Signature: verify_profile(admin, address)
+# Requires university admin authentication, so we sign with UNIV_ADMIN_KEY.
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$UNIV_ADMIN_KEY" \
@@ -136,6 +140,7 @@ stellar contract invoke \
 echo "Step 5: Querying verified student profile..."
 # Get student profile (passing caller)
 # Signature: get_profile(address, caller)
+# Requires caller authentication, so we sign with STUDENT_KEY.
 stellar contract invoke \
     --id "$IDENTITY_ID" \
     --source-account "$STUDENT_KEY" \
