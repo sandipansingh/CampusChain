@@ -384,3 +384,67 @@ fn food_ordering_enforces_ownership_cancellation_and_sequential_transitions() {
         FoodOrderStatus::Completed
     );
 }
+
+#[test]
+fn test_scholarship_flow_and_getters() {
+    let env = Env::default();
+    let contracts = deployed(&env);
+    let admin = Address::generate(&env);
+    let student = Address::generate(&env);
+    let univ_code = text(&env, "UNI-A");
+
+    claim_and_approve(&contracts, &env, &admin, "UNI-A");
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin,
+        &student,
+        "UNI-A",
+        UserRole::Student,
+        student_details(&env),
+    );
+
+    // Mint and approve tokens
+    let amount = 1000i128;
+    contracts.token.mint(&admin, &amount);
+    contracts.token.approve(&admin, &contracts.service.address, &amount, &10000u32);
+
+    // Create scholarship program
+    let program_id = contracts.service.create_scholarship_program(
+        &admin,
+        &univ_code,
+        &text(&env, "Science Scholarship"),
+        &500i128,
+        &300u32, // GPA 3.00
+    );
+
+    // Get and list programs
+    let program = contracts.service.get_scholarship_program(&program_id);
+    assert_eq!(program.id, program_id);
+    assert_eq!(program.name, text(&env, "Science Scholarship"));
+    assert_eq!(program.amount, 500i128);
+    assert_eq!(program.sponsor, admin);
+    assert_eq!(program.university_code, univ_code);
+    assert_eq!(program.min_gpa, 300u32);
+    assert_eq!(program.active, true);
+
+    let programs = contracts.service.list_scholarship_programs(&0u64, &10u32);
+    assert_eq!(programs.len(), 1);
+    assert_eq!(programs.get(0).unwrap().id, program_id);
+
+    // Apply for scholarship
+    let app_id = contracts.service.apply_for_scholarship(&student, &program_id, &350u32);
+
+    // Get and list applications
+    let app = contracts.service.get_scholarship_application(&app_id);
+    assert_eq!(app.id, app_id);
+    assert_eq!(app.program_id, program_id);
+    assert_eq!(app.applicant, student);
+    assert_eq!(app.university_code, univ_code);
+    assert_eq!(app.gpa, 350u32);
+    assert_eq!(app.status, 0); // Applied
+
+    let apps = contracts.service.list_scholarship_applications(&0u64, &10u32);
+    assert_eq!(apps.len(), 1);
+    assert_eq!(apps.get(0).unwrap().id, app_id);
+}

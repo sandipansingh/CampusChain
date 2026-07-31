@@ -961,6 +961,52 @@ impl CampusService {
         Ok(())
     }
 
+    pub fn get_scholarship_program(env: Env, id: u64) -> Result<ScholarshipProgram, Error> {
+        let key = DataKey::ScholarshipProgram(id);
+        extend_persistent(&env, &key);
+        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+    }
+
+    pub fn list_scholarship_programs(env: Env, start_after: u64, limit: u32) -> Vec<ScholarshipProgram> {
+        let upper = env
+            .storage()
+            .instance()
+            .get::<DataKey, u64>(&DataKey::ScholarshipProgramCounter)
+            .unwrap_or(0);
+        let mut records = Vec::new(&env);
+        let mut id = start_after;
+        while id < upper && records.len() < limit.min(50) {
+            id += 1;
+            if let Some(record) = env.storage().persistent().get(&DataKey::ScholarshipProgram(id)) {
+                records.push_back(record);
+            }
+        }
+        records
+    }
+
+    pub fn get_scholarship_application(env: Env, id: u64) -> Result<ScholarshipApplication, Error> {
+        let key = DataKey::ScholarshipApplication(id);
+        extend_persistent(&env, &key);
+        env.storage().persistent().get(&key).ok_or(Error::NotFound)
+    }
+
+    pub fn list_scholarship_applications(env: Env, start_after: u64, limit: u32) -> Vec<ScholarshipApplication> {
+        let upper = env
+            .storage()
+            .instance()
+            .get::<DataKey, u64>(&DataKey::ScholarshipApplicationCounter)
+            .unwrap_or(0);
+        let mut records = Vec::new(&env);
+        let mut id = start_after;
+        while id < upper && records.len() < limit.min(50) {
+            id += 1;
+            if let Some(record) = env.storage().persistent().get(&DataKey::ScholarshipApplication(id)) {
+                records.push_back(record);
+            }
+        }
+        records
+    }
+
     pub fn create_utility_reward(
         env: Env,
         merchant: Address,
