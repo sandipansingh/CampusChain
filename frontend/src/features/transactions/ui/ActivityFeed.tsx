@@ -5,19 +5,41 @@ import { useWallet } from "@/shared/stellar/useWallet";
 import { Dropdown } from "@/shared/ui/Dropdown";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { useActivityFeed } from "@/features/transactions/hooks/useActivityFeed";
+import { ICON_COLORS } from "@/shared/stellar/eventDecoder";
 import {
   Search,
   Copy,
   ExternalLink,
   Check,
   History,
-  ArrowDownLeft,
   ListFilter,
   ArrowLeftRight,
   Lock,
   Ticket,
   Coins,
+  UserCheck,
+  Building,
+  Shield,
 } from "lucide-react";
+
+function getEventIcon(icon: string) {
+  switch (icon) {
+    case "transfer":
+      return <ArrowLeftRight className="h-4.5 w-4.5" />;
+    case "escrow":
+      return <Lock className="h-4.5 w-4.5" />;
+    case "ticket":
+      return <Ticket className="h-4.5 w-4.5" />;
+    case "faucet":
+      return <Coins className="h-4.5 w-4.5" />;
+    case "role":
+      return <UserCheck className="h-4.5 w-4.5" />;
+    case "university":
+      return <Building className="h-4.5 w-4.5" />;
+    default:
+      return <Shield className="h-4.5 w-4.5" />;
+  }
+}
 
 export function ActivityFeed() {
   const { address } = useWallet();
@@ -85,6 +107,8 @@ export function ActivityFeed() {
                 { value: "escrow", label: "Escrow", icon: <Lock className="h-4 w-4 text-amber-500" /> },
                 { value: "ticket", label: "Ticketing", icon: <Ticket className="h-4 w-4 text-indigo-500" /> },
                 { value: "faucet", label: "Faucet", icon: <Coins className="h-4 w-4 text-emerald-500" /> },
+                { value: "role", label: "Verifications", icon: <UserCheck className="h-4 w-4 text-purple-500" /> },
+                { value: "university", label: "Universities", icon: <Building className="h-4 w-4 text-indigo-500" /> },
               ]}
               value={typeFilter}
               onChange={(val) => setTypeFilter(val)}
@@ -130,8 +154,8 @@ export function ActivityFeed() {
               >
                 <div className="flex justify-between items-center">
                   <div className="flex items-center gap-3 min-w-0">
-                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground shrink-0 border border-border">
-                      <ArrowDownLeft className="h-4.5 w-4.5" />
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center shrink-0 border ${ICON_COLORS[evt.color] || "bg-muted text-foreground border-border"}`}>
+                      {getEventIcon(evt.icon)}
                     </div>
                     <div className="min-w-0">
                       <p className="font-bold truncate leading-snug">{evt.title}</p>

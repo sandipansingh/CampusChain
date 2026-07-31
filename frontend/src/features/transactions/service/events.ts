@@ -2,6 +2,7 @@ import {
   getRpcServer,
   NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
   NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+  NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
   getEventsSafe,
 } from "@/shared/stellar/client";
 import { decodeEvent, DecodedEvent } from "@/shared/stellar/eventDecoder";
@@ -21,7 +22,7 @@ export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
   const latestLedger = await server.getLatestLedger();
   const startLedger = Math.max(1, latestLedger.sequence - 2000);
 
-  const [sRes, tRes] = (await Promise.all([
+  const [sRes, tRes, iRes] = (await Promise.all([
     getEventsSafe(server, {
       startLedger,
       filters: [
@@ -42,12 +43,23 @@ export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
       ],
       limit: 50,
     }),
+    getEventsSafe(server, {
+      startLedger,
+      filters: [
+        {
+          type: "contract",
+          contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID],
+        },
+      ],
+      limit: 50,
+    }),
   ])) as [
+    { events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[] },
     { events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[] },
     { events: { id: string; ledger: number; ledgerClosedAt: string; txHash: string; topic: unknown[]; value: unknown }[] }
   ];
 
-  const allEvents = [...sRes.events, ...tRes.events]
+  const allEvents = [...sRes.events, ...tRes.events, ...iRes.events]
     .sort((a, b) => b.ledger - a.ledger)
     .slice(0, 50);
 
@@ -74,6 +86,7 @@ export async function fetchEventsPaginated(cursor: string | null, limit = 40, ad
   const baseFilters = [
     { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] },
     { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] },
+    { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID] },
   ];
 
   let res: {
