@@ -260,7 +260,7 @@
                             "symbol": "student_identifier_hash"
                           },
                           "val": {
-                            "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                            "bytes": "0202020202020202020202020202020202020202020202020202020202020202"
                           }
                         }
                       ]
@@ -1095,7 +1095,7 @@
                                   "symbol": "student_identifier_hash"
                                 },
                                 "val": {
-                                  "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                                  "bytes": "0202020202020202020202020202020202020202020202020202020202020202"
                                 }
                               }
                             ]
@@ -1537,6 +1537,58 @@
                     },
                     {
                       "string": "UNI-B"
+                    }
+                  ]
+                }
+              }
+            },
+            "ext": "v0"
+          },
+          4095
+        ]
+      ],
+      [
+        {
+          "contract_data": {
+            "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+            "key": {
+              "vec": [
+                {
+                  "symbol": "UniversityStudentIds"
+                },
+                {
+                  "string": "UNI-A"
+                }
+              ]
+            },
+            "durability": "persistent"
+          }
+        },
+        [
+          {
+            "last_modified_ledger_seq": 0,
+            "data": {
+              "contract_data": {
+                "ext": "v0",
+                "contract": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAFCT4",
+                "key": {
+                  "vec": [
+                    {
+                      "symbol": "UniversityStudentIds"
+                    },
+                    {
+                      "string": "UNI-A"
+                    }
+                  ]
+                },
+                "durability": "persistent",
+                "val": {
+                  "vec": [
+                    {
+                      "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                    },
+                    {
+                      "bytes": "0202020202020202020202020202020202020202020202020202020202020202"
                     }
                   ]
                 }
@@ -2489,7 +2541,7 @@
                             "symbol": "student_identifier_hash"
                           },
                           "val": {
-                            "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                            "bytes": "0202020202020202020202020202020202020202020202020202020202020202"
                           }
                         }
                       ]
@@ -3335,7 +3387,7 @@
                               "symbol": "student_identifier_hash"
                             },
                             "val": {
-                              "bytes": "0101010101010101010101010101010101010101010101010101010101010101"
+                              "bytes": "0202020202020202020202020202020202020202020202020202020202020202"
                             }
                           }
                         ]

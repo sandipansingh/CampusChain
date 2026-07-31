@@ -29,6 +29,7 @@ pub enum Error {
     InvalidVerificationStatus = 12,
     InvalidUniversityStatus = 13,
     UniversityCodeMismatch = 14,
+    StudentIdAlreadyExists = 15,
 }
 
 #[contracttype]
@@ -150,6 +151,7 @@ pub enum DataKey {
     /// production registry makes a full response too expensive.
     UniversityCodes,
     Profiles,
+    UniversityStudentIds(String),
 }
 
 const LEDGER_THRESHOLD_INSTANCE: u32 = 1_000;
@@ -498,6 +500,29 @@ impl CampusIdentity {
             return Err(Error::InvalidRole);
         }
         validate_code(&university_code)?;
+        if let ProfileDetails::Student(ref student_details) = details {
+            let student_ids_key = DataKey::UniversityStudentIds(university_code.clone());
+            let mut student_ids: Vec<BytesN<32>> = env
+                .storage()
+                .persistent()
+                .get(&student_ids_key)
+                .unwrap_or(Vec::new(&env));
+
+            let mut exists = false;
+            for id in student_ids.iter() {
+                if id == student_details.student_identifier_hash {
+                    exists = true;
+                    break;
+                }
+            }
+            if exists {
+                return Err(Error::StudentIdAlreadyExists);
+            }
+
+            student_ids.push_back(student_details.student_identifier_hash.clone());
+            env.storage().persistent().set(&student_ids_key, &student_ids);
+            extend_persistent(&env, &student_ids_key);
+        }
         if full_name.len() == 0
             || get_university_internal(&env, &university_code)?.approval_status
                 != UniversityApprovalStatus::Approved
@@ -625,6 +650,16 @@ impl CampusIdentity {
         env.storage()
             .persistent()
             .get(&profiles_key)
+            .unwrap_or(Vec::new(&env))
+    }
+
+    pub fn list_student_ids(env: Env, university_code: String) -> Vec<BytesN<32>> {
+        let student_ids_key = DataKey::UniversityStudentIds(university_code);
+        extend_persistent(&env, &student_ids_key);
+        extend_instance(&env);
+        env.storage()
+            .persistent()
+            .get(&student_ids_key)
             .unwrap_or(Vec::new(&env))
     }
 

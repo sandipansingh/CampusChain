@@ -14,6 +14,15 @@ fn student_details(env: &Env) -> ProfileDetails {
     })
 }
 
+fn student_details_with_hash(env: &Env, hash: u8) -> ProfileDetails {
+    ProfileDetails::Student(StudentDetails {
+        student_identifier_hash: BytesN::from_array(env, &[hash; 32]),
+        department: text(env, "Engineering"),
+        program: text(env, "Computer Science"),
+        graduation_year: 2027,
+    })
+}
+
 fn merchant_details(env: &Env) -> ProfileDetails {
     ProfileDetails::Merchant(MerchantDetails {
         business_name: text(env, "Campus Store"),
@@ -234,14 +243,14 @@ fn only_matching_university_admin_can_verify_or_reject_profiles() {
         &text(&env, "Student A"),
         &text(&env, "UNI-A"),
         &UserRole::Student,
-        &student_details(&env),
+        &student_details_with_hash(&env, 1),
     );
     client.register_profile(
         &student_for_rejection,
         &text(&env, "Student To Reject"),
         &text(&env, "UNI-A"),
         &UserRole::Student,
-        &student_details(&env),
+        &student_details_with_hash(&env, 2),
     );
 
     assert!(client.try_verify_profile(&admin_b, &student_a).is_err());
@@ -293,4 +302,40 @@ fn platform_admin_is_bootstrapped_once_and_cannot_be_assigned() {
             &text(&env, "Registrar"),
         )
         .is_err());
+}
+
+#[test]
+fn student_id_must_be_unique_in_university() {
+    let env = Env::default();
+    let (client, platform_admin) = initialized_identity(&env);
+    let university_admin = Address::generate(&env);
+    let student_a = Address::generate(&env);
+    let student_b = Address::generate(&env);
+
+    claim_university(&client, &env, &university_admin, "UNI-A");
+    client.approve_university(&platform_admin, &text(&env, "UNI-A"));
+
+    // Register first student with a specific ID hash
+    client.register_profile(
+        &student_a,
+        &text(&env, "Alice"),
+        &text(&env, "UNI-A"),
+        &UserRole::Student,
+        &student_details(&env),
+    );
+
+    // Assert that the list of student IDs contains our registered student's ID hash
+    let ids = client.list_student_ids(&text(&env, "UNI-A"));
+    assert_eq!(ids.len(), 1);
+    assert_eq!(ids.get(0).unwrap(), BytesN::from_array(&env, &[1; 32]));
+
+    // Register second student with the same details (same ID hash)
+    let res = client.try_register_profile(
+        &student_b,
+        &text(&env, "Bob"),
+        &text(&env, "UNI-A"),
+        &UserRole::Student,
+        &student_details(&env),
+    );
+    assert!(res.is_err());
 }
