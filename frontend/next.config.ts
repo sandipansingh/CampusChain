@@ -3,6 +3,7 @@ import path from "path";
 
 const nextConfig: NextConfig = {
   /* config options here */
+  allowedDevOrigins: ["172.20.10.7", "localhost"],
   turbopack: {
     root: path.join(__dirname, ".."),
   },
