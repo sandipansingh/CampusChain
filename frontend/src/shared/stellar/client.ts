@@ -68,6 +68,34 @@ export async function readContract(
   return scValToNative(retval);
 }
 
+function getActionLabel(methodName: string): string {
+  switch (methodName) {
+    case "transfer":
+      return "Send CAMP Tokens";
+    case "buy_camp_tokens":
+      return "Buy CAMP Tokens";
+    case "claim_faucet":
+      return "Claim Testnet CAMP Faucet";
+    case "create_scholarship":
+      return "Create Scholarship Program";
+    case "admin_approve_scholarship":
+      return "Approve Scholarship Program";
+    case "admin_reject_scholarship":
+      return "Reject Scholarship Program";
+    case "apply_scholarship":
+      return "Apply for Scholarship";
+    case "decide_application":
+      return "Review Scholarship Application";
+    case "approve":
+      return "Approve Contract Allowance";
+    default:
+      return methodName
+        .split("_")
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(" ");
+  }
+}
+
 export async function invokeContractMethod(
   contractId: string,
   methodName: string,
@@ -76,7 +104,7 @@ export async function invokeContractMethod(
   signTxFn: (xdr: string, passphrase: string, address: string) => Promise<string>
 ): Promise<string> {
   const store = useTransactionStatusStore.getState();
-  const label = `Invoke contract method: ${methodName}`;
+  const label = getActionLabel(methodName);
 
   const run = async (): Promise<string> => {
     store.setPending(label, run);

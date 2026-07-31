@@ -36,17 +36,15 @@ export interface ScholarshipApplication {
 
 function parseStatus(statusVal: any): "pending" | "approved" | "rejected" {
   if (!statusVal) return "pending";
+  let statusStr = "";
   if (typeof statusVal === "string") {
-    const val = statusVal.toLowerCase();
-    if (val === "pending" || val === "approved" || val === "rejected") {
-      return val as any;
-    }
+    statusStr = statusVal;
+  } else if (typeof statusVal === "object") {
+    statusStr = statusVal.name ?? statusVal.tag ?? Object.keys(statusVal)[0] ?? "";
   }
-  if (typeof statusVal === "object" && statusVal.name) {
-    const val = String(statusVal.name).toLowerCase();
-    if (val === "pending" || val === "approved" || val === "rejected") {
-      return val as any;
-    }
+  const val = String(statusStr).toLowerCase();
+  if (val === "pending" || val === "approved" || val === "rejected") {
+    return val as any;
   }
   return "pending";
 }
