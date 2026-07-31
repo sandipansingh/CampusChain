@@ -59,6 +59,7 @@ function getCacheKeysForEvent(eventName: string): string[][] {
     case "ScholarshipCreated":
     case "ScholarshipApproved":
     case "ScholarshipRejected":
+    case "ScholarshipSuspended":
       return [["scholarship-programs"], ["ledger-events"]];
 
     default:

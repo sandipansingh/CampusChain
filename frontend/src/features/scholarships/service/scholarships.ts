@@ -20,7 +20,7 @@ export interface Scholarship {
   deadline: string;
   slots: number;
   createdByUniversityId: string;
-  adminApprovalStatus: "pending" | "approved" | "rejected";
+  adminApprovalStatus: "pending" | "approved" | "rejected" | "suspended";
   createdAt: number;
 }
 
@@ -34,10 +34,11 @@ export interface ScholarshipApplication {
   decidedBy: string;
 }
 
-function parseStatus(statusVal: any): "pending" | "approved" | "rejected" {
+function parseStatus(statusVal: any): "pending" | "approved" | "rejected" | "suspended" {
   if (statusVal === 0 || statusVal === "0") return "pending";
   if (statusVal === 1 || statusVal === "1") return "approved";
   if (statusVal === 2 || statusVal === "2") return "rejected";
+  if (statusVal === 3 || statusVal === "3") return "suspended";
   if (!statusVal) return "pending";
   let statusStr = "";
   if (typeof statusVal === "string") {
@@ -46,7 +47,7 @@ function parseStatus(statusVal: any): "pending" | "approved" | "rejected" {
     statusStr = statusVal.name ?? statusVal.tag ?? Object.keys(statusVal)[0] ?? "";
   }
   const val = String(statusStr).toLowerCase();
-  if (val === "pending" || val === "approved" || val === "rejected") {
+  if (val === "pending" || val === "approved" || val === "rejected" || val === "suspended") {
     return val as any;
   }
   return "pending";
@@ -230,6 +231,23 @@ export async function executeAdminReviewScholarship(
   return invokeContractMethod(
     NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
     method,
+    [
+      addressToScVal(adminId),
+      u64ToScVal(scholarshipId),
+    ],
+    adminId,
+    signTx
+  );
+}
+
+export async function executeAdminSuspendScholarship(
+  adminId: string,
+  scholarshipId: number
+): Promise<string> {
+  const { signTx } = await import("@/features/wallet/service/wallet");
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "admin_suspend_scholarship",
     [
       addressToScVal(adminId),
       u64ToScVal(scholarshipId),

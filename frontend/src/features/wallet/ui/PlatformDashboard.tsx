@@ -28,7 +28,7 @@ import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
 import { Settings as SettingsView } from "./Settings";
 import { NotificationPanel } from "@/shared/ui/NotificationPanel";
 import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
-import { useScholarshipPrograms, useAdminReviewScholarshipMutation } from "@/features/scholarships/hooks/useScholarships";
+import { useScholarshipPrograms, useAdminReviewScholarshipMutation, useAdminSuspendScholarshipMutation } from "@/features/scholarships/hooks/useScholarships";
 
 export function PlatformDashboard() {
   const { address, disconnect } = useWallet();
@@ -44,6 +44,7 @@ export function PlatformDashboard() {
   // Scholarships approvals
   const scholarshipsQuery = useScholarshipPrograms(address ?? undefined);
   const reviewScholarship = useAdminReviewScholarshipMutation();
+  const suspendScholarship = useAdminSuspendScholarshipMutation();
   const [schNotice, setSchNotice] = useState<string | null>(null);
 
   useEffect(() => {
@@ -144,72 +145,174 @@ export function PlatformDashboard() {
   };
 
   const renderQueue = () => {
-    return (
-      <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
-        <h3 className="text-lg font-bold">University Approval Requests</h3>
-        {universitiesQuery.isLoading ? (
-          <Skeleton className="h-40 w-full" />
-        ) : pendingUniversities.length === 0 ? (
-          <p className="text-sm text-muted-foreground py-6 text-center">No pending approvals in queue.</p>
-        ) : (
-          <div className="space-y-3">
-            {pendingUniversities.map((u) => {
-              const isApprovePending = approveUniv.isPending && approveUniv.variables === u.code;
-              const isRejectPending = rejectUniv.isPending && rejectUniv.variables === u.code;
-              const hasApproveError = approveUniv.isError && approveUniv.variables === u.code;
-              const hasRejectError = rejectUniv.isError && rejectUniv.variables === u.code;
+    const pendingScholarships = (scholarshipsQuery.data ?? []).filter((s) => s.adminApprovalStatus === "pending");
 
-              return (
-                <div key={u.code} className="flex flex-col p-4 border border-border rounded-lg gap-3 bg-muted/10">
-                  <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                    <div>
-                      <p className="font-bold text-sm">{u.name} <span className="text-xs text-muted-foreground font-mono">({u.code})</span></p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Physical address: {u.address}</p>
-                      <p className="text-xs text-muted-foreground mt-0.5">Admin wallet: <span className="font-mono text-xs">{u.adminAddress}</span></p>
-                      <p className="text-[10px] text-muted-foreground mt-1">Submitted: {new Date(Number(u.createdAt) * 1000).toLocaleString()}</p>
+    return (
+      <div className="space-y-6">
+        {/* University requests */}
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
+          <h3 className="text-lg font-bold text-foreground">Approval Requests</h3>
+          <p className="text-xs text-muted-foreground">Manage and review incoming claims for University registrations and Scholarship approvals.</p>
+          
+          <div className="border-t border-border pt-4">
+            <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+              <Building2 className="size-4" /> University Registration Requests ({pendingUniversities.length})
+            </h4>
+            {universitiesQuery.isLoading ? (
+              <Skeleton className="h-40 w-full animate-pulse" />
+            ) : pendingUniversities.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No pending university registrations in queue.</p>
+            ) : (
+              <div className="space-y-3">
+                {pendingUniversities.map((u) => {
+                  const isApprovePending = approveUniv.isPending && approveUniv.variables === u.code;
+                  const isRejectPending = rejectUniv.isPending && rejectUniv.variables === u.code;
+                  const hasApproveError = approveUniv.isError && approveUniv.variables === u.code;
+                  const hasRejectError = rejectUniv.isError && rejectUniv.variables === u.code;
+
+                  return (
+                    <div key={u.code} className="flex flex-col p-4 border border-border rounded-lg gap-3 bg-muted/10">
+                      <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+                        <div>
+                          <p className="font-bold text-sm">{u.name} <span className="text-xs text-muted-foreground font-mono">({u.code})</span></p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Physical address: {u.address}</p>
+                          <p className="text-xs text-muted-foreground mt-0.5">Admin wallet: <span className="font-mono text-xs">{u.adminAddress}</span></p>
+                          <p className="text-[10px] text-muted-foreground mt-1">Submitted: {new Date(Number(u.createdAt) * 1000).toLocaleString()}</p>
+                        </div>
+                        <div className="flex gap-2 shrink-0">
+                          <button
+                            disabled={approveUniv.isPending || rejectUniv.isPending}
+                            onClick={() => approveUniv.mutate(u.code)}
+                            className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer h-9 transition-colors"
+                          >
+                            {isApprovePending ? (
+                              <span className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <CheckCircle2 className="size-3.5" />
+                            )}
+                            {isApprovePending ? "Approving..." : "Approve"}
+                          </button>
+                          <button
+                            disabled={approveUniv.isPending || rejectUniv.isPending}
+                            onClick={() => rejectUniv.mutate(u.code)}
+                            className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer h-9 transition-colors"
+                          >
+                            {isRejectPending ? (
+                              <span className="h-3 w-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
+                            ) : (
+                              <XCircle className="size-3.5" />
+                            )}
+                            {isRejectPending ? "Rejecting..." : "Reject"}
+                          </button>
+                        </div>
+                      </div>
+                      {hasApproveError && (
+                        <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
+                          Error: {approveUniv.error instanceof Error ? approveUniv.error.message : "Approval transaction failed"}
+                        </p>
+                      )}
+                      {hasRejectError && (
+                        <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
+                          Error: {rejectUniv.error instanceof Error ? rejectUniv.error.message : "Rejection transaction failed"}
+                        </p>
+                      )}
                     </div>
-                    <div className="flex gap-2 shrink-0">
-                      <button
-                        disabled={approveUniv.isPending || rejectUniv.isPending}
-                        onClick={() => approveUniv.mutate(u.code)}
-                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer h-9 transition-colors"
-                      >
-                        {isApprovePending ? (
-                          <span className="h-3 w-3 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <CheckCircle2 className="size-3.5" />
-                        )}
-                        {isApprovePending ? "Approving..." : "Approve"}
-                      </button>
-                      <button
-                        disabled={approveUniv.isPending || rejectUniv.isPending}
-                        onClick={() => rejectUniv.mutate(u.code)}
-                        className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1.5 disabled:opacity-50 cursor-pointer h-9 transition-colors"
-                      >
-                        {isRejectPending ? (
-                          <span className="h-3 w-3 border-2 border-red-600 border-t-transparent rounded-full animate-spin" />
-                        ) : (
-                          <XCircle className="size-3.5" />
-                        )}
-                        {isRejectPending ? "Rejecting..." : "Reject"}
-                      </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
+          {/* Scholarship requests */}
+          <div className="border-t border-border pt-6">
+            <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+              <GraduationCap className="size-4" /> Scholarship Program Requests ({pendingScholarships.length})
+            </h4>
+
+            {schNotice && (
+              <div
+                className={`text-xs p-2.5 rounded-lg border mb-3 ${
+                  schNotice.includes("successfully")
+                    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                    : "text-destructive bg-destructive/5 border-destructive/20"
+                }`}
+              >
+                {schNotice}
+              </div>
+            )}
+
+            {scholarshipsQuery.isLoading ? (
+              <Skeleton className="h-40 w-full animate-pulse" />
+            ) : pendingScholarships.length === 0 ? (
+              <p className="text-sm text-muted-foreground py-4">No pending scholarship requests in queue.</p>
+            ) : (
+              <div className="space-y-3">
+                {pendingScholarships.map((s) => (
+                  <div key={s.id} className="p-4 border border-border rounded-lg bg-muted/10 space-y-3">
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
+                      <div className="space-y-1">
+                        <h5 className="font-bold text-sm text-foreground">{s.title}</h5>
+                        <p className="text-xs text-muted-foreground leading-relaxed">{s.description}</p>
+                      </div>
+                      <div className="shrink-0 flex items-center gap-1 bg-primary/10 text-primary font-bold px-2.5 py-1 rounded-lg text-xs border border-primary/20">
+                        {s.amount.toLocaleString()} CAMP
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4 text-xs pt-3 border-t border-border">
+                      <div className="space-y-1">
+                        <span className="text-muted-foreground font-semibold block">Eligibility Criteria</span>
+                        <span className="text-foreground">{s.criteria}</span>
+                      </div>
+                      <div className="space-y-1.5">
+                        <p className="text-muted-foreground">Deadline: <strong className="text-foreground">{s.deadline}</strong></p>
+                        <p className="text-muted-foreground">Slots: <strong className="text-foreground">{s.slots}</strong></p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row justify-between sm:items-center pt-3 border-t border-border gap-3">
+                      <span className="text-[10px] font-mono text-muted-foreground truncate max-w-[250px]" title={s.createdByUniversityId}>
+                        University: {s.createdByUniversityId}
+                      </span>
+                      <div className="flex gap-2">
+                        <button
+                          disabled={reviewScholarship.isPending}
+                          onClick={async () => {
+                            try {
+                              setSchNotice(null);
+                              const txHash = await reviewScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id, approved: true });
+                              setSchNotice(`Scholarship approved successfully! Tx: ${txHash}`);
+                            } catch (err) {
+                              setSchNotice(err instanceof Error ? err.message : "Approval failed.");
+                            }
+                          }}
+                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          <CheckCircle2 className="size-3.5" /> Approve
+                        </button>
+                        <button
+                          disabled={reviewScholarship.isPending}
+                          onClick={async () => {
+                            try {
+                              setSchNotice(null);
+                              const txHash = await reviewScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id, approved: false });
+                              setSchNotice(`Scholarship rejected successfully! Tx: ${txHash}`);
+                            } catch (err) {
+                              setSchNotice(err instanceof Error ? err.message : "Rejection failed.");
+                            }
+                          }}
+                          className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                        >
+                          <XCircle className="size-3.5" /> Reject
+                        </button>
+                      </div>
                     </div>
                   </div>
-                  {hasApproveError && (
-                    <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
-                      Error: {approveUniv.error instanceof Error ? approveUniv.error.message : "Approval transaction failed"}
-                    </p>
-                  )}
-                  {hasRejectError && (
-                    <p className="text-xs text-destructive bg-destructive/5 border border-destructive/20 p-2 rounded">
-                      Error: {rejectUniv.error instanceof Error ? rejectUniv.error.message : "Rejection transaction failed"}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
+                ))}
+              </div>
+            )}
           </div>
-        )}
+        </div>
       </div>
     );
   };
@@ -276,13 +379,13 @@ export function PlatformDashboard() {
   };
 
   const renderScholarshipsList = () => {
-    const pendingScholarships = (scholarshipsQuery.data ?? []).filter((s) => s.adminApprovalStatus === "pending");
+    const activeScholarships = (scholarshipsQuery.data ?? []).filter((s) => s.adminApprovalStatus === "approved");
 
     return (
       <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
-        <h3 className="text-base font-bold text-foreground">Pending Scholarships Approval</h3>
+        <h3 className="text-base font-bold text-foreground">Active Scholarship Programs</h3>
         <p className="text-xs text-muted-foreground font-normal">
-          Review and approve scholarship programs created by registered universities before they become visible to students.
+          Monitor all active on-chain scholarship programs. Platform Admin can immediately suspend any program if necessary.
         </p>
 
         {schNotice && (
@@ -299,15 +402,15 @@ export function PlatformDashboard() {
 
         {scholarshipsQuery.isLoading ? (
           <Skeleton className="h-24 w-full animate-pulse" />
-        ) : pendingScholarships.length === 0 ? (
+        ) : activeScholarships.length === 0 ? (
           <div className="text-center py-12 border border-border border-dashed rounded-lg bg-muted/5">
             <GraduationCap className="h-10 w-10 mx-auto text-muted-foreground animate-none" />
-            <p className="mt-3 text-sm font-bold text-foreground">All caught up!</p>
-            <p className="text-xs text-muted-foreground mt-1">No pending scholarship programs awaiting approval.</p>
+            <p className="mt-3 text-sm font-bold text-foreground">No active scholarships</p>
+            <p className="text-xs text-muted-foreground mt-1">There are no approved or active scholarship programs on-chain.</p>
           </div>
         ) : (
           <div className="space-y-4">
-            {pendingScholarships.map((s) => (
+            {activeScholarships.map((s) => (
               <div key={s.id} className="p-5 border border-border rounded-lg bg-muted/10 space-y-3">
                 <div className="flex flex-col sm:flex-row justify-between sm:items-start gap-4">
                   <div className="space-y-1">
@@ -336,34 +439,19 @@ export function PlatformDashboard() {
                   </span>
                   <div className="flex gap-2">
                     <button
-                      disabled={reviewScholarship.isPending}
+                      disabled={suspendScholarship.isPending}
                       onClick={async () => {
                         try {
                           setSchNotice(null);
-                          const txHash = await reviewScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id, approved: true });
-                          setSchNotice(`Scholarship approved successfully! Tx: ${txHash}`);
+                          const txHash = await suspendScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id });
+                          setSchNotice(`Scholarship suspended successfully! Tx: ${txHash}`);
                         } catch (err) {
-                          setSchNotice(err instanceof Error ? err.message : "Approval failed.");
+                          setSchNotice(err instanceof Error ? err.message : "Suspension failed.");
                         }
                       }}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      className="px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
                     >
-                      <CheckCircle2 className="size-3.5" /> Approve
-                    </button>
-                    <button
-                      disabled={reviewScholarship.isPending}
-                      onClick={async () => {
-                        try {
-                          setSchNotice(null);
-                          const txHash = await reviewScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id, approved: false });
-                          setSchNotice(`Scholarship rejected successfully! Tx: ${txHash}`);
-                        } catch (err) {
-                          setSchNotice(err instanceof Error ? err.message : "Rejection failed.");
-                        }
-                      }}
-                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
-                    >
-                      <XCircle className="size-3.5" /> Reject
+                      <XCircle className="size-3.5" /> Suspend Immediately
                     </button>
                   </div>
                 </div>
@@ -453,7 +541,9 @@ export function PlatformDashboard() {
       <div className="flex-1 md:ml-64 flex flex-col h-full overflow-hidden">
         <header className="flex justify-between items-center h-16 border-b border-border bg-card px-4 md:px-6 sticky top-0 z-30 shrink-0">
           <div className="flex items-center gap-2">
-            <h2 className="text-lg md:text-xl font-bold capitalize">{activeTab}</h2>
+            <h2 className="text-lg md:text-xl font-bold capitalize">
+              {activeTab === "queue" ? "Approval Requests" : activeTab}
+            </h2>
             <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200">
               Platform Admin
             </span>

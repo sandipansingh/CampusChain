@@ -31,6 +31,7 @@ import {
   useReviewScholarshipApplicationMutation,
 } from "@/features/scholarships/hooks/useScholarships";
 import { Settings as SettingsView } from "./Settings";
+import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
 
 import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
 
@@ -559,6 +560,10 @@ export function UniversityDashboard() {
     );
   };
 
+  const renderActivityFeed = () => {
+    return <ActivityFeed />;
+  };
+
   const renderContentView = () => {
     switch (activeTab) {
       case "requests":
@@ -571,6 +576,8 @@ export function UniversityDashboard() {
         return renderMerchants();
       case "events":
         return renderEvents();
+      case "activity":
+        return renderActivityFeed();
       case "settings":
         return <SettingsView />;
       case "overview":
@@ -601,6 +608,7 @@ export function UniversityDashboard() {
             { value: "scholarships", label: "Scholarships", icon: GraduationCap },
             { value: "merchants", label: "Merchants", icon: Store },
             { value: "events", label: "Events Oversight", icon: Calendar },
+            { value: "activity", label: "Activity Feed", icon: History },
           ].map((item) => {
             const Icon = item.icon;
             const isActive = activeTab === item.value;

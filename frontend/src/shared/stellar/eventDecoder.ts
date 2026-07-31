@@ -292,6 +292,12 @@ export function decodeEvent(evt: {
     return { ...baseEvent, type: "role", title: "Scholarship Rejected", message: `Scholarship #${id} was rejected by admin`, details: admin, color: "orange", icon: "role" };
   }
 
+  if (eventName === "ScholarshipSuspended") {
+    const id = decodeNative(topicNative[1]) ?? 0;
+    const admin = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    return { ...baseEvent, type: "role", title: "Scholarship Suspended", message: `Scholarship #${id} was suspended by admin`, details: admin, color: "orange", icon: "role" };
+  }
+
   return { ...baseEvent, type: "system", title: eventName || "Contract Event", message: `Ledger ${evt.ledger}`, details: evt.txHash.slice(0, 8), color: "gray", icon: "system" };
 }
 

@@ -8,6 +8,7 @@ import {
   executeApplyForScholarship,
   executeReviewScholarshipApplication,
   executeAdminReviewScholarship,
+  executeAdminSuspendScholarship,
 } from "../service/scholarships";
 
 export function useScholarshipProgram(programId: number | null, address?: string) {
@@ -143,6 +144,24 @@ export function useAdminReviewScholarshipMutation() {
       approved: boolean;
     }) => {
       return executeAdminReviewScholarship(adminId, scholarshipId, approved);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["scholarship-programs"] });
+    },
+  });
+}
+
+export function useAdminSuspendScholarshipMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({
+      adminId,
+      scholarshipId,
+    }: {
+      adminId: string;
+      scholarshipId: number;
+    }) => {
+      return executeAdminSuspendScholarship(adminId, scholarshipId);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["scholarship-programs"] });
