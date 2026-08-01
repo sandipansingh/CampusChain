@@ -65,7 +65,7 @@ jobs:
 
       - name: Install dependencies (npm ci)
         working-directory: frontend
-        run: npm ci
+        run: npm ci --omit=optional
 
       # Vitest runs in headless jsdom mode — no Freighter popup, no network calls.
       - name: Run frontend tests

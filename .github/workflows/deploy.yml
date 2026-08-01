@@ -73,7 +73,7 @@ jobs:
 
       - name: Install dependencies (npm ci)
         working-directory: frontend
-        run: npm ci
+        run: npm ci --omit=optional
 
       # Production build
       # Injects real contract addresses from GitHub Secrets so the built
