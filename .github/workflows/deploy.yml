@@ -64,7 +64,7 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 22 (LTS)
+      - name: Setup Node.js 24
         uses: actions/setup-node@v4
         with:
           node-version: "24"
@@ -87,16 +87,18 @@ jobs:
       # Skipped when VERCEL_TOKEN is not configured — see fallback step below.
       - name: Deploy to Vercel
         if: env.VERCEL_TOKEN != ''
-        working-directory: frontend
         run: |
           npm install --global vercel@latest
           vercel pull --yes \
             --environment=production \
-            --token="$VERCEL_TOKEN"
+            --token="$VERCEL_TOKEN" \
+            --cwd frontend
           vercel build --prod \
-            --token="$VERCEL_TOKEN"
+            --token="$VERCEL_TOKEN" \
+            --cwd frontend
           vercel deploy --prebuilt --prod \
-            --token="$VERCEL_TOKEN"
+            --token="$VERCEL_TOKEN" \
+            --cwd frontend
 
       # Fallback: upload build artefact
       # When Vercel is not yet configured, upload the .next output so the
