@@ -50,24 +50,24 @@ update_file() {
         -e 's/(\|\s*\*\*CampusToken\*\* \(CAMP\)\s*\|\s*`)[A-Z0-9]{56}(`\s*\|\s*\[StellarExpert ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/contract\/)[A-Z0-9]{56}(\)\s*\|)/\1'"$TOKEN_ID"'\2'"$TOKEN_ID"'\3/' \
         -e 's/(\|\s*\*\*CampusService\*\*\s*\|\s*`)[A-Z0-9]{56}(`\s*\|\s*\[StellarExpert ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/contract\/)[A-Z0-9]{56}(\)\s*\|)/\1'"$SERVICE_ID"'\2'"$SERVICE_ID"'\3/' \
         \
-        -e 's/(\|\s*CampusIdentity\s*\|\s*`)[a-f0-9]{64}(`\s*\|)/\1'"$IDENTITY_WASM"'\2/' \
-        -e 's/(\|\s*\*\*CampusIdentity\*\*\s*\|\s*`[A-Z0-9]{56}`\s*\|\s*`)[a-f0-9]{64}(`\s*\|)/\1'"$IDENTITY_WASM"'\2/' \
-        -e 's/(\|\s*CampusToken\s*\|\s*`)[a-f0-9]{64}(`\s*\|)/\1'"$TOKEN_WASM"'\2/' \
-        -e 's/(\|\s*\*\*CampusToken\*\* \(CAMP\)\s*\|\s*`[A-Z0-9]{56}`\s*\|\s*`)[a-f0-9]{64}(`\s*\|)/\1'"$TOKEN_WASM"'\2/' \
-        -e 's/(\|\s*CampusService\s*\|\s*`)[a-f0-9]{64}(`\s*\|)/\1'"$SERVICE_WASM"'\2/' \
-        -e 's/(\|\s*\*\*CampusService\*\*\s*\|\s*`[A-Z0-9]{56}`\s*\|\s*`)[a-f0-9]{64}(`\s*\|)/\1'"$SERVICE_WASM"'\2/' \
+        -e 's/(\|\s*CampusIdentity\s*\|\s*`)[a-f0-9]*(`\s*\|)/\1'"$IDENTITY_WASM"'\2/' \
+        -e 's/(\|\s*\*\*CampusIdentity\*\*\s*\|\s*`[A-Z0-9]{56}`\s*\|\s*`)[a-f0-9]*(`\s*\|)/\1'"$IDENTITY_WASM"'\2/' \
+        -e 's/(\|\s*CampusToken\s*\|\s*`)[a-f0-9]*(`\s*\|)/\1'"$TOKEN_WASM"'\2/' \
+        -e 's/(\|\s*\*\*CampusToken\*\* \(CAMP\)\s*\|\s*`[A-Z0-9]{56}`\s*\|\s*`)[a-f0-9]*(`\s*\|)/\1'"$TOKEN_WASM"'\2/' \
+        -e 's/(\|\s*CampusService\s*\|\s*`)[a-f0-9]*(`\s*\|)/\1'"$SERVICE_WASM"'\2/' \
+        -e 's/(\|\s*\*\*CampusService\*\*\s*\|\s*`[A-Z0-9]{56}`\s*\|\s*`)[a-f0-9]*(`\s*\|)/\1'"$SERVICE_WASM"'\2/' \
         \
-        -e '/#### CampusIdentity/,/####/ s/(\|\s*WASM Upload\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$IDENTITY_INSTALL_TX"'\2'"$IDENTITY_INSTALL_TX"'\3/' \
-        -e '/#### CampusIdentity/,/####/ s/(\|\s*Contract Instantiate\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$IDENTITY_DEPLOY_TX"'\2'"$IDENTITY_DEPLOY_TX"'\3/' \
-        -e '/#### CampusIdentity/,/####/ s/(\|\s*`initialize\(\)`\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$IDENTITY_INIT_TX"'\2'"$IDENTITY_INIT_TX"'\3/' \
+        -e '/#### CampusIdentity/,/####/ s/(\|\s*WASM Upload\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$IDENTITY_INSTALL_TX"'\2'"$IDENTITY_INSTALL_TX"'\3/' \
+        -e '/#### CampusIdentity/,/####/ s/(\|\s*Contract Instantiate\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$IDENTITY_DEPLOY_TX"'\2'"$IDENTITY_DEPLOY_TX"'\3/' \
+        -e '/#### CampusIdentity/,/####/ s/(\|\s*`initialize\(\)`\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$IDENTITY_INIT_TX"'\2'"$IDENTITY_INIT_TX"'\3/' \
         \
-        -e '/#### CampusToken/,/####/ s/(\|\s*WASM Upload\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$TOKEN_INSTALL_TX"'\2'"$TOKEN_INSTALL_TX"'\3/' \
-        -e '/#### CampusToken/,/####/ s/(\|\s*Contract Instantiate\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$TOKEN_DEPLOY_TX"'\2'"$TOKEN_DEPLOY_TX"'\3/' \
-        -e '/#### CampusToken/,/####/ s/(\|\s*`initialize\(\)`\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$TOKEN_INIT_TX"'\2'"$TOKEN_INIT_TX"'\3/' \
+        -e '/#### CampusToken/,/####/ s/(\|\s*WASM Upload\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$TOKEN_INSTALL_TX"'\2'"$TOKEN_INSTALL_TX"'\3/' \
+        -e '/#### CampusToken/,/####/ s/(\|\s*Contract Instantiate\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$TOKEN_DEPLOY_TX"'\2'"$TOKEN_DEPLOY_TX"'\3/' \
+        -e '/#### CampusToken/,/####/ s/(\|\s*`initialize\(\)`\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$TOKEN_INIT_TX"'\2'"$TOKEN_INIT_TX"'\3/' \
         \
-        -e '/#### CampusService/,/####/ s/(\|\s*WASM Upload\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$SERVICE_INSTALL_TX"'\2'"$SERVICE_INSTALL_TX"'\3/' \
-        -e '/#### CampusService/,/####/ s/(\|\s*Contract Instantiate\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$SERVICE_DEPLOY_TX"'\2'"$SERVICE_DEPLOY_TX"'\3/' \
-        -e '/#### CampusService/,/####/ s/(\|\s*`initialize\(\)`\s*\|\s*`)[a-f0-9]{64}(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]{64}(\)\s*\|)/\1'"$SERVICE_INIT_TX"'\2'"$SERVICE_INIT_TX"'\3/' \
+        -e '/#### CampusService/,/####/ s/(\|\s*WASM Upload\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$SERVICE_INSTALL_TX"'\2'"$SERVICE_INSTALL_TX"'\3/' \
+        -e '/#### CampusService/,/####/ s/(\|\s*Contract Instantiate\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$SERVICE_DEPLOY_TX"'\2'"$SERVICE_DEPLOY_TX"'\3/' \
+        -e '/#### CampusService/,/####/ s/(\|\s*`initialize\(\)`\s*\|\s*`)[a-f0-9]*(`\s*\|\s*\[View ↗\]\(https:\/\/stellar\.expert\/explorer\/testnet\/tx\/)[a-f0-9]*(\)\s*\|)/\1'"$SERVICE_INIT_TX"'\2'"$SERVICE_INIT_TX"'\3/' \
         "$file" > "$tmp"
         
     mv "$tmp" "$file"

@@ -541,37 +541,40 @@ Tests mock at the service boundary — no Freighter popup, no real RPC calls. Th
 
 ## 7. CI/CD & Deployment
 
-### 7.1 Automated CI (Pull Requests)
+### 7.1 Automated CI & Testing (Pull Requests & Pushes)
 
-Every PR targeting `main` runs [`.github/workflows/pr-checks.yml`](.github/workflows/pr-checks.yml) in two parallel jobs:
+Every commit and PR targeting `main` runs automated testing and quality gates in parallel:
 
-| Job | Steps |
-|---|---|
-| **contracts** | `cargo fmt --check` → `cargo clippy -D warnings` → `cargo test` |
-| **frontend** | `npm ci` → `tsc --noEmit` → `eslint` → `vitest run` → `next build` |
+*   **Test Runner Workflow ([`test.yml`](.github/workflows/test.yml)):**
+    *   **contracts:** Compiles contracts and runs the Soroban Rust unit/integration tests (`cargo test`).
+    *   **frontend:** Installs dependencies and runs the Next.js React component and service tests (`npm run test` via Vitest).
+*   **Static Quality Checks Workflow ([`pr-checks.yml`](.github/workflows/pr-checks.yml)):**
+    *   **contracts:** Checks formatting (`cargo fmt --check`) and lints (`cargo clippy -D warnings`).
+    *   **frontend:** Verifies TypeScript typing (`tsc --noEmit`), code style (`eslint`), and compiles a mock Next.js production build (`npm run build`).
 
-PRs cannot be merged until both jobs pass. Enforce this via GitHub → Settings → Branches → "Require status checks".
+PRs cannot be merged until all status checks pass. Enforce this via GitHub → Settings → Branches → "Require status checks".
 
 ### 7.2 Automated Deploy (merge to main)
 
 Merges to `main` trigger [`.github/workflows/deploy.yml`](.github/workflows/deploy.yml):
 
-1. `npm ci` + `next build` — injects real contract addresses from GitHub Secrets
-2. `vercel deploy --prebuilt --prod` — deploys to Vercel production URL
-3. If `VERCEL_TOKEN` is not configured, the build artefact is uploaded to GitHub Actions (90-day retention) as a fallback.
+1. `npm ci` + `next build` — injects real contract addresses and network config from GitHub Secrets.
+2. `vercel deploy --prebuilt --prod` — deploys to Vercel production URL.
+3. If `VERCEL_TOKEN` is not configured, the compiled Next.js build artifact is uploaded to GitHub Actions artifacts as a fallback.
 
 **Required GitHub Secrets** (Settings → Secrets → Actions):
 
 | Secret | Purpose |
 |---|---|
-| `VERCEL_TOKEN` | Vercel personal access token |
-| `VERCEL_ORG_ID` | From `vercel link` → `.vercel/project.json` |
-| `VERCEL_PROJECT_ID` | From `vercel link` → `.vercel/project.json` |
-| `NEXT_PUBLIC_STELLAR_RPC_URL` | Soroban RPC endpoint |
-| `NEXT_PUBLIC_STELLAR_PASSPHRASE` | Network passphrase |
-| `NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID` | Deployed token contract |
-| `NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID` | Deployed service contract |
-| `NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS` | Admin G… address |
+| `VERCEL_TOKEN` | Vercel Personal Access Token |
+| `VERCEL_ORG_ID` | Vercel Organization ID (derived from `vercel link`) |
+| `VERCEL_PROJECT_ID` | Vercel Project ID (derived from `vercel link`) |
+| `NEXT_PUBLIC_STELLAR_RPC_URL` | Soroban RPC endpoint (e.g. `https://soroban-testnet.stellar.org`) |
+| `NEXT_PUBLIC_STELLAR_PASSPHRASE` | Stellar Network Passphrase |
+| `NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID` | Deployed `CampusIdentity` contract ID |
+| `NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID` | Deployed `CampusToken` (CAMP) contract ID |
+| `NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID` | Deployed `CampusService` contract ID |
+| `NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS` | Platform Admin account address (public `G...` key) |
 
 ### 7.3 Contract Deployment (Manual — One-Time or After WASM Change)
 
@@ -646,35 +649,51 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 ## 9. Screenshots
 
-> Drop PNG/WebP screenshots into `docs/screenshots/` and uncomment the lines below.
+> All screenshot files are stored in the root `/screenshots` folder. Drop your images there matching the placeholder paths below.
 
-| Screen | Path |
-|---|---|
-| Login / Wallet Connect | `docs/screenshots/01_login.png` |
-| Wallet Dashboard (balance, recent tx) | `docs/screenshots/02_wallet_dashboard.png` |
-| Send / Receive CAMP | `docs/screenshots/03_send_receive.png` |
-| Scan & Pay (QR) | `docs/screenshots/04_scan_pay.png` |
-| Marketplace Grid | `docs/screenshots/05_marketplace_grid.png` |
-| Marketplace Listing Detail / Sell | `docs/screenshots/06_marketplace_detail.png` |
-| Events | `docs/screenshots/07_events.png` |
-| Rewards Catalogue | `docs/screenshots/08_rewards.png` |
-| Scholarships | `docs/screenshots/09_scholarships.png` |
-| Transaction History | `docs/screenshots/10_tx_history.png` |
-| Merchant Dashboard | `docs/screenshots/11_merchant_dashboard.png` |
-| Admin Dashboard | `docs/screenshots/12_admin_dashboard.png` |
-| Settings | `docs/screenshots/13_settings.png` |
+### 9.1 Desktop
 
-<!--
-![Login](docs/screenshots/01_login.png)
-![Dashboard](docs/screenshots/02_wallet_dashboard.png)
-![Send/Receive](docs/screenshots/03_send_receive.png)
-![Scan & Pay](docs/screenshots/04_scan_pay.png)
-![Marketplace](docs/screenshots/05_marketplace_grid.png)
-![Events](docs/screenshots/07_events.png)
-![Rewards](docs/screenshots/08_rewards.png)
-![Scholarships](docs/screenshots/09_scholarships.png)
-![Admin](docs/screenshots/12_admin_dashboard.png)
--->
+*   **Login & Wallet Connection:**
+    ![Login & Wallet Connection](screenshots/desktop_login.png)
+*   **Wallet Dashboard (Balances & Quick Actions):**
+    ![Wallet Dashboard](screenshots/desktop_dashboard.png)
+*   **Send & Receive Tokens / Swap Faucet:**
+    ![Send & Receive](screenshots/desktop_send_receive.png)
+*   **Marketplace (P2P Listings & Escrow):**
+    ![Marketplace](screenshots/desktop_marketplace.png)
+*   **Events Ticketing (Purchase & Creation):**
+    ![Events](screenshots/desktop_events.png)
+*   **Scholarship Stepper (Submission & Status):**
+    ![Scholarships](screenshots/desktop_scholarships.png)
+*   **Merchant Canteen Management & Order Tracking:**
+    ![Canteen Orders](screenshots/desktop_food_ordering.png)
+*   **University Admin Dashboard (Profile Verification):**
+    ![University Approvals](screenshots/desktop_university_approval.png)
+*   **Platform Admin Dashboard (Campus Claims):**
+    ![Platform Controls](screenshots/desktop_platform_controls.png)
+
+### 9.2 Mobile
+
+*   **Responsive Mobile Layout:**
+    ![Mobile Dashboard](screenshots/mobile_dashboard.png)
+*   **QR Code Payment Scanner (Scan & Pay):**
+    ![Mobile Scan & Pay](screenshots/mobile_scan_pay.png)
+*   **NFT Ticket Redemption (Verification):**
+    ![Mobile Ticket Wallet](screenshots/mobile_ticket_wallet.png)
+
+### 9.3 Test
+
+*   **Smart Contract Rust Unit/Integration Tests (`cargo test`):**
+    ![Rust Contract Tests](screenshots/test_cargo_test.png)
+*   **Frontend component & hook unit/integration tests (`npm run test`):**
+    ![Frontend Tests](screenshots/test_frontend_test.png)
+
+### 9.4 CI/CD
+
+*   **GitHub Actions CI Workflow checks passing on PR/Push:**
+    ![GitHub Actions CI checks](screenshots/cicd_pr_checks.png)
+*   **Vercel build and deployment pipeline status (Production release):**
+    ![Vercel Deployment dashboard](screenshots/cicd_vercel_deploy.png)
 
 ---
 
@@ -693,24 +712,24 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 | Action | Transaction Hash | Explorer |
 |---|---|---|
-| WASM Upload | `` | [View ↗](https://stellar.expert/explorer/testnet/tx/) |
-| Contract Instantiate | `06a3b6bedfdc4983af2f38011b96f08616e27536f769f306a531415404976119` | [View ↗](https://stellar.expert/explorer/testnet/tx/06a3b6bedfdc4983af2f38011b96f08616e27536f769f306a531415404976119) |
+| WASM Upload | `ed1359c549f97a672c52e7bc579dfa7122e1f353e1c41a5e4e71a4d6dcfa5f22` | [View ↗](https://stellar.expert/explorer/testnet/tx/ed1359c549f97a672c52e7bc579dfa7122e1f353e1c41a5e4e71a4d6dcfa5f22) |
+| Contract Instantiate | `b280460c61117776f7f81869ddc8810b64141aaeaf172c554d77d575b52c0790` | [View ↗](https://stellar.expert/explorer/testnet/tx/b280460c61117776f7f81869ddc8810b64141aaeaf172c554d77d575b52c0790) |
 | `initialize()` | `8c2cacca2fbfa456bff8c726d22b9d465fd41238e695d570c1b888a247910de9` | [View ↗](https://stellar.expert/explorer/testnet/tx/8c2cacca2fbfa456bff8c726d22b9d465fd41238e695d570c1b888a247910de9) |
 
 #### CampusToken
 
 | Action | Transaction Hash | Explorer |
 |---|---|---|
-| WASM Upload | `` | [View ↗](https://stellar.expert/explorer/testnet/tx/) |
-| Contract Instantiate | `82654bcdfe15c8477fd48c3c9dd2b9a46c6f3fd36026fbeeebc5c073155c2da5` | [View ↗](https://stellar.expert/explorer/testnet/tx/82654bcdfe15c8477fd48c3c9dd2b9a46c6f3fd36026fbeeebc5c073155c2da5) |
+| WASM Upload | `8dbff51ae775973ab146b692a464007f02270d2e245a143a4e2221455265f92b` | [View ↗](https://stellar.expert/explorer/testnet/tx/8dbff51ae775973ab146b692a464007f02270d2e245a143a4e2221455265f92b) |
+| Contract Instantiate | `9ba86932646865334c612dcb37c8f1804b3354a331f15b273d9cdde36b8f5eb8` | [View ↗](https://stellar.expert/explorer/testnet/tx/9ba86932646865334c612dcb37c8f1804b3354a331f15b273d9cdde36b8f5eb8) |
 | `initialize()` | `8bc4e0d5139050bec8c063e91f7347dd97c7e567fc22dcfdf36b97080f75a42d` | [View ↗](https://stellar.expert/explorer/testnet/tx/8bc4e0d5139050bec8c063e91f7347dd97c7e567fc22dcfdf36b97080f75a42d) |
 
 #### CampusService
 
 | Action | Transaction Hash | Explorer |
 |---|---|---|
-| WASM Upload | `` | [View ↗](https://stellar.expert/explorer/testnet/tx/) |
-| Contract Instantiate | `ad651b95b8e16b63cb5e3f25895cfa7730b264d5ab0d73b718933847870cf69c` | [View ↗](https://stellar.expert/explorer/testnet/tx/ad651b95b8e16b63cb5e3f25895cfa7730b264d5ab0d73b718933847870cf69c) |
+| WASM Upload | `a9671a8e4a281fbff345ab6bc8b1cc1e35cf7e9bd3d69aa556c38fc95731b74c` | [View ↗](https://stellar.expert/explorer/testnet/tx/a9671a8e4a281fbff345ab6bc8b1cc1e35cf7e9bd3d69aa556c38fc95731b74c) |
+| Contract Instantiate | `0ce93e2d1507814f0c5553c39bdcc1f5ba0d50f3be6cf8fb698e85b2a781fa90` | [View ↗](https://stellar.expert/explorer/testnet/tx/0ce93e2d1507814f0c5553c39bdcc1f5ba0d50f3be6cf8fb698e85b2a781fa90) |
 | `initialize()` | `96f09b30998d4cfa6c36a6e5acd33150956c7100a72f7fda5cd7bd54cf0b2a8a` | [View ↗](https://stellar.expert/explorer/testnet/tx/96f09b30998d4cfa6c36a6e5acd33150956c7100a72f7fda5cd7bd54cf0b2a8a) |
 
 ### WASM Hashes
@@ -727,11 +746,20 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 | Resource | Link |
 |---|---|
-| 🌐 Live demo (Vercel) | `https://campuschain.vercel.app` *(placeholder — update after first deploy)* |
+| 🌐 Live demo (Stellar Mainnet/Testnet interface) | [campuschain.sandipansingh.com ↗](https://campuschain.sandipansingh.com) |
 | 🎥 Demo video | `<!-- embed a Loom / YouTube link here -->` |
 | 🧪 Testnet faucet | [Stellar Laboratory Friendbot](https://laboratory.stellar.org/#account-creator?network=testnet) |
 | 📖 Stellar docs | [developers.stellar.org](https://developers.stellar.org) |
 | 🔍 Contract explorer | [StellarExpert Testnet](https://stellar.expert/explorer/testnet) |
+
+---
+
+## 12. Feedback & Responses
+
+We appreciate your feedback and suggestions! Please use the following links to interact with our feedback portal:
+
+*   📝 **Submit Feedback (Google Form):** [Feedback Form ↗](https://forms.gle/u2BEwqcTnCpGBBUg8)
+*   📊 **View Responses (Google Sheet):** [Feedback Responses Sheet ↗](https://docs.google.com/spreadsheets/d/1HNzt2QfXsF_n4LzUpJnpaSk4cKBfVsngAfEyxHbXqkU/edit?usp=sharing)
 
 ---
 

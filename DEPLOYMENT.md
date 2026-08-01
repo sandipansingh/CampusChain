@@ -111,6 +111,38 @@ This is the current active deployment state updated by the deploy script:
 | **CampusToken** (CAMP) | `CC37FOQRDHKUKERLWJZDHQ2ZYSRGQ3JY42RXRAPUA6G2S4X5774XZQEV` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CC37FOQRDHKUKERLWJZDHQ2ZYSRGQ3JY42RXRAPUA6G2S4X5774XZQEV) |
 | **CampusService** | `CBLZQKQ3OBMNJX57YARH3MDFQLHS2X4VJO2XNJNFC6P2NXYDLLYTSF6Q` | [StellarExpert ↗](https://stellar.expert/explorer/testnet/contract/CBLZQKQ3OBMNJX57YARH3MDFQLHS2X4VJO2XNJNFC6P2NXYDLLYTSF6Q) |
 
+#### CampusIdentity
+
+| Action | Transaction Hash | Explorer |
+|---|---|---|
+| WASM Upload | `ed1359c549f97a672c52e7bc579dfa7122e1f353e1c41a5e4e71a4d6dcfa5f22` | [View ↗](https://stellar.expert/explorer/testnet/tx/ed1359c549f97a672c52e7bc579dfa7122e1f353e1c41a5e4e71a4d6dcfa5f22) |
+| Contract Instantiate | `b280460c61117776f7f81869ddc8810b64141aaeaf172c554d77d575b52c0790` | [View ↗](https://stellar.expert/explorer/testnet/tx/b280460c61117776f7f81869ddc8810b64141aaeaf172c554d77d575b52c0790) |
+| `initialize()` | `8c2cacca2fbfa456bff8c726d22b9d465fd41238e695d570c1b888a247910de9` | [View ↗](https://stellar.expert/explorer/testnet/tx/8c2cacca2fbfa456bff8c726d22b9d465fd41238e695d570c1b888a247910de9) |
+
+#### CampusToken
+
+| Action | Transaction Hash | Explorer |
+|---|---|---|
+| WASM Upload | `8dbff51ae775973ab146b692a464007f02270d2e245a143a4e2221455265f92b` | [View ↗](https://stellar.expert/explorer/testnet/tx/8dbff51ae775973ab146b692a464007f02270d2e245a143a4e2221455265f92b) |
+| Contract Instantiate | `9ba86932646865334c612dcb37c8f1804b3354a331f15b273d9cdde36b8f5eb8` | [View ↗](https://stellar.expert/explorer/testnet/tx/9ba86932646865334c612dcb37c8f1804b3354a331f15b273d9cdde36b8f5eb8) |
+| `initialize()` | `8bc4e0d5139050bec8c063e91f7347dd97c7e567fc22dcfdf36b97080f75a42d` | [View ↗](https://stellar.expert/explorer/testnet/tx/8bc4e0d5139050bec8c063e91f7347dd97c7e567fc22dcfdf36b97080f75a42d) |
+
+#### CampusService
+
+| Action | Transaction Hash | Explorer |
+|---|---|---|
+| WASM Upload | `a9671a8e4a281fbff345ab6bc8b1cc1e35cf7e9bd3d69aa556c38fc95731b74c` | [View ↗](https://stellar.expert/explorer/testnet/tx/a9671a8e4a281fbff345ab6bc8b1cc1e35cf7e9bd3d69aa556c38fc95731b74c) |
+| Contract Instantiate | `0ce93e2d1507814f0c5553c39bdcc1f5ba0d50f3be6cf8fb698e85b2a781fa90` | [View ↗](https://stellar.expert/explorer/testnet/tx/0ce93e2d1507814f0c5553c39bdcc1f5ba0d50f3be6cf8fb698e85b2a781fa90) |
+| `initialize()` | `96f09b30998d4cfa6c36a6e5acd33150956c7100a72f7fda5cd7bd54cf0b2a8a` | [View ↗](https://stellar.expert/explorer/testnet/tx/96f09b30998d4cfa6c36a6e5acd33150956c7100a72f7fda5cd7bd54cf0b2a8a) |
+
+### WASM Hashes
+
+| Contract | WASM Hash |
+|---|---|
+| CampusIdentity | `06a3b6bedfdc4983af2f38011b96f08616e27536f769f306a531415404976119` |
+| CampusToken | `82654bcdfe15c8477fd48c3c9dd2b9a46c6f3fd36026fbeeebc5c073155c2da5` |
+| CampusService | `ad651b95b8e16b63cb5e3f25895cfa7730b264d5ab0d73b718933847870cf69c` |
+
 ---
 
 ## 6. Upgrading or Redeploying on Code Changes
@@ -166,4 +198,13 @@ To execute the onboarding demo:
 ```bash
 ./scripts/onboard_demo.sh
 ```
+
+---
+
+## 8. Feedback & Responses
+
+We value your feedback on the CampusChain platform! Please use the links below to submit feedback or view the responses:
+
+*   📝 **Submit Feedback:** [Google Form ↗](https://forms.gle/u2BEwqcTnCpGBBUg8)
+*   📊 **View Responses:** [Google Sheets Responses Dashboard ↗](https://docs.google.com/spreadsheets/d/1HNzt2QfXsF_n4LzUpJnpaSk4cKBfVsngAfEyxHbXqkU/edit?usp=sharing)
 
