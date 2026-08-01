@@ -829,10 +829,10 @@ impl CampusService {
         }
         assert_same_university(&env, &buyer, &listing.seller)?;
         if listing.escrow_enabled {
-            let escrow_id = Self::create_escrow(
-                env.clone(),
-                buyer.clone(),
-                listing.seller.clone(),
+            let escrow_id = create_escrow_internal(
+                &env,
+                &buyer,
+                &listing.seller,
                 listing.price,
             )?;
             let escrow_key = DataKey::ListingEscrow(id);
