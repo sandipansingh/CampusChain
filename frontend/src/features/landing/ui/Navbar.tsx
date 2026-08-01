@@ -40,7 +40,7 @@ export function Navbar({ onGetStarted }: { onGetStarted: () => void }) {
         <div className="flex items-center gap-2 sm:gap-4">
           <button
             onClick={onGetStarted}
-            className="rounded-full bg-zinc-950 px-4 py-2 text-sm font-semibold tracking-[0.05em] text-white transition-opacity hover:opacity-90 sm:px-6 sm:py-2.5 cursor-pointer"
+            className="rounded-full bg-zinc-950 px-3.5 py-1.5 text-xs font-semibold tracking-[0.05em] text-white transition-opacity hover:opacity-90 sm:px-6 sm:py-2.5 sm:text-sm cursor-pointer"
           >
             Get Started
           </button>

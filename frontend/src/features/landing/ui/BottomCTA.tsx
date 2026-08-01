@@ -9,7 +9,7 @@ export function BottomCTA({ onGetStarted }: { onGetStarted: () => void }) {
         <div className="mt-8 flex flex-col items-center gap-6 sm:gap-8">
           <button
             onClick={onGetStarted}
-            className="rounded-lg bg-zinc-950 px-12 py-4 text-sm font-semibold tracking-[0.05em] text-white transition-opacity hover:opacity-90 cursor-pointer"
+            className="rounded-lg bg-zinc-950 px-6 py-3 text-sm font-semibold tracking-[0.05em] text-white transition-opacity hover:opacity-90 cursor-pointer sm:px-12 sm:py-4"
           >
             Get Started<span className="sm:hidden"> Now</span>
           </button>
