@@ -436,8 +436,12 @@ CampusChain includes a comprehensive Canteen Canteen/Food Ordering system integr
 #### 3. Order Checkout & Tracking Lifecycle
 - **Sequential Checkout**: When checking out, the frontend coordinates order placement by submitting sequential transaction envelopes for each item in the cart.
 - **Real-Time Status Tracking**: Upon placing an order, students are routed to a live tracking screen that monitors order milestones using an event-driven vertical stepper:
-  ```
-  [Placed] ──> [Preparing] ──> [Ready for Pickup] ──> [Completed]
+  ```mermaid
+  graph LR
+      P["1. Placed"] --> Prep["2. Preparing"]
+      Prep --> R["3. Ready for Pickup"]
+      R --> C["4. Completed"]
+      P -.->|"On-Chain Cancel (Refund)"| Cancel["5. Cancelled"]
   ```
 - **Cancellation & Refunds**: Before a merchant begins order preparation (status *Placed*), the student can cancel the order on-chain to trigger an automatic contract-level refund.
 
