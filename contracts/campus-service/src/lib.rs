@@ -1109,11 +1109,10 @@ impl CampusService {
             scholarship.slots -= 1;
             application.status = ApprovalStatus::Approved;
 
-            // Disburse amount from platform admin to student
-            let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
-            token_client(&env)?.transfer_from(
+            // Disburse scholarship award by minting CAMP tokens directly to the student.
+            // CampusService is authorized to call mint_purchase on the token contract.
+            token_client(&env)?.mint_purchase(
                 &env.current_contract_address(),
-                &platform_admin,
                 &application.student,
                 &scholarship.amount,
             );
