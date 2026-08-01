@@ -75,15 +75,13 @@ jobs:
         working-directory: frontend
         run: npm ci
 
-      # Production build
-      # Injects real contract addresses from GitHub Secrets so the built
-      # bundle points to the deployed testnet contracts.
-      - name: Build Next.js for production
-        working-directory: frontend
-        run: npm run build
-
       # Deploy to Vercel (production)
       # Uses the Vercel CLI directly (no third-party action dependency).
+      # NOTE: All vercel commands run from the REPO ROOT (no --cwd flag).
+      # The Vercel project already has rootDirectory=frontend configured in
+      # the Vercel dashboard, so passing --cwd frontend would double the path
+      # to frontend/frontend. vercel build also runs the Next.js build itself,
+      # so we do NOT run a separate `npm run build` step here.
       # Skipped when VERCEL_TOKEN is not configured — see fallback step below.
       - name: Deploy to Vercel
         if: env.VERCEL_TOKEN != ''
@@ -91,14 +89,11 @@ jobs:
           npm install --global vercel@latest
           vercel pull --yes \
             --environment=production \
-            --token="$VERCEL_TOKEN" \
-            --cwd frontend
+            --token="$VERCEL_TOKEN"
           vercel build --prod \
-            --token="$VERCEL_TOKEN" \
-            --cwd frontend
+            --token="$VERCEL_TOKEN"
           vercel deploy --prebuilt --prod \
-            --token="$VERCEL_TOKEN" \
-            --cwd frontend
+            --token="$VERCEL_TOKEN"
 
       # Fallback: upload build artefact
       # When Vercel is not yet configured, upload the .next output so the
