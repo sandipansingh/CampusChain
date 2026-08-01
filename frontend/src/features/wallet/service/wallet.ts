@@ -48,6 +48,12 @@ export async function signTx(
   networkPassphrase: string,
   userAddress: string
 ): Promise<string> {
+  const activeAddr = await getActiveAddress();
+  if (activeAddr && activeAddr.toLowerCase() !== userAddress.toLowerCase()) {
+    const short = (a: string) => `${a.slice(0, 6)}...${a.slice(-6)}`;
+    throw new Error(`Account mismatch: Your wallet is connected as ${short(activeAddr)}, but you are logged into the app as ${short(userAddress)}. Please switch your wallet account to match.`);
+  }
+
   const { signedTxXdr } = await StellarWalletsKit.signTransaction(xdr, {
     networkPassphrase,
     address: userAddress,
