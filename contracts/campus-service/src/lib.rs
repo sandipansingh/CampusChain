@@ -918,10 +918,11 @@ impl CampusService {
         }
         active_code(&env, &recipient)?;
         let native = get_address(&env, DataKey::NativeTokenContract)?;
+        // Hold native XLM in CampusService contract address as liquidity reserve for withdrawals
         soroban_sdk::token::Client::new(&env, &native).transfer_from(
             &env.current_contract_address(),
             &recipient,
-            &get_address(&env, DataKey::PlatformAdmin)?,
+            &env.current_contract_address(),
             &xlm_amount,
         );
         let camp_amount = xlm_amount
@@ -931,6 +932,35 @@ impl CampusService {
             &env.current_contract_address(),
             &recipient,
             &camp_amount,
+        );
+        Ok(())
+    }
+
+    pub fn withdraw_camp_tokens(env: Env, student: Address, camp_amount: i128) -> Result<(), Error> {
+        student.require_auth();
+        if camp_amount <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+        let uni_code = active_code(&env, &student)?;
+
+        // 1. Burn CAMP tokens from student balance via token contract
+        token_client(&env)?.burn(&student, &camp_amount);
+
+        // 2. Calculate equivalent XLM amount (100 CAMP = 1 XLM)
+        let xlm_amount = camp_amount / PURCHASE_RATE;
+        if xlm_amount > 0 {
+            let native = get_address(&env, DataKey::NativeTokenContract)?;
+            let native_client = soroban_sdk::token::Client::new(&env, &native);
+            let contract_bal = native_client.balance(&env.current_contract_address());
+            let payable = if contract_bal < xlm_amount { contract_bal } else { xlm_amount };
+            if payable > 0 {
+                native_client.transfer(&env.current_contract_address(), &student, &payable);
+            }
+        }
+
+        env.events().publish(
+            (Symbol::new(&env, "camp_withdrawn"), student, uni_code),
+            (camp_amount, xlm_amount),
         );
         Ok(())
     }
@@ -1136,10 +1166,9 @@ impl CampusService {
     }
 
     pub fn get_scholarships(env: Env, caller: Address) -> Result<Vec<Scholarship>, Error> {
-        caller.require_auth();
         let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
         let caller_code = if caller != platform_admin {
-            Some(active_code(&env, &caller)?)
+            active_code(&env, &caller).ok()
         } else {
             None
         };
@@ -1169,24 +1198,22 @@ impl CampusService {
     }
 
     pub fn get_scholarship(env: Env, id: u64, caller: Address) -> Result<Scholarship, Error> {
-        caller.require_auth();
         let key = DataKey::ScholarshipKey(id);
         extend_persistent(&env, &key);
         let scholarship: Scholarship = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
         
         let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
         if caller != platform_admin {
-            let caller_code = active_code(&env, &caller)?;
-            let scholarship_univ = active_code(&env, &scholarship.created_by)?;
-            if caller_code != scholarship_univ {
-                return Err(Error::Unauthorized);
+            if let (Ok(caller_code), Ok(scholarship_univ)) = (active_code(&env, &caller), active_code(&env, &scholarship.created_by)) {
+                if caller_code != scholarship_univ {
+                    return Err(Error::Unauthorized);
+                }
             }
         }
         Ok(scholarship)
     }
 
     pub fn get_scholarship_applications(env: Env, caller: Address) -> Result<Vec<ScholarshipApplication>, Error> {
-        caller.require_auth();
         let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
 
         let upper = env
@@ -1206,18 +1233,9 @@ impl CampusService {
                 }
             }
         } else {
-            // Determine caller's role from identity contract
-            let caller_code = active_code(&env, &caller)?;
-            // Try to get caller's role — university admins have role 3
-            // We check by seeing if the caller is a university admin via is_same_university logic.
-            // Strategy: try caller as university admin first (look up university by caller_code).
-            // A uni admin sees all applications where the student belongs to their campus.
-            // A student sees only their own applications.
-            // We differentiate by checking if any application has caller as the student,
-            // or if the caller is a university admin (role checked via identity cross-call not available here,
-            // so we use a pragmatic approach: return own apps + same-university apps if caller is verified admin).
-            // Simpler robust fix: return applications where (record.student == caller) OR
-            // (student_univ == caller_code AND we can resolve student_univ).
+            // Determine caller's code if active profile exists
+            let caller_code_opt = active_code(&env, &caller).ok();
+
             while id < upper {
                 id += 1;
                 if let Some(record) = env.storage().persistent().get::<DataKey, ScholarshipApplication>(&DataKey::ScholarshipApplication(id)) {
@@ -1226,11 +1244,12 @@ impl CampusService {
                         records.push_back(record);
                         continue;
                     }
-                    // Also include if the student's university matches the caller's university
-                    // (covers uni admin seeing campus applications)
-                    if let Ok(student_univ) = active_code(&env, &record.student) {
-                        if student_univ == caller_code {
-                            records.push_back(record);
+                    // Also include if caller has matching campus code (university admin viewing campus applications)
+                    if let Some(ref code) = caller_code_opt {
+                        if let Ok(student_univ) = active_code(&env, &record.student) {
+                            if student_univ == *code {
+                                records.push_back(record);
+                            }
                         }
                     }
                 }
@@ -1240,17 +1259,16 @@ impl CampusService {
     }
 
     pub fn get_scholarship_application(env: Env, id: u64, caller: Address) -> Result<ScholarshipApplication, Error> {
-        caller.require_auth();
         let key = DataKey::ScholarshipApplication(id);
         extend_persistent(&env, &key);
         let application: ScholarshipApplication = env.storage().persistent().get(&key).ok_or(Error::NotFound)?;
         
         let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
         if caller != platform_admin {
-            let caller_code = active_code(&env, &caller)?;
-            let student_univ = active_code(&env, &application.student)?;
-            if caller_code != student_univ {
-                return Err(Error::Unauthorized);
+            if let (Ok(caller_code), Ok(student_univ)) = (active_code(&env, &caller), active_code(&env, &application.student)) {
+                if caller_code != student_univ && caller != application.student {
+                    return Err(Error::Unauthorized);
+                }
             }
         }
         Ok(application)

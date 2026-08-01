@@ -304,7 +304,9 @@ export function UniversityDashboard() {
   };
 
   const renderScholarships = () => {
-    const myPrograms = programs.filter((p) => p.createdByUniversityId === address);
+    const myPrograms = programs.filter(
+      (p) => p.createdByUniversityId.toLowerCase() === (address?.toLowerCase() ?? "")
+    );
 
     return (
       <div className="space-y-6">

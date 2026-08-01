@@ -28,7 +28,12 @@ import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
 import { Settings as SettingsView } from "./Settings";
 import { NotificationPanel } from "@/shared/ui/NotificationPanel";
 import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
-import { useScholarshipPrograms, useAdminReviewScholarshipMutation, useAdminSuspendScholarshipMutation } from "@/features/scholarships/hooks/useScholarships";
+import {
+  useScholarshipPrograms,
+  useScholarshipApplications,
+  useAdminReviewScholarshipMutation,
+  useAdminSuspendScholarshipMutation,
+} from "@/features/scholarships/hooks/useScholarships";
 
 export function PlatformDashboard() {
   const { address, disconnect } = useWallet();
@@ -41,8 +46,9 @@ export function PlatformDashboard() {
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const queryClient = useQueryClient();
 
-  // Scholarships approvals
+  // Scholarships approvals & applications
   const scholarshipsQuery = useScholarshipPrograms(address ?? undefined);
+  const applicationsQuery = useScholarshipApplications(address ?? undefined);
   const reviewScholarship = useAdminReviewScholarshipMutation();
   const suspendScholarship = useAdminSuspendScholarshipMutation();
   const [schNotice, setSchNotice] = useState<string | null>(null);
@@ -536,6 +542,38 @@ export function PlatformDashboard() {
             ))}
           </div>
         )}
+
+        {/* Student Applications Overview */}
+        <div className="pt-6 border-t border-border space-y-4">
+          <h4 className="text-sm font-bold text-foreground">Student Applications Overview</h4>
+          {applicationsQuery.isLoading ? (
+            <Skeleton className="h-16 w-full animate-pulse" />
+          ) : (applicationsQuery.data ?? []).length === 0 ? (
+            <p className="text-xs text-muted-foreground">No student applications submitted on-chain yet.</p>
+          ) : (
+            <div className="space-y-2">
+              {(applicationsQuery.data ?? []).map((app) => (
+                <div key={app.id} className="p-3 border border-border rounded-lg bg-card flex items-center justify-between text-xs">
+                  <div>
+                    <span className="font-bold text-foreground">App #{app.id}</span> · Scholarship #{app.scholarshipId}
+                    <p className="text-[10px] text-muted-foreground font-mono">Student: {app.studentId}</p>
+                  </div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                      app.status === "approved"
+                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                        : app.status === "rejected"
+                        ? "bg-rose-50 text-rose-700 border-rose-200"
+                        : "bg-amber-50 text-amber-700 border-amber-200"
+                    }`}
+                  >
+                    {app.status.toUpperCase()}
+                  </span>
+                </div>
+              ))}
+            </div>
+          )}
+        </div>
       </div>
     );
   };

@@ -194,3 +194,14 @@ export async function executeBuyCampTokens(recipient: string, xlmAmount: string)
   );
 }
 
+export async function executeWithdrawCampTokens(student: string, campAmount: number): Promise<string> {
+  const rawCampAmount = BigInt(Math.round(campAmount * 10_000_000));
+  return invokeContractMethod(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "withdraw_camp_tokens",
+    [addressToScVal(student), i128ToScVal(rawCampAmount)],
+    student,
+    signTx
+  );
+}
+

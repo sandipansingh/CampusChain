@@ -27,8 +27,12 @@ import {
   ClipboardList,
 } from "lucide-react";
 
-// Import hooks
-import { useCampusBalance, useCampusProfile, useCampusUserRole } from "@/features/wallet/hooks/useWallet";
+import {
+  useCampusBalance,
+  useCampusProfile,
+  useCampusUserRole,
+  useWithdrawCampMutation,
+} from "@/features/wallet/hooks/useWallet";
 import { useActivityFeed } from "@/features/transactions/hooks/useActivityFeed";
 
 // Import sub-screens
@@ -72,6 +76,12 @@ export function WalletDashboard() {
   // Marketplace sub-views state
   const [selectedListingId, setSelectedListingId] = useState<number | null>(null);
   const [showSellForm, setShowSellForm] = useState(false);
+
+  // Withdrawal state
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawNotice, setWithdrawNotice] = useState<string | null>(null);
+  const withdrawMutation = useWithdrawCampMutation();
 
   // Fetch real on-chain details
   const { data: campBalance, isLoading: isBalanceLoading } = useCampusBalance(address);
@@ -196,7 +206,7 @@ export function WalletDashboard() {
                     </h3>
                   )}
                 </div>
-                <div className="flex gap-3 mt-8">
+                <div className="flex gap-3 mt-8 flex-wrap sm:flex-nowrap">
                   <button
                     onClick={() => router.push(`/${role}/wallet`)}
                     className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
@@ -210,6 +220,13 @@ export function WalletDashboard() {
                   >
                     <ArrowDownLeft className="h-4 w-4" />
                     Receive
+                  </button>
+                  <button
+                    onClick={() => setShowWithdrawModal(true)}
+                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+                  >
+                    <ArrowDownLeft className="h-4 w-4" />
+                    Withdraw to XLM
                   </button>
                 </div>
               </div>
@@ -483,6 +500,101 @@ export function WalletDashboard() {
           })}
         </div>
       </nav>
+
+      {/* Withdraw to XLM Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!address || !withdrawAmount || Number(withdrawAmount) <= 0) return;
+              try {
+                setWithdrawNotice(null);
+                const txHash = await withdrawMutation.mutateAsync({
+                  student: address,
+                  campAmount: Number(withdrawAmount),
+                });
+                setWithdrawNotice(`Successfully withdrawn ${withdrawAmount} CAMP to XLM! Tx: ${txHash}`);
+                setWithdrawAmount("");
+              } catch (err) {
+                setWithdrawNotice(err instanceof Error ? err.message : "Withdrawal failed.");
+              }
+            }}
+            className="w-full max-w-md bg-card border border-border rounded-xl p-6 space-y-4 shadow-xl"
+          >
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
+                <ArrowDownLeft className="h-5 w-5 text-amber-500" /> Withdraw CAMP to XLM
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  setWithdrawNotice(null);
+                }}
+                className="text-muted-foreground hover:text-foreground text-xs font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Burn your CAMP tokens on-chain to receive native XLM directly into your Stellar wallet.
+              <br />
+              <strong className="text-foreground">Conversion Rate: 100 CAMP = 1 XLM</strong>
+            </p>
+
+            {withdrawNotice && (
+              <div
+                className={`text-xs p-2.5 rounded-lg border ${
+                  withdrawNotice.includes("Successfully")
+                    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                    : "text-destructive bg-destructive/5 border-destructive/20"
+                }`}
+              >
+                {withdrawNotice}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">CAMP Amount to Withdraw</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="e.g. 100"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Estimated XLM payout: <strong>{(Number(withdrawAmount || 0) / 100).toFixed(2)} XLM</strong>
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  setWithdrawNotice(null);
+                }}
+                className="h-10 px-4 border border-border rounded-lg text-xs font-bold cursor-pointer hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={withdrawMutation.isPending || !withdrawAmount}
+                className="h-10 px-4 bg-amber-600 hover:bg-amber-700 text-white rounded-lg text-xs font-bold disabled:opacity-50 cursor-pointer"
+              >
+                {withdrawMutation.isPending ? "Processing..." : "Confirm Withdrawal"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

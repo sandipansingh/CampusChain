@@ -47,6 +47,7 @@ export function useScholarshipPrograms(address?: string) {
   return useQuery({
     queryKey: ["scholarship-programs", address],
     queryFn: () => fetchScholarshipPrograms(address),
+    refetchInterval: 15_000,
   });
 }
 
@@ -54,6 +55,7 @@ export function useScholarshipApplications(address?: string) {
   return useQuery({
     queryKey: ["scholarship-applications", address],
     queryFn: () => fetchScholarshipApplications(address),
+    refetchInterval: 15_000,
   });
 }
 

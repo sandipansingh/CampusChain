@@ -12,6 +12,7 @@ import {
   executeClaimFaucet,
   fetchHasClaimedFaucet,
   executeBuyCampTokens,
+  executeWithdrawCampTokens,
 } from "../service/campusToken";
 import {
   fetchUserProfile,
@@ -318,6 +319,19 @@ export function useBuyCampTokensMutation() {
     },
     onSuccess: (_, variables) => {
       queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.recipient] });
+      if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
+    },
+  });
+}
+
+export function useWithdrawCampMutation() {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: async ({ student, campAmount }: { student: string; campAmount: number }) => {
+      return executeWithdrawCampTokens(student, campAmount);
+    },
+    onSuccess: (_, variables) => {
+      queryClient.invalidateQueries({ queryKey: ["campus-balance", variables.student] });
       if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
     },
   });

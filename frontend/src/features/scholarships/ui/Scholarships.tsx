@@ -33,7 +33,10 @@ export function Scholarships() {
     }
   };
 
-  const ownApplications = applications.data?.filter((app) => app.studentId === address) ?? [];
+  const ownApplications =
+    applications.data?.filter(
+      (app) => app.studentId.toLowerCase() === (address?.toLowerCase() ?? "")
+    ) ?? [];
   const approvedPrograms = programs.data?.filter((p) => p.adminApprovalStatus === "approved") ?? [];
 
   return (
