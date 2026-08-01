@@ -747,20 +747,46 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 ### 9.2 Mobile
 
-*   **Mobile Landing Page:**
-    ![Mobile Landing](screenshots/mobile_landing.png)
-*   **Mobile Login & Wallet Selection:**
-    ![Mobile Login](screenshots/mobile_login.png)
-*   **Mobile Student Dashboard:**
-    ![Mobile Dashboard](screenshots/mobile_dashboard.png)
-*   **Mobile Wallet & Asset View:**
-    ![Mobile Wallet](screenshots/mobile_wallet.png)
-*   **Mobile QR Code Scanner & Payments:**
-    ![Mobile Scan & Pay](screenshots/mobile_pay_qr.png)
-*   **Mobile Campus Marketplace:**
-    ![Mobile Marketplace](screenshots/mobile_marketplace.png)
-*   **Mobile User Settings:**
-    ![Mobile Settings](screenshots/mobile_settings.png)
+<table border="0">
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Mobile Landing Page</b></p>
+      <img src="screenshots/mobile_landing.png" alt="Mobile Landing" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Mobile Login & Wallet Selection</b></p>
+      <img src="screenshots/mobile_login.png" alt="Mobile Login" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Mobile Student Dashboard</b></p>
+      <img src="screenshots/mobile_dashboard.png" alt="Mobile Dashboard" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Mobile Wallet & Asset View</b></p>
+      <img src="screenshots/mobile_wallet.png" alt="Mobile Wallet" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Mobile QR Code Scanner & Payments</b></p>
+      <img src="screenshots/mobile_pay_qr.png" alt="Mobile Scan & Pay" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Mobile Campus Marketplace</b></p>
+      <img src="screenshots/mobile_marketplace.png" alt="Mobile Marketplace" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Mobile User Settings</b></p>
+      <img src="screenshots/mobile_settings.png" alt="Mobile Settings" />
+    </td>
+    <td width="50%" align="center">
+    </td>
+  </tr>
+</table>
 
 ### 9.3 Test
 
