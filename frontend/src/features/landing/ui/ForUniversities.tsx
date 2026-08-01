@@ -1,7 +1,7 @@
 import { CheckCircle2, ShieldCheck, Store } from "lucide-react";
 
 const benefits = [
-  "SSO Identity & University Registry",
+  "On-Chain Identity & Member Registry",
   "Automated Scholarship Disbursements",
   "Canteen Merchant Management & Approvals",
   "Real-Time Audit Trail & Event Polling"
