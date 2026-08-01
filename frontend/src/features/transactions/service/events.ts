@@ -51,18 +51,24 @@ function eventInvolvesAddress(event: { topic: unknown[] }, address?: string): bo
   }
 }
 
-/**
- * Returns true if the university_code (last topic element) matches the given campus code.
- * All campus-service events have university_code in their topic vector.
- */
-function eventBelongsToCampus(event: { topic: unknown[] }, universityCode: string): boolean {
+function eventBelongsToCampus(event: { topic: unknown[]; value: unknown }, universityCode: string): boolean {
   try {
     const topics = (event.topic as never[]).map((t) => extractString(scValToNative(t as never)));
     const lastTopic = topics[topics.length - 1];
-    return typeof lastTopic === "string" && lastTopic.toUpperCase() === universityCode.toUpperCase();
+    if (typeof lastTopic === "string" && lastTopic.toUpperCase() === universityCode.toUpperCase()) {
+      return true;
+    }
+    if (event.value) {
+      const valNative = scValToNative(event.value as never);
+      const valStr = extractString(valNative);
+      if (valStr && valStr.toUpperCase() === universityCode.toUpperCase()) {
+        return true;
+      }
+    }
   } catch {
     return false;
   }
+  return false;
 }
 
 function decodeOrNull(evt: RawEvent): DecodedEvent | null {
