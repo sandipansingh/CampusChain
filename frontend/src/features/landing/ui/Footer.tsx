@@ -1,9 +1,20 @@
+import Image from "next/image";
+
 export function Footer() {
   return (
     <footer className="border-t border-zinc-200 bg-white px-6 py-8 sm:py-16">
       <div className="mx-auto flex max-w-7xl flex-col gap-8 md:flex-row md:items-center md:justify-between">
         <div>
-          <p className="text-2xl font-bold tracking-[-0.06em] text-zinc-950">CampusChain</p>
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/icon.png"
+              alt="CampusChain Logo"
+              width={28}
+              height={28}
+              className="h-7 w-7 rounded-lg object-contain"
+            />
+            <p className="text-2xl font-bold tracking-[-0.06em] text-zinc-950">CampusChain</p>
+          </div>
           <p className="mt-2 text-xs font-medium text-zinc-500">
             <span className="sm:hidden">Next-generation university financial infrastructure.</span>
             <span className="hidden sm:inline">© 2024 CampusChain. All rights reserved.</span>

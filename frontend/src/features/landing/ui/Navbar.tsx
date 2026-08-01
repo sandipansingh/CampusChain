@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import Link from "next/link";
 import { Menu, X } from "lucide-react";
 import { useState } from "react";
@@ -17,7 +18,17 @@ export function Navbar({ onGetStarted }: { onGetStarted: () => void }) {
     <nav aria-label="Primary navigation" className="fixed inset-x-0 top-0 z-50 border-b border-zinc-200 bg-white/90 backdrop-blur-md">
       <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-6">
         <div className="flex items-center gap-8">
-          <Link href="/" className="text-2xl font-bold tracking-[-0.06em] text-zinc-950">CampusChain</Link>
+          <Link href="/" className="flex items-center gap-2.5 text-2xl font-bold tracking-[-0.06em] text-zinc-950">
+            <Image
+              src="/icon.png"
+              alt="CampusChain Logo"
+              width={32}
+              height={32}
+              className="h-8 w-8 rounded-lg object-contain"
+              priority
+            />
+            <span>CampusChain</span>
+          </Link>
           <div className="hidden items-center gap-6 md:flex">
             {links.map((link) => (
               <a key={link.href} href={link.href} className="text-sm font-semibold tracking-[0.05em] text-zinc-500 transition-colors hover:text-zinc-950">

@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { useParams, useRouter } from "next/navigation";
+import Image from "next/image";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import {
@@ -601,9 +602,13 @@ export function PlatformDashboard() {
       {/* Sidebar */}
       <nav className="hidden md:flex flex-col w-64 bg-card border-r border-border h-full fixed left-0 top-0 py-6 px-4 z-40">
         <div className="flex items-center gap-3 mb-8 px-2">
-          <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center font-semibold text-foreground">
-            PA
-          </div>
+          <Image
+            src="/icon.png"
+            alt="CampusChain Logo"
+            width={40}
+            height={40}
+            className="w-10 h-10 rounded-xl object-contain bg-zinc-900 p-1"
+          />
           <div>
             <h1 className="text-lg font-bold leading-tight">CampusChain</h1>
             <p className="text-xs text-muted-foreground">Platform Admin</p>
@@ -655,7 +660,14 @@ export function PlatformDashboard() {
       {/* Main Content */}
       <div className="flex-1 md:ml-64 flex flex-col h-full overflow-hidden">
         <header className="flex justify-between items-center h-16 border-b border-border bg-card px-4 md:px-6 sticky top-0 z-30 shrink-0">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2.5">
+            <Image
+              src="/icon.png"
+              alt="CampusChain Logo"
+              width={28}
+              height={28}
+              className="h-7 w-7 rounded-lg object-contain bg-zinc-900 p-0.5 md:hidden"
+            />
             <h2 className="text-lg md:text-xl font-bold capitalize">
               {activeTab === "queue" ? "Approval Requests" : activeTab}
             </h2>
