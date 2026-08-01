@@ -51,7 +51,7 @@ pub struct AllowanceData {
     pub expiration_ledger: u32,
 }
 
-const FAUCET_AMOUNT: i128 = 100_000_0000;
+const FAUCET_AMOUNT: i128 = 1_000_000_000;
 const LEDGER_THRESHOLD_INSTANCE: u32 = 1_000;
 const LEDGER_EXTEND_TO_INSTANCE: u32 = 10_000;
 const LEDGER_THRESHOLD_PERSISTENT: u32 = 1_000;
@@ -176,7 +176,7 @@ impl CampusToken {
         if !matches!(identity.try_platform_admin(), Ok(Ok(address)) if address == platform_admin) {
             return Err(Error::Unauthorized);
         }
-        if name.len() == 0 || symbol.len() == 0 {
+        if name.is_empty() || symbol.is_empty() {
             return Err(Error::InvalidAmount);
         }
         env.storage()

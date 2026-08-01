@@ -182,11 +182,17 @@ fn verified_student_and_merchant_can_both_create_marketplace_listings() {
         &false,
     );
     assert_eq!(
-        contracts.service.get_listing(&student_listing, &student).seller,
+        contracts
+            .service
+            .get_listing(&student_listing, &student)
+            .seller,
         student
     );
     assert_eq!(
-        contracts.service.get_listing(&merchant_listing, &merchant).seller,
+        contracts
+            .service
+            .get_listing(&merchant_listing, &merchant)
+            .seller,
         merchant
     );
 }
@@ -259,7 +265,7 @@ fn university_boundaries_block_cross_campus_actions_and_allow_same_campus_action
         &1u32,
         &false,
     );
-    
+
     // Student B (UNI-B) trying to buy listing from UNI-A fails
     assert!(contracts
         .service
@@ -270,16 +276,20 @@ fn university_boundaries_block_cross_campus_actions_and_allow_same_campus_action
     contracts
         .token
         .approve(&student_a, &contracts.service.address, &100i128, &1000u32);
-    
+
     // Cross-university wallet transfer (pay_camp) should SUCCEED
-    contracts
-        .service
-        .pay_camp(&student_a, &student_b, &10i128);
+    contracts.service.pay_camp(&student_a, &student_b, &10i128);
     assert_eq!(contracts.token.balance(&student_b), 10i128);
 
     // Same university buy listing succeeds
     contracts.service.buy_listing(&listing_id, &student_a);
-    assert_eq!(contracts.service.get_listing(&listing_id, &student_a).status, 2);
+    assert_eq!(
+        contracts
+            .service
+            .get_listing(&listing_id, &student_a)
+            .status,
+        2
+    );
 
     let event_id = contracts.service.create_event(&organizer_a, &0i128, &10u32);
     assert!(contracts
@@ -287,7 +297,10 @@ fn university_boundaries_block_cross_campus_actions_and_allow_same_campus_action
         .try_buy_ticket(&event_id, &student_b)
         .is_err());
     let ticket_id = contracts.service.buy_ticket(&event_id, &student_a);
-    assert_eq!(contracts.service.get_ticket(&ticket_id, &student_a).owner, student_a);
+    assert_eq!(
+        contracts.service.get_ticket(&ticket_id, &student_a).owner,
+        student_a
+    );
 
     let menu_item_id = contracts.service.publish_menu_item(
         &food_merchant_a,
@@ -355,7 +368,10 @@ fn food_ordering_enforces_ownership_cancellation_and_sequential_transitions() {
         .place_order(&student, &menu_item_id, &1u32);
     contracts.service.cancel_order(&student, &cancelled_order);
     assert_eq!(
-        contracts.service.get_food_order(&cancelled_order, &student).status,
+        contracts
+            .service
+            .get_food_order(&cancelled_order, &student)
+            .status,
         FoodOrderStatus::Cancelled
     );
 
@@ -413,7 +429,12 @@ fn test_scholarship_flow_and_getters() {
     // Mint and approve tokens from platform_admin to service contract
     let amount = 2000i128;
     contracts.token.mint(&platform_admin, &amount);
-    contracts.token.approve(&platform_admin, &contracts.service.address, &amount, &10000u32);
+    contracts.token.approve(
+        &platform_admin,
+        &contracts.service.address,
+        &amount,
+        &10000u32,
+    );
 
     // Create scholarship
     let scholarship_id = contracts.service.create_scholarship(
@@ -436,15 +457,21 @@ fn test_scholarship_flow_and_getters() {
     assert_eq!(scholarship.admin_approval_status, ApprovalStatus::Pending);
 
     // Approve the scholarship as platform admin
-    contracts.service.admin_approve_scholarship(&platform_admin, &scholarship_id);
+    contracts
+        .service
+        .admin_approve_scholarship(&platform_admin, &scholarship_id);
     let scholarship = contracts.service.get_scholarship(&scholarship_id, &admin);
     assert_eq!(scholarship.admin_approval_status, ApprovalStatus::Approved);
 
     // Apply for scholarship
-    let app_id = contracts.service.apply_scholarship(&student, &scholarship_id);
+    let app_id = contracts
+        .service
+        .apply_scholarship(&student, &scholarship_id);
 
     // Get and list applications
-    let app = contracts.service.get_scholarship_application(&app_id, &admin);
+    let app = contracts
+        .service
+        .get_scholarship_application(&app_id, &admin);
     assert_eq!(app.id, app_id);
     assert_eq!(app.scholarship_id, scholarship_id);
     assert_eq!(app.student, student);
@@ -458,7 +485,9 @@ fn test_scholarship_flow_and_getters() {
     contracts.service.decide_application(&admin, &app_id, &true);
 
     // Verify application status and slot decrement
-    let app = contracts.service.get_scholarship_application(&app_id, &student);
+    let app = contracts
+        .service
+        .get_scholarship_application(&app_id, &student);
     assert_eq!(app.status, ApprovalStatus::Approved);
 
     let scholarship = contracts.service.get_scholarship(&scholarship_id, &student);
@@ -512,10 +541,16 @@ fn test_cross_university_reads_fail() {
     );
 
     // Student A can read listing
-    assert!(contracts.service.try_get_listing(&listing_id, &student_a).is_ok());
+    assert!(contracts
+        .service
+        .try_get_listing(&listing_id, &student_a)
+        .is_ok());
 
     // Student B (UNI-B) trying to read UNI-A listing fails on-chain
-    assert!(contracts.service.try_get_listing(&listing_id, &student_b).is_err());
+    assert!(contracts
+        .service
+        .try_get_listing(&listing_id, &student_b)
+        .is_err());
 }
 
 #[test]
@@ -547,7 +582,10 @@ fn test_platform_admin_reads_bypass_isolation() {
     );
 
     // Platform admin (who has no university_code) can successfully read
-    assert!(contracts.service.try_get_listing(&listing_id, &contracts.platform_admin).is_ok());
+    assert!(contracts
+        .service
+        .try_get_listing(&listing_id, &contracts.platform_admin)
+        .is_ok());
 }
 
 #[test]

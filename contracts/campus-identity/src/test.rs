@@ -259,7 +259,9 @@ fn only_matching_university_admin_can_verify_or_reject_profiles() {
     assert!(client.try_verify_profile(&non_admin, &student_a).is_err());
     client.verify_profile(&admin_a, &student_a);
     assert_eq!(
-        client.get_profile(&student_a, &student_a).verification_status,
+        client
+            .get_profile(&student_a, &student_a)
+            .verification_status,
         VerificationStatus::Verified
     );
 

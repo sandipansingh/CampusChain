@@ -290,13 +290,17 @@ pub struct CampusIdentity;
 #[contractimpl]
 impl CampusIdentity {
     /// Initializes the immutable Platform Admin and its sole, non-university profile.
-    pub fn initialize(env: Env, platform_admin: Address, platform_admin_name: String) -> Result<(), Error> {
+    pub fn initialize(
+        env: Env,
+        platform_admin: Address,
+        platform_admin_name: String,
+    ) -> Result<(), Error> {
         let admin_key = DataKey::PlatformAdmin;
         if env.storage().persistent().has(&admin_key) {
             return Err(Error::AlreadyInitialized);
         }
         platform_admin.require_auth();
-        if platform_admin_name.len() == 0 {
+        if platform_admin_name.is_empty() {
             return Err(Error::InvalidInput);
         }
 
@@ -318,14 +322,16 @@ impl CampusIdentity {
         );
         extend_persistent(&env, &admin_key);
         extend_persistent(&env, &profile_key);
-        
+
         let mut profiles: Vec<Address> = env
             .storage()
             .persistent()
             .get(&DataKey::Profiles)
             .unwrap_or(Vec::new(&env));
         profiles.push_back(platform_admin.clone());
-        env.storage().persistent().set(&DataKey::Profiles, &profiles);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Profiles, &profiles);
         extend_persistent(&env, &DataKey::Profiles);
 
         extend_instance(&env);
@@ -352,7 +358,7 @@ impl CampusIdentity {
             return Err(Error::Unauthorized);
         }
         validate_code(&code)?;
-        if name.len() == 0 || address.len() == 0 || title.len() == 0 {
+        if name.is_empty() || address.is_empty() || title.is_empty() {
             return Err(Error::InvalidInput);
         }
         let profile_key = DataKey::Profile(admin.clone());
@@ -393,33 +399,35 @@ impl CampusIdentity {
             created_at: now,
             updated_at: now,
         };
-         env.storage().persistent().set(&profile_key, &profile);
-         env.storage().persistent().set(&university_key, &university);
-         env.storage().persistent().set(&owner_key, &code);
+        env.storage().persistent().set(&profile_key, &profile);
+        env.storage().persistent().set(&university_key, &university);
+        env.storage().persistent().set(&owner_key, &code);
 
-         let mut profiles: Vec<Address> = env
-             .storage()
-             .persistent()
-             .get(&DataKey::Profiles)
-             .unwrap_or(Vec::new(&env));
-         profiles.push_back(admin.clone());
-         env.storage().persistent().set(&DataKey::Profiles, &profiles);
-         extend_persistent(&env, &DataKey::Profiles);
+        let mut profiles: Vec<Address> = env
+            .storage()
+            .persistent()
+            .get(&DataKey::Profiles)
+            .unwrap_or(Vec::new(&env));
+        profiles.push_back(admin.clone());
+        env.storage()
+            .persistent()
+            .set(&DataKey::Profiles, &profiles);
+        extend_persistent(&env, &DataKey::Profiles);
 
-         let mut university_codes: Vec<String> = env
-             .storage()
-             .persistent()
-             .get(&university_codes_key)
-             .unwrap_or(Vec::new(&env));
-         university_codes.push_back(code.clone());
-         env.storage()
-             .persistent()
-             .set(&university_codes_key, &university_codes);
-         extend_persistent(&env, &profile_key);
-         extend_persistent(&env, &university_key);
-         extend_persistent(&env, &owner_key);
-         extend_persistent(&env, &university_codes_key);
-         extend_instance(&env);
+        let mut university_codes: Vec<String> = env
+            .storage()
+            .persistent()
+            .get(&university_codes_key)
+            .unwrap_or(Vec::new(&env));
+        university_codes.push_back(code.clone());
+        env.storage()
+            .persistent()
+            .set(&university_codes_key, &university_codes);
+        extend_persistent(&env, &profile_key);
+        extend_persistent(&env, &university_key);
+        extend_persistent(&env, &owner_key);
+        extend_persistent(&env, &university_codes_key);
+        extend_instance(&env);
         env.events().publish(
             (Symbol::new(&env, "UniversityRegistered"), admin),
             university,
@@ -521,10 +529,12 @@ impl CampusIdentity {
             }
 
             student_ids.push_back(student_details.student_identifier_hash.clone());
-            env.storage().persistent().set(&student_ids_key, &student_ids);
+            env.storage()
+                .persistent()
+                .set(&student_ids_key, &student_ids);
             extend_persistent(&env, &student_ids_key);
         }
-        if full_name.len() == 0
+        if full_name.is_empty()
             || get_university_internal(&env, &university_code)?.approval_status
                 != UniversityApprovalStatus::Approved
         {
@@ -551,7 +561,9 @@ impl CampusIdentity {
             .get(&DataKey::Profiles)
             .unwrap_or(Vec::new(&env));
         profiles.push_back(address.clone());
-        env.storage().persistent().set(&DataKey::Profiles, &profiles);
+        env.storage()
+            .persistent()
+            .set(&DataKey::Profiles, &profiles);
         extend_persistent(&env, &DataKey::Profiles);
 
         extend_instance(&env);
@@ -627,11 +639,11 @@ impl CampusIdentity {
             return Err(Error::InvalidRole);
         }
         validate_code(&university_code)?;
-        
+
         let now = env.ledger().timestamp();
         let profile_key = DataKey::Profile(target.clone());
         let existing = env.storage().persistent().has(&profile_key);
-        
+
         let profile = Profile {
             address: target.clone(),
             full_name,
@@ -649,7 +661,7 @@ impl CampusIdentity {
         };
         env.storage().persistent().set(&profile_key, &profile);
         extend_persistent(&env, &profile_key);
-        
+
         if !existing {
             let mut profiles: Vec<Address> = env
                 .storage()
@@ -657,7 +669,9 @@ impl CampusIdentity {
                 .get(&DataKey::Profiles)
                 .unwrap_or(Vec::new(&env));
             profiles.push_back(target.clone());
-            env.storage().persistent().set(&DataKey::Profiles, &profiles);
+            env.storage()
+                .persistent()
+                .set(&DataKey::Profiles, &profiles);
             extend_persistent(&env, &DataKey::Profiles);
         }
         extend_instance(&env);
@@ -718,15 +732,15 @@ impl CampusIdentity {
             .persistent()
             .get(&profiles_key)
             .unwrap_or(Vec::new(&env));
-        
+
         let platform_admin = get_platform_admin(&env)?;
         if caller == platform_admin {
             return Ok(all_profiles);
         }
-        
+
         let caller_profile = get_profile_internal(&env, &caller)?;
         let caller_univ = profile_code(&caller_profile)?;
-        
+
         let mut filtered = Vec::new(&env);
         for addr in all_profiles.iter() {
             if let Ok(profile) = get_profile_internal(&env, &addr) {
@@ -740,7 +754,11 @@ impl CampusIdentity {
         Ok(filtered)
     }
 
-    pub fn list_student_ids(env: Env, caller: Address, university_code: String) -> Result<Vec<BytesN<32>>, Error> {
+    pub fn list_student_ids(
+        env: Env,
+        caller: Address,
+        university_code: String,
+    ) -> Result<Vec<BytesN<32>>, Error> {
         caller.require_auth();
         let platform_admin = get_platform_admin(&env)?;
         if caller != platform_admin {
@@ -753,7 +771,8 @@ impl CampusIdentity {
         let student_ids_key = DataKey::UniversityStudentIds(university_code);
         extend_persistent(&env, &student_ids_key);
         extend_instance(&env);
-        Ok(env.storage()
+        Ok(env
+            .storage()
             .persistent()
             .get(&student_ids_key)
             .unwrap_or(Vec::new(&env)))

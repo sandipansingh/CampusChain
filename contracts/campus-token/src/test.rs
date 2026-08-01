@@ -24,6 +24,7 @@ struct TestContext<'a> {
     identity: CampusIdentityClient<'a>,
     token: CampusTokenClient<'a>,
     platform_admin: Address,
+    #[allow(dead_code)]
     service: Address,
 }
 
@@ -75,7 +76,8 @@ fn onboard_student(
             &text(env, "123 Campus Rd"),
             &text(env, "Registrar"),
         );
-        ctx.identity.approve_university(&ctx.platform_admin, &univ_code);
+        ctx.identity
+            .approve_university(&ctx.platform_admin, &univ_code);
     }
 
     // Register and verify student
@@ -112,19 +114,19 @@ fn test_mint_burn_faucet() {
 
     // Faucet claim
     ctx.token.faucet(&student);
-    assert_eq!(ctx.token.balance(&student), 100_000_0000i128);
-    assert_eq!(ctx.token.total_supply(), 100_000_0000i128);
+    assert_eq!(ctx.token.balance(&student), 1_000_000_000i128);
+    assert_eq!(ctx.token.total_supply(), 1_000_000_000i128);
 
     // Faucet can only be claimed once
     assert!(ctx.token.try_faucet(&student).is_err());
 
     // Mint by platform admin
-    ctx.token.mint(&student, &50_000_0000i128);
-    assert_eq!(ctx.token.balance(&student), 150_000_0000i128);
+    ctx.token.mint(&student, &500_000_000i128);
+    assert_eq!(ctx.token.balance(&student), 1_500_000_000i128);
 
     // Burn
-    ctx.token.burn(&student, &30_000_0000i128);
-    assert_eq!(ctx.token.balance(&student), 120_000_0000i128);
+    ctx.token.burn(&student, &300_000_000i128);
+    assert_eq!(ctx.token.balance(&student), 1_200_000_000i128);
 }
 
 #[test]
@@ -154,7 +156,8 @@ fn test_transfer_and_allowances() {
     ctx.token.approve(&student_a, &spender, &200i128, &1000u32);
     assert_eq!(ctx.token.allowance(&student_a, &spender), 200i128);
 
-    ctx.token.transfer_from(&spender, &student_a, &student_b, &150i128);
+    ctx.token
+        .transfer_from(&spender, &student_a, &student_b, &150i128);
     assert_eq!(ctx.token.balance(&student_a), 550i128);
     assert_eq!(ctx.token.balance(&student_b), 450i128);
     assert_eq!(ctx.token.allowance(&student_a, &spender), 50i128);
@@ -182,5 +185,8 @@ fn test_unverified_transfer_fails() {
     ctx.token.mint(&student_a, &1000i128);
 
     // Transfer to unverified should fail
-    assert!(ctx.token.try_transfer(&student_a, &unverified_student, &100i128).is_err());
+    assert!(ctx
+        .token
+        .try_transfer(&student_a, &unverified_student, &100i128)
+        .is_err());
 }
