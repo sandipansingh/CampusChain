@@ -4630,9 +4630,6 @@
                 "u64": 1
               },
               {
-                "u64": 1
-              },
-              {
                 "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
               },
               {
@@ -4641,6 +4638,9 @@
             ],
             "data": {
               "vec": [
+                {
+                  "u64": 1
+                },
                 {
                   "i128": {
                     "hi": 0,
@@ -5584,9 +5584,6 @@
                 "u64": 1
               },
               {
-                "u64": 1
-              },
-              {
                 "address": "CAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAOLZM"
               },
               {
@@ -5595,6 +5592,9 @@
             ],
             "data": {
               "vec": [
+                {
+                  "u64": 1
+                },
                 {
                   "i128": {
                     "hi": 0,

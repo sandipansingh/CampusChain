@@ -334,17 +334,17 @@ export function decodeEvent(evt: {
 
   if (eventName === "ScholarshipApplied") {
     const appId = decodeNative(topicNative[1]) ?? 0;
-    const scholarshipId = decodeNative(topicNative[2]) ?? 0;
-    const student = typeof topicNative[3] === "string" ? topicNative[3] : "";
-    const uniCode = typeof topicNative[4] === "string" ? topicNative[4] : "";
-    const vals = valueNative as unknown as [number, string] | null;
-    const amount = vals ? Number(vals[0] ?? 0) / 10_000_000 : 0;
-    const title = vals ? String(vals[1] ?? "") : "";
+    const student = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    const uniCode = typeof topicNative[3] === "string" ? topicNative[3] : "";
+    const vals = valueNative as unknown as [number, number, string] | null;
+    const scholarshipId = vals ? Number(vals[0] ?? 0) : 0;
+    const amount = vals ? Number(vals[1] ?? 0) / 10_000_000 : 0;
+    const title = vals ? String(vals[2] ?? "") : "";
     return {
       ...baseEvent,
       type: "role",
       title: "Scholarship Application Submitted",
-      message: `Student ${shortAddr(student)} applied for ${title || `#${scholarshipId}`}`,
+      message: `Student ${shortAddr(student)} applied for ${title || `Scholarship #${scholarshipId}`}`,
       details: `${uniCode} · ${amount.toFixed(2)} CAMP`,
       color: "amber",
       icon: "role",
@@ -353,12 +353,12 @@ export function decodeEvent(evt: {
 
   if (eventName === "ScholarshipAppApproved") {
     const appId = decodeNative(topicNative[1]) ?? 0;
-    const scholarshipId = decodeNative(topicNative[2]) ?? 0;
-    const student = typeof topicNative[3] === "string" ? topicNative[3] : "";
-    const uniCode = typeof topicNative[4] === "string" ? topicNative[4] : "";
-    const vals = valueNative as unknown as [number, string] | null;
-    const amount = vals ? Number(vals[0] ?? 0) / 10_000_000 : 0;
-    const university = vals ? String(vals[1] ?? "") : "";
+    const student = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    const uniCode = typeof topicNative[3] === "string" ? topicNative[3] : "";
+    const vals = valueNative as unknown as [number, number, string] | null;
+    const scholarshipId = vals ? Number(vals[0] ?? 0) : 0;
+    const amount = vals ? Number(vals[1] ?? 0) / 10_000_000 : 0;
+    const university = vals ? String(vals[2] ?? "") : "";
     return {
       ...baseEvent,
       type: "role",
@@ -372,10 +372,11 @@ export function decodeEvent(evt: {
 
   if (eventName === "ScholarshipAppRejected") {
     const appId = decodeNative(topicNative[1]) ?? 0;
-    const scholarshipId = decodeNative(topicNative[2]) ?? 0;
-    const student = typeof topicNative[3] === "string" ? topicNative[3] : "";
-    const uniCode = typeof topicNative[4] === "string" ? topicNative[4] : "";
-    const university = typeof valueNative === "string" ? valueNative : "";
+    const student = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    const uniCode = typeof topicNative[3] === "string" ? topicNative[3] : "";
+    const vals = valueNative as unknown as [number, string] | null;
+    const scholarshipId = vals ? Number(vals[0] ?? 0) : 0;
+    const university = vals ? String(vals[1] ?? "") : "";
     return {
       ...baseEvent,
       type: "role",

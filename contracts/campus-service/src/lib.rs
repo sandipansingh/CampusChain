@@ -1114,8 +1114,8 @@ impl CampusService {
 
         let uni_code = active_code(&env, &student).unwrap_or_else(|_| scholarship.created_by.to_string().into());
         env.events().publish(
-            (Symbol::new(&env, "ScholarshipApplied"), id, scholarship_id, student, uni_code),
-            (scholarship.amount, scholarship.title),
+            (Symbol::new(&env, "ScholarshipApplied"), id, student, uni_code),
+            (scholarship_id, scholarship.amount, scholarship.title),
         );
 
         Ok(id)
@@ -1173,13 +1173,13 @@ impl CampusService {
         let uni_code = active_code(&env, &university).unwrap_or_else(|_| university.to_string().into());
         if approved {
             env.events().publish(
-                (Symbol::new(&env, "ScholarshipAppApproved"), application_id, application.scholarship_id, application.student, uni_code),
-                (scholarship.amount, university),
+                (Symbol::new(&env, "ScholarshipAppApproved"), application_id, application.student, uni_code),
+                (application.scholarship_id, scholarship.amount, university),
             );
         } else {
             env.events().publish(
-                (Symbol::new(&env, "ScholarshipAppRejected"), application_id, application.scholarship_id, application.student, uni_code),
-                university,
+                (Symbol::new(&env, "ScholarshipAppRejected"), application_id, application.student, uni_code),
+                (application.scholarship_id, university),
             );
         }
 

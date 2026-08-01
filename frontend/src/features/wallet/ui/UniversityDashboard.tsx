@@ -450,7 +450,7 @@ export function UniversityDashboard() {
                         onClick={() => setExpandedProgramId(expandedProgramId === p.id ? null : p.id)}
                         className="text-xs font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1.5"
                       >
-                        {expandedProgramId === p.id ? "Hide Applicant Queue" : `View Applicant Queue (${programApps.length})`}
+                        {expandedProgramId === p.id ? "Hide Applicant" : `View Applicant (${programApps.length})`}
                       </button>
                     </div>
 

@@ -223,8 +223,8 @@ export function useContractEventStream(address: string | null | undefined) {
             evt.eventName === "ScholarshipAppApproved" ||
             evt.eventName === "ScholarshipAppRejected"
           ) {
-            const studentAddr = typeof evt.topicNative?.[3] === "string" ? evt.topicNative[3] : "";
-            const eventUniCode = typeof evt.topicNative?.[4] === "string" ? evt.topicNative[4].toUpperCase() : "";
+            const studentAddr = typeof evt.topicNative?.[2] === "string" ? evt.topicNative[2] : "";
+            const eventUniCode = typeof evt.topicNative?.[3] === "string" ? evt.topicNative[3].toUpperCase() : "";
 
             if (studentAddr.toLowerCase() === address.toLowerCase()) {
               if (evt.eventName === "ScholarshipApplied") {
@@ -250,8 +250,19 @@ export function useContractEventStream(address: string | null | undefined) {
             continue;
           }
 
-          // 4. Token Transfer personal notifications (CAMP sent/received)
-          if (evt.eventName === "transfer" || evt.eventName === "mint_purchase") {
+          // 4. Token Transfer & Minting personal notifications (CAMP sent/received)
+          if (evt.eventName === "mint_purchase") {
+            const recipient = typeof evt.topicNative?.[1] === "string" ? evt.topicNative[1] : "";
+            if (recipient.toLowerCase() === address.toLowerCase()) {
+              evt.title = "CAMP Received";
+              evt.message = `You received ${evt.details} (Scholarship Award / Token Purchase)`;
+              evt.color = "emerald";
+              filteredDecoded.push(evt);
+            }
+            continue;
+          }
+
+          if (evt.eventName === "transfer") {
             const from = typeof evt.topicNative?.[1] === "string" ? evt.topicNative[1] : "";
             const to = typeof evt.topicNative?.[2] === "string" ? evt.topicNative[2] : "";
 
