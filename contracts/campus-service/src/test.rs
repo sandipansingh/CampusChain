@@ -548,3 +548,34 @@ fn test_platform_admin_reads_bypass_isolation() {
     // Platform admin (who has no university_code) can successfully read
     assert!(contracts.service.try_get_listing(&listing_id, &contracts.platform_admin).is_ok());
 }
+
+#[test]
+fn test_faucet_claim_once() {
+    let env = Env::default();
+    let contracts = deployed(&env);
+    let admin_a = Address::generate(&env);
+    let student_a = Address::generate(&env);
+
+    claim_and_approve(&contracts, &env, &admin_a, "UNI-A");
+    register_and_verify(
+        &contracts,
+        &env,
+        &admin_a,
+        &student_a,
+        "UNI-A",
+        UserRole::Student,
+        student_details(&env, 1),
+    );
+
+    // Initial has_claimed_faucet is false
+    assert!(!contracts.service.has_claimed_faucet(&student_a));
+
+    // Claim faucet succeeds
+    assert!(contracts.service.try_claim_faucet(&student_a).is_ok());
+
+    // has_claimed_faucet is now true
+    assert!(contracts.service.has_claimed_faucet(&student_a));
+
+    // Claiming again fails
+    assert!(contracts.service.try_claim_faucet(&student_a).is_err());
+}
