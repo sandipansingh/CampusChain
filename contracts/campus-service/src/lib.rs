@@ -421,14 +421,14 @@ impl CampusService {
                 id,
                 buyer: buyer.clone(),
                 seller: seller.clone(),
-                university_code,
+                university_code: university_code.clone(),
                 amount,
                 status: 1,
             },
         );
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "escrow_created"), id, buyer, seller),
+            (Symbol::new(&env, "escrow_created"), id, buyer, seller, university_code),
             amount,
         );
         Ok(id)
@@ -714,9 +714,10 @@ impl CampusService {
                 escrow_enabled,
             },
         );
+        let uni_code = active_code(&env, &seller)?;
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "item_listed"), id, seller),
+            (Symbol::new(&env, "item_listed"), id, seller, uni_code),
             (price, title),
         );
         Ok(id)
@@ -967,10 +968,11 @@ impl CampusService {
             created_at: env.ledger().timestamp(),
         };
 
+        let uni_code = active_code(&env, &scholarship.created_by)?;
         env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "ScholarshipCreated"), id, scholarship.created_by),
+            (Symbol::new(&env, "ScholarshipCreated"), id, scholarship.created_by, uni_code),
             scholarship.amount,
         );
         Ok(id)
@@ -990,10 +992,11 @@ impl CampusService {
         }
 
         scholarship.admin_approval_status = ApprovalStatus::Approved;
+        let uni_code = active_code(&env, &scholarship.created_by).unwrap_or_else(|_| scholarship.created_by.to_string().into());
         env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "ScholarshipApproved"), id, admin),
+            (Symbol::new(&env, "ScholarshipApproved"), id, admin, uni_code),
             (),
         );
         Ok(())
@@ -1013,10 +1016,11 @@ impl CampusService {
         }
 
         scholarship.admin_approval_status = ApprovalStatus::Rejected;
+        let uni_code = active_code(&env, &scholarship.created_by).unwrap_or_else(|_| scholarship.created_by.to_string().into());
         env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "ScholarshipRejected"), id, admin),
+            (Symbol::new(&env, "ScholarshipRejected"), id, admin, uni_code),
             (),
         );
         Ok(())
@@ -1036,10 +1040,11 @@ impl CampusService {
         }
 
         scholarship.admin_approval_status = ApprovalStatus::Suspended;
+        let uni_code = active_code(&env, &scholarship.created_by).unwrap_or_else(|_| scholarship.created_by.to_string().into());
         env.storage().persistent().set(&key, &scholarship);
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "ScholarshipSuspended"), id, admin),
+            (Symbol::new(&env, "ScholarshipSuspended"), id, admin, uni_code),
             (),
         );
         Ok(())
@@ -1352,9 +1357,10 @@ impl CampusService {
                 updated_at: now,
             },
         );
+        let uni_code = active_code(&env, &merchant)?;
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "MenuItemPublished"), id, merchant),
+            (Symbol::new(&env, "MenuItemPublished"), id, merchant, uni_code),
             price_camp,
         );
         Ok(id)
@@ -1443,6 +1449,7 @@ impl CampusService {
         let now = env.ledger().timestamp();
         let id = next_id(&env, DataKey::FoodOrderCounter);
         let key = DataKey::FoodOrder(id);
+        let uni_code = item.university_code.clone();
         env.storage().persistent().set(
             &key,
             &FoodOrder {
@@ -1461,7 +1468,7 @@ impl CampusService {
         );
         extend_persistent(&env, &key);
         env.events()
-            .publish((Symbol::new(&env, "OrderPlaced"), id, student), total_camp);
+            .publish((Symbol::new(&env, "OrderPlaced"), id, student, uni_code), total_camp);
         Ok(id)
     }
 
@@ -1501,10 +1508,11 @@ impl CampusService {
                 &order.total_camp,
             );
         }
+        let uni_code = order.university_code.clone();
         env.storage().persistent().set(&key, &order);
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "OrderStatusChanged"), order_id, merchant),
+            (Symbol::new(&env, "OrderStatusChanged"), order_id, merchant, uni_code),
             new_status,
         );
         Ok(())
@@ -1537,12 +1545,13 @@ impl CampusService {
             &order.student,
             &order.total_camp,
         );
+        let uni_code = order.university_code.clone();
         order.status = FoodOrderStatus::Cancelled;
         order.updated_at = env.ledger().timestamp();
         env.storage().persistent().set(&key, &order);
         extend_persistent(&env, &key);
         env.events().publish(
-            (Symbol::new(&env, "OrderStatusChanged"), order_id, caller),
+            (Symbol::new(&env, "OrderStatusChanged"), order_id, caller, uni_code),
             FoodOrderStatus::Cancelled,
         );
         Ok(())
