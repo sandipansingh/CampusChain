@@ -1,6 +1,7 @@
 import { create } from "zustand";
 import { StellarWalletsKit, KitEventType, Networks } from "@creit.tech/stellar-wallets-kit";
 import { defaultModules } from "@creit.tech/stellar-wallets-kit/modules/utils";
+import { NEXT_PUBLIC_STELLAR_PASSPHRASE } from "@/shared/stellar/client";
 
 export type NetworkType = "testnet" | "public" | "standalone";
 
@@ -64,19 +65,22 @@ export const useWalletStore = create<WalletState>((set, get) => {
       const address = event.payload.address || null;
       const networkPassphrase = event.payload.networkPassphrase || null;
       
-      const expectedPassphrase = "Test SDF Network ; September 2015";
+      const expectedPassphrase = NEXT_PUBLIC_STELLAR_PASSPHRASE;
       const wrongNetwork = !!address && networkPassphrase !== expectedPassphrase;
 
       if (address) {
         localStorage.setItem("campuschain_wallet_address", address);
       }
 
+      const isExpectedTestnet = NEXT_PUBLIC_STELLAR_PASSPHRASE === "Test SDF Network ; September 2015";
+      const networkName = isExpectedTestnet ? "Testnet" : "the configured network";
+
       set({
         address,
         networkPassphrase,
         isConnected: !!address,
         wrongNetwork,
-        error: wrongNetwork ? "Wrong Network: Please switch your wallet to Testnet." : null,
+        error: wrongNetwork ? `Wrong Network: Please switch your wallet to ${networkName}.` : null,
       });
     });
 
@@ -117,10 +121,10 @@ export const useWalletStore = create<WalletState>((set, get) => {
     initialize: () => {
       if (typeof window === "undefined") return;
 
-      // Initialize the Kit with all default modules
+      // Initialize the Kit with the configured network passphrase
       StellarWalletsKit.init({
         modules: defaultModules(),
-        network: Networks.TESTNET,
+        network: NEXT_PUBLIC_STELLAR_PASSPHRASE as any,
       });
 
       setupListeners();
@@ -143,11 +147,13 @@ export const useWalletStore = create<WalletState>((set, get) => {
               // Fetch connected network passphrase
               StellarWalletsKit.getNetwork().then((networkInfo) => {
                 const passphrase = networkInfo.networkPassphrase;
-                const wrongNetwork = passphrase !== "Test SDF Network ; September 2015";
+                const wrongNetwork = passphrase !== NEXT_PUBLIC_STELLAR_PASSPHRASE;
+                const isExpectedTestnet = NEXT_PUBLIC_STELLAR_PASSPHRASE === "Test SDF Network ; September 2015";
+                const networkName = isExpectedTestnet ? "Testnet" : "the configured network";
                 set({
                   networkPassphrase: passphrase,
                   wrongNetwork,
-                  error: wrongNetwork ? "Wrong Network: Please switch your wallet to Testnet." : null,
+                  error: wrongNetwork ? `Wrong Network: Please switch your wallet to ${networkName}.` : null,
                 });
               }).catch(() => {});
             }
@@ -172,10 +178,13 @@ export const useWalletStore = create<WalletState>((set, get) => {
 
         const networkInfo = await StellarWalletsKit.getNetwork();
         const passphrase = networkInfo.networkPassphrase;
-        const expectedPassphrase = "Test SDF Network ; September 2015";
+        const expectedPassphrase = NEXT_PUBLIC_STELLAR_PASSPHRASE;
         const wrongNetwork = passphrase !== expectedPassphrase;
 
         localStorage.setItem("campuschain_wallet_address", address);
+
+        const isExpectedTestnet = NEXT_PUBLIC_STELLAR_PASSPHRASE === "Test SDF Network ; September 2015";
+        const networkName = isExpectedTestnet ? "Testnet" : "the configured network";
 
         set({
           address,
@@ -183,7 +192,7 @@ export const useWalletStore = create<WalletState>((set, get) => {
           networkPassphrase: passphrase,
           wrongNetwork,
           isConnecting: false,
-          error: wrongNetwork ? "Wrong Network: Please switch your wallet to Testnet." : null,
+          error: wrongNetwork ? `Wrong Network: Please switch your wallet to ${networkName}.` : null,
         });
 
         return address;
@@ -235,10 +244,12 @@ export const useWalletStore = create<WalletState>((set, get) => {
       set({ network: newNetwork, networkPassphrase: passphrase });
       
       const address = get().address;
-      const wrongNetwork = !!address && passphrase !== "Test SDF Network ; September 2015";
+      const wrongNetwork = !!address && passphrase !== NEXT_PUBLIC_STELLAR_PASSPHRASE;
+      const isExpectedTestnet = NEXT_PUBLIC_STELLAR_PASSPHRASE === "Test SDF Network ; September 2015";
+      const networkName = isExpectedTestnet ? "Testnet" : "the configured network";
       set({
         wrongNetwork,
-        error: wrongNetwork ? "Wrong Network: Please switch your wallet to Testnet." : null,
+        error: wrongNetwork ? `Wrong Network: Please switch your wallet to ${networkName}.` : null,
       });
     },
   };
