@@ -53,15 +53,21 @@ jobs:
       VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
       VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
       VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+      NEXT_PUBLIC_STELLAR_RPC_URL: ${{ secrets.NEXT_PUBLIC_STELLAR_RPC_URL }}
+      NEXT_PUBLIC_STELLAR_PASSPHRASE: ${{ secrets.NEXT_PUBLIC_STELLAR_PASSPHRASE }}
+      NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID }}
+      NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID }}
+      NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID }}
+      NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS: ${{ secrets.NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS }}
 
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 24 (LTS)
+      - name: Setup Node.js 22 (LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: "24"
+          node-version: "22"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
@@ -75,12 +81,6 @@ jobs:
       - name: Build Next.js for production
         working-directory: frontend
         run: npm run build
-        env:
-          NEXT_PUBLIC_STELLAR_RPC_URL: ${{ secrets.NEXT_PUBLIC_STELLAR_RPC_URL }}
-          NEXT_PUBLIC_STELLAR_PASSPHRASE: ${{ secrets.NEXT_PUBLIC_STELLAR_PASSPHRASE }}
-          NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID }}
-          NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID: ${{ secrets.NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID }}
-          NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS: ${{ secrets.NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS }}
 
       # Deploy to Vercel (production)
       # Uses the Vercel CLI directly (no third-party action dependency).
