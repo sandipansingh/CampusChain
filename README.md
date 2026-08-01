@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="frontend/public/icon.png" alt="CampusChain Logo" width="96" height="96"/>
+  <img src="frontend/public/icon-readme.png" alt="CampusChain Logo" width="96" height="96"/>
 </p>
 
 <p align="center">
