@@ -1,10 +1,94 @@
-import { CheckCircle2, LineChart } from "lucide-react";
+import { CheckCircle2, ShieldCheck, Store } from "lucide-react";
 
-const benefits = ["Automated Financial Reporting", "SSO Student Verification Integration", "Departmental Budget Allocation"];
+const benefits = [
+  "SSO Identity & University Registry",
+  "Automated Scholarship Disbursements",
+  "Canteen Merchant Management & Approvals",
+  "Real-Time Audit Trail & Event Polling"
+];
 
 export function ForUniversities() {
-  return <section id="universities" className="overflow-hidden bg-[#f7f7f5] py-8 sm:py-24"><div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-8 px-6 lg:grid-cols-2 lg:gap-16"><div><h2 className="text-[28px] font-bold leading-[34px] tracking-[-0.02em] text-zinc-950 sm:text-4xl sm:leading-11"><span className="sm:hidden">For Universities</span><span className="hidden sm:inline">Designed for Administrative Clarity</span></h2><p className="mt-4 text-base font-medium leading-6 text-zinc-500 sm:mt-6 sm:text-xl sm:leading-[30px]"><span className="sm:hidden">Reduce administrative overhead, eliminate cash handling risks, and gain unprecedented insight into campus economic health with our turn-key blockchain solution.</span><span className="hidden sm:inline">Deploy a private or public payment ecosystem in minutes. CampusChain provides university admins with real-time financial oversight, automated scholarship distribution, and secure identity management.</span></p><ul className="mt-8 hidden space-y-4 sm:block">{benefits.map((benefit) => <li key={benefit} className="flex items-center gap-3 text-base font-medium"><CheckCircle2 size={20} />{benefit}</li>)}</ul></div><DesktopMockup /><MobileMockup /></div></section>;
+  return (
+    <section id="universities" className="overflow-hidden bg-[#fbfbfa] py-16 sm:py-24 border-b border-zinc-200/60">
+      <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2 lg:gap-16">
+        <div>
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Administration</span>
+          <h2 className="mt-2 text-3xl font-bold leading-tight tracking-[-0.03em] text-zinc-950 sm:text-4xl sm:leading-11">
+            Built for administrative clarity
+          </h2>
+          <p className="mt-4 text-base font-medium leading-relaxed text-zinc-500 sm:mt-6 sm:text-lg">
+            Deploy a secure payment and services ecosystem in minutes. CampusChain provides university admins with real-time financial oversight, automated scholarship distribution, canteen merchant validation, and member registry controls.
+          </p>
+          <ul className="mt-8 space-y-4">
+            {benefits.map((benefit) => (
+              <li key={benefit} className="flex items-center gap-3 text-sm font-semibold text-zinc-800 sm:text-base">
+                <CheckCircle2 size={18} className="text-zinc-900 shrink-0" />
+                {benefit}
+              </li>
+            ))}
+          </ul>
+        </div>
+        <div className="flex flex-col gap-6 lg:gap-8">
+          <DesktopMockup />
+        </div>
+      </div>
+    </section>
+  );
 }
 
-function DesktopMockup() { return <div className="relative hidden lg:block"><div className="relative z-10 mx-auto max-w-md rotate-2 rounded-2xl border border-zinc-200 bg-white p-8 shadow-xl"><div className="mb-8 flex items-center justify-between"><div className="h-4 w-24 rounded bg-zinc-200" /><div className="size-8 rounded-full bg-zinc-200" /></div><div className="space-y-6"><div className="flex gap-4"><div className="h-20 w-1/3 rounded-lg border border-zinc-200 bg-zinc-100" /><div className="h-20 w-2/3 rounded-lg bg-zinc-100" /></div><div className="h-4 w-full rounded bg-zinc-200" /><div className="h-4 w-5/6 rounded bg-zinc-200" /><div className="h-4 w-4/6 rounded bg-zinc-200" /><div className="flex justify-between border-t border-zinc-200 pt-6"><div className="h-8 w-16 rounded bg-zinc-950" /><div className="h-8 w-16 rounded bg-zinc-200" /></div></div></div><div className="absolute -right-10 -top-10 size-64 rounded-full border border-zinc-300 opacity-20" /><div className="absolute -bottom-10 -left-10 size-48 rounded-full bg-zinc-200 blur-3xl" /></div>; }
-function MobileMockup() { return <div className="relative aspect-[4/3] w-full overflow-hidden rounded-2xl bg-zinc-950 p-6 shadow-2xl lg:hidden"><div className="flex items-start justify-between"><div className="h-2 w-12 rounded-full bg-white/20" /><div className="flex gap-2"><div className="size-3 rounded-full bg-white/40" /><div className="size-3 rounded-full bg-white/40" /></div></div><div className="mt-14 space-y-4"><div className="h-8 w-2/3 rounded bg-white/10" /><div className="grid grid-cols-3 gap-2"><div className="h-16 rounded bg-white/5" /><div className="h-16 rounded bg-white/5" /><div className="h-16 rounded bg-white/5" /></div></div><div className="mt-4 flex h-24 items-center justify-center rounded-xl bg-white/10"><LineChart size={40} className="text-white/20" /></div></div>; }
+function DesktopMockup() {
+  return (
+    <div className="relative w-full">
+      {/* Abstract Admin Panel Card */}
+      <div className="relative z-10 mx-auto w-full max-w-lg rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-lg transition-shadow hover:shadow-xl sm:p-8">
+        <div className="mb-6 flex items-center justify-between border-b border-zinc-100 pb-4">
+          <div className="flex items-center gap-2">
+            <span className="size-2.5 rounded-full bg-zinc-900" />
+            <span className="text-sm font-bold tracking-tight text-zinc-950">University Registry Admin</span>
+          </div>
+          <span className="rounded-full bg-green-50 border border-green-200 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-green-700">
+            Connected
+          </span>
+        </div>
+        
+        <div className="space-y-5">
+          {/* Stat Cards Row */}
+          <div className="grid grid-cols-2 gap-4">
+            <div className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
+              <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Total Members</div>
+              <div className="mt-1 text-2xl font-extrabold text-zinc-950">1,248</div>
+            </div>
+            <div className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
+              <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Scholarships Paid</div>
+              <div className="mt-1 text-2xl font-extrabold text-zinc-950">45k CAMP</div>
+            </div>
+          </div>
+
+          {/* Pending Tasks Section */}
+          <div className="rounded-xl border border-zinc-100 p-4">
+            <div className="mb-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Administrative Approvals</div>
+            <div className="space-y-3">
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 font-semibold text-zinc-800">
+                  <Store size={14} className="text-zinc-500" />
+                  <span>Engineering Cafe (Merchant Request)</span>
+                </div>
+                <span className="rounded bg-zinc-900 px-2 py-0.5 font-bold text-white">Approve</span>
+              </div>
+              <div className="flex items-center justify-between text-xs">
+                <div className="flex items-center gap-2 font-semibold text-zinc-800">
+                  <ShieldCheck size={14} className="text-zinc-500" />
+                  <span>Student #8291 (Verify Identity)</span>
+                </div>
+                <span className="rounded bg-zinc-900 px-2 py-0.5 font-bold text-white">Verify</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+      {/* Background visual accents */}
+      <div className="absolute -right-6 -top-6 -z-10 size-64 rounded-full border border-zinc-200/50 opacity-60" />
+      <div className="absolute -bottom-8 -left-8 -z-10 size-48 rounded-full bg-zinc-100 blur-3xl opacity-50" />
+    </div>
+  );
+}
