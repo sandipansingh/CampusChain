@@ -704,46 +704,108 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 ### 9.1 Desktop
 
-*   **Landing Page:**
-    ![Landing Page](screenshots/desktop_landing.png)
-*   **Login & Wallet Connection:**
-    ![Login & Wallet Connection](screenshots/desktop_login.png)
-*   **Student Dashboard:**
-    ![Student Dashboard](screenshots/desktop_dashboard.png)
-*   **Wallet & Asset Balances (XLM & CAMP):**
-    ![Wallet Balances](screenshots/desktop_wallet.png)
-*   **Pay QR & Peer-to-Peer Transfers:**
-    ![Pay QR](screenshots/desktop_pay_qr.png)
-*   **Campus P2P Marketplace:**
-    ![Marketplace](screenshots/desktop_marketplace.png)
-*   **Canteen Food Ordering:**
-    ![Food Ordering](screenshots/desktop_food_ordering.png)
-*   **Student Canteen Order History & Tracking:**
-    ![My Orders](screenshots/desktop_my_orders.png)
-*   **Campus Events & Ticketing:**
-    ![Events](screenshots/desktop_events.png)
-*   **Scholarship Applications & Portal:**
-    ![Scholarships](screenshots/desktop_scholarships.png)
-*   **User Profile & Settings:**
-    ![User Settings](screenshots/desktop_settings.png)
-*   **Student Personal Activity Log:**
-    ![Student Activity](screenshots/desktop_activity.png)
-*   **University Admin Dashboard:**
-    ![University Dashboard](screenshots/desktop_university_dashboard.png)
-*   **University Member Roster & Role Verifications:**
-    ![University Members](screenshots/desktop_university_members.png)
-*   **University Scholarship Creation:**
-    ![Scholarship Creation](screenshots/desktop_university_scholarship_create.png)
-*   **University Admin Activity Log:**
-    ![University Activity](screenshots/desktop_university_activity.png)
-*   **Platform Super-Admin Metrics Dashboard:**
-    ![Platform Admin Dashboard](screenshots/desktop_platform_admin_dashbaord.png)
-*   **Platform Admin University Onboarding Management:**
-    ![Platform Admin Universities](screenshots/desktop_platform_admin_universities_management.png)
-*   **Platform Admin Global Scholarship Oversight:**
-    ![Platform Admin Scholarships](screenshots/desktop_platform_admin_scholarship_management.png)
-*   **Platform Super-Admin System Audit Log:**
-    ![Platform Admin Activity](screenshots/desktop_platform_admin_activity.png)
+<table border="0">
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Landing Page</b></p>
+      <img src="screenshots/desktop_landing.png" alt="Landing Page" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Login & Wallet Connection</b></p>
+      <img src="screenshots/desktop_login.png" alt="Login & Wallet Connection" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Student Dashboard</b></p>
+      <img src="screenshots/desktop_dashboard.png" alt="Student Dashboard" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Wallet & Asset Balances (XLM & CAMP)</b></p>
+      <img src="screenshots/desktop_wallet.png" alt="Wallet Balances" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Pay QR & Peer-to-Peer Transfers</b></p>
+      <img src="screenshots/desktop_pay_qr.png" alt="Pay QR" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Campus P2P Marketplace</b></p>
+      <img src="screenshots/desktop_marketplace.png" alt="Marketplace" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Canteen Food Ordering</b></p>
+      <img src="screenshots/desktop_food_ordering.png" alt="Food Ordering" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Student Canteen Order History & Tracking</b></p>
+      <img src="screenshots/desktop_my_orders.png" alt="My Orders" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Campus Events & Ticketing</b></p>
+      <img src="screenshots/desktop_events.png" alt="Events" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Scholarship Applications & Portal</b></p>
+      <img src="screenshots/desktop_scholarships.png" alt="Scholarships" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>User Profile & Settings</b></p>
+      <img src="screenshots/desktop_settings.png" alt="User Settings" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Student Personal Activity Log</b></p>
+      <img src="screenshots/desktop_activity.png" alt="Student Activity" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>University Admin Dashboard</b></p>
+      <img src="screenshots/desktop_university_dashboard.png" alt="University Dashboard" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>University Member Roster & Role Verifications</b></p>
+      <img src="screenshots/desktop_university_members.png" alt="University Members" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>University Scholarship Creation</b></p>
+      <img src="screenshots/desktop_university_scholarship_create.png" alt="Scholarship Creation" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>University Admin Activity Log</b></p>
+      <img src="screenshots/desktop_university_activity.png" alt="University Activity" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Platform Super-Admin Metrics Dashboard</b></p>
+      <img src="screenshots/desktop_platform_admin_dashbaord.png" alt="Platform Admin Dashboard" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Platform Admin University Onboarding Management</b></p>
+      <img src="screenshots/desktop_platform_admin_universities_management.png" alt="Platform Admin Universities" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Platform Admin Global Scholarship Oversight</b></p>
+      <img src="screenshots/desktop_platform_admin_scholarship_management.png" alt="Platform Admin Scholarships" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Platform Super-Admin System Audit Log</b></p>
+      <img src="screenshots/desktop_platform_admin_activity.png" alt="Platform Admin Activity" />
+    </td>
+  </tr>
+</table>
 
 ### 9.2 Mobile
 
@@ -790,10 +852,18 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 ### 9.3 Test
 
-*   **Smart Contract Rust Unit/Integration Tests (`cargo test`):**
-    ![Rust Contract Tests](screenshots/test_cargo_test.png)
-*   **Frontend Component & Hook Unit/Integration Tests (`npm run test`):**
-    ![Frontend Tests](screenshots/test_frontend_test.png)
+<table border="0">
+  <tr>
+    <td width="50%" align="center">
+      <p><b>Smart Contract Rust Tests (<code>cargo test</code>)</b></p>
+      <img src="screenshots/test_cargo_test.png" alt="Rust Contract Tests" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>Frontend Component Tests (<code>npm run test</code>)</b></p>
+      <img src="screenshots/test_frontend_test.png" alt="Frontend Tests" />
+    </td>
+  </tr>
+</table>
 
 ### 9.4 CI/CD
 
