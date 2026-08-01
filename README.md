@@ -272,14 +272,14 @@ The Platform Admin address is bootstrapped immutably at the time of contract dep
 
 #### Two-Tier Approval Model
 
-```
-[Platform Admin]
-       │
-       ▼ (Tier 1: Approve University Registry claim)
-[University Admin]
-       │
-       ▼ (Tier 2: Verify individual user profiles)
-[Student / Merchant / Event Organizer]
+```mermaid
+graph TD
+    PA["Platform Admin<br>(Role 5: Global Super-Admin)"]
+    UA["University Admin<br>(Role 4: Campus Registrar)"]
+    Users["Students / Merchants / Event Organizers<br>(Roles 1, 2, 3: Scoped Campus Users)"]
+
+    PA -->|"Tier 1: Approve University Registry Claim<br>(approve_university)"| UA
+    UA -->|"Tier 2: Verify Individual User Profiles<br>(verify_profile)"| Users
 ```
 
 - **Tier 1 (University Registry Approval)**: When a new university admin registers, their university code is claimed and placed in a `PendingApproval` state. The Platform Admin must invoke `approve_university(code)` to activate the university.
