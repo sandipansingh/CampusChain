@@ -105,6 +105,7 @@ pub struct MarketplaceListing {
     pub university_code: String,
     pub title: String,
     pub description: String,
+    pub image_url: String,
     pub price: i128,
     pub category: u32,
     /// 1: Active, 2: Sold, 3: Cancelled.
@@ -689,6 +690,7 @@ impl CampusService {
         seller: Address,
         title: String,
         description: String,
+        image_url: String,
         price: i128,
         category: u32,
         escrow_enabled: bool,
@@ -708,6 +710,7 @@ impl CampusService {
                 university_code: active_code(&env, &seller)?,
                 title: title.clone(),
                 description,
+                image_url,
                 price,
                 category,
                 status: 1,
@@ -943,20 +946,26 @@ impl CampusService {
         }
         let uni_code = active_code(&env, &student)?;
 
-        // 1. Burn CAMP tokens from student balance via token contract
+        // 1. Calculate equivalent XLM amount (100 CAMP = 1 XLM)
+        let xlm_amount = camp_amount / PURCHASE_RATE;
+        if xlm_amount <= 0 {
+            return Err(Error::InvalidAmount);
+        }
+
+        // 2. Check native XLM liquidity reserve balance of contract vault FIRST
+        let native = get_address(&env, DataKey::NativeTokenContract)?;
+        let native_client = soroban_sdk::token::Client::new(&env, &native);
+        let contract_bal = native_client.balance(&env.current_contract_address());
+
+        if contract_bal < xlm_amount {
+            return Err(Error::CapacityReached);
+        }
+
+        // 3. Burn CAMP tokens from student balance via token contract
         token_client(&env)?.burn(&student, &camp_amount);
 
-        // 2. Calculate equivalent XLM amount (100 CAMP = 1 XLM)
-        let xlm_amount = camp_amount / PURCHASE_RATE;
-        if xlm_amount > 0 {
-            let native = get_address(&env, DataKey::NativeTokenContract)?;
-            let native_client = soroban_sdk::token::Client::new(&env, &native);
-            let contract_bal = native_client.balance(&env.current_contract_address());
-            let payable = if contract_bal < xlm_amount { contract_bal } else { xlm_amount };
-            if payable > 0 {
-                native_client.transfer(&env.current_contract_address(), &student, &payable);
-            }
-        }
+        // 4. Transfer native XLM directly from contract vault to student wallet
+        native_client.transfer(&env.current_contract_address(), &student, &xlm_amount);
 
         env.events().publish(
             (Symbol::new(&env, "camp_withdrawn"), student, uni_code),

@@ -2099,6 +2099,9 @@
                   "string": "Must not be listed"
                 },
                 {
+                  "string": ""
+                },
+                {
                   "i128": {
                     "hi": 0,
                     "lo": 10
@@ -2452,6 +2455,9 @@
                     },
                     {
                       "string": "Must not be listed"
+                    },
+                    {
+                      "string": ""
                     },
                     {
                       "i128": {

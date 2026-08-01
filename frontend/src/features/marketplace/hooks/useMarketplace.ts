@@ -97,6 +97,7 @@ export function useCreateListingMutation() {
       seller,
       title,
       description,
+      imageUrl = "",
       price,
       category,
       escrowEnabled,
@@ -104,11 +105,12 @@ export function useCreateListingMutation() {
       seller: string;
       title: string;
       description: string;
+      imageUrl?: string;
       price: number;
       category: number;
       escrowEnabled: boolean;
     }) => {
-      return executeCreateListing(seller, title, description, price, category, escrowEnabled);
+      return executeCreateListing(seller, title, description, imageUrl, price, category, escrowEnabled);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });

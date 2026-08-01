@@ -36,6 +36,7 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
   const [category, setCategory] = useState<CategoryType | "">("");
   const [condition, setCondition] = useState<ConditionType | "">("");
   const [priceCamp, setPriceCamp] = useState("");
+  const [imageUrl, setImageUrl] = useState("");
   const [description, setDescription] = useState("");
   const [escrowEnabled, setEscrowEnabled] = useState(true);
   const [statusMsg, setStatusMsg] = useState<{ type: "success" | "error" | "info"; text: string } | null>(null);
@@ -76,6 +77,7 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
         seller: address,
         title,
         description,
+        imageUrl,
         price,
         category: categoryMap[category],
         escrowEnabled,
@@ -251,6 +253,39 @@ export function MarketplaceSell({ onBack }: MarketplaceSellProps) {
                     required
                     className="w-full h-11 pl-10 pr-4 bg-card border border-border rounded-lg text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
                   />
+                </div>
+              )}
+            </div>
+
+            {/* Item Image URL */}
+            <div>
+              <label className="block text-xs font-bold uppercase tracking-wider text-muted-foreground mb-1.5" htmlFor="imageUrl">
+                Item Photo URL (PNG / JPG) <span className="text-[10px] font-normal text-muted-foreground">(optional)</span>
+              </label>
+              {isSubmitting ? (
+                <Skeleton className="h-11 w-full rounded-lg" />
+              ) : (
+                <div className="space-y-2">
+                  <input
+                    id="imageUrl"
+                    type="url"
+                    value={imageUrl}
+                    onChange={(e) => setImageUrl(e.target.value)}
+                    placeholder="https://example.com/item-photo.png"
+                    className="w-full h-11 px-4 bg-card border border-border rounded-lg text-sm focus:border-foreground focus:ring-1 focus:ring-foreground focus:outline-none"
+                  />
+                  {imageUrl && (
+                    <div className="relative h-32 w-full rounded-lg overflow-hidden border border-border bg-muted">
+                      <img
+                        src={imageUrl}
+                        alt="Item Preview"
+                        className="w-full h-full object-cover"
+                        onError={(e) => {
+                          (e.target as HTMLImageElement).style.display = "none";
+                        }}
+                      />
+                    </div>
+                  )}
                 </div>
               )}
             </div>

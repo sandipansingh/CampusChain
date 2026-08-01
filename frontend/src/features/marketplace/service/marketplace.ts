@@ -18,7 +18,7 @@ export async function fetchListing(id: number, address?: string) {
     "get_listing",
     [u64ToScVal(id), addressToScVal(address)],
     address
-  )) as unknown as { id: bigint; seller: string; title: string; description: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
+  )) as unknown as { id: bigint; seller: string; title: string; description: string; image_url?: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
 
   if (!res) return null;
   return {
@@ -26,6 +26,7 @@ export async function fetchListing(id: number, address?: string) {
     seller: String(res.seller),
     title: String(res.title),
     description: String(res.description),
+    imageUrl: res.image_url ? String(res.image_url) : "",
     price: Number(res.price) / 10_000_000,
     category: Number(res.category),
     status: Number(res.status),
@@ -33,7 +34,7 @@ export async function fetchListing(id: number, address?: string) {
   };
 }
 
-type RawListing = { id: bigint; seller: string; title: string; description: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
+type RawListing = { id: bigint; seller: string; title: string; description: string; image_url?: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
 
 function parseListing(res: RawListing) {
   return {
@@ -41,6 +42,7 @@ function parseListing(res: RawListing) {
     seller: String(res.seller),
     title: String(res.title),
     description: String(res.description),
+    imageUrl: res.image_url ? String(res.image_url) : "",
     price: Number(res.price) / 10_000_000,
     category: Number(res.category),
     status: Number(res.status),
@@ -75,6 +77,7 @@ export async function executeCreateListing(
   seller: string,
   title: string,
   description: string,
+  imageUrl: string,
   price: number,
   category: number,
   escrowEnabled: boolean
@@ -87,6 +90,7 @@ export async function executeCreateListing(
       addressToScVal(seller),
       stringToScVal(title),
       stringToScVal(description),
+      stringToScVal(imageUrl || ""),
       i128ToScVal(rawPrice),
       u32ToScVal(category),
       nativeToScVal(escrowEnabled),

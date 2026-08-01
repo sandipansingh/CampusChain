@@ -338,6 +338,9 @@
                   "string": "Personal item"
                 },
                 {
+                  "string": ""
+                },
+                {
                   "i128": {
                     "hi": 0,
                     "lo": 10
@@ -373,6 +376,9 @@
                 },
                 {
                   "string": "Shop inventory"
+                },
+                {
+                  "string": ""
                 },
                 {
                   "i128": {
@@ -1551,6 +1557,14 @@
                     },
                     {
                       "key": {
+                        "symbol": "image_url"
+                      },
+                      "val": {
+                        "string": ""
+                      }
+                    },
+                    {
+                      "key": {
                         "symbol": "price"
                       },
                       "val": {
@@ -1668,6 +1682,14 @@
                       },
                       "val": {
                         "u64": 2
+                      }
+                    },
+                    {
+                      "key": {
+                        "symbol": "image_url"
+                      },
+                      "val": {
+                        "string": ""
                       }
                     },
                     {
@@ -3231,6 +3253,9 @@
                   "string": "Personal item"
                 },
                 {
+                  "string": ""
+                },
+                {
                   "i128": {
                     "hi": 0,
                     "lo": 10
@@ -3723,6 +3748,9 @@
                 },
                 {
                   "string": "Shop inventory"
+                },
+                {
+                  "string": ""
                 },
                 {
                   "i128": {
@@ -4314,6 +4342,14 @@
                 },
                 {
                   "key": {
+                    "symbol": "image_url"
+                  },
+                  "val": {
+                    "string": ""
+                  }
+                },
+                {
+                  "key": {
                     "symbol": "price"
                   },
                   "val": {
@@ -4491,6 +4527,14 @@
                   },
                   "val": {
                     "u64": 2
+                  }
+                },
+                {
+                  "key": {
+                    "symbol": "image_url"
+                  },
+                  "val": {
+                    "string": ""
                   }
                 },
                 {
