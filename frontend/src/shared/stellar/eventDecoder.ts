@@ -3,7 +3,7 @@ import { scValToNative, xdr } from "@stellar/stellar-sdk";
 export interface DecodedEvent {
   id: string;
   eventName: string;
-  type: "transfer" | "escrow" | "ticket" | "role" | "university" | "membership" | "faucet" | "system";
+  type: "transfer" | "escrow" | "ticket" | "role" | "university" | "membership" | "faucet" | "marketplace" | "system";
   title: string;
   message: string;
   details: string;
@@ -12,7 +12,7 @@ export interface DecodedEvent {
   timestamp: string;
   ledger: number;
   color: "blue" | "purple" | "emerald" | "amber" | "indigo" | "cyan" | "orange" | "gray";
-  icon: "transfer" | "escrow" | "ticket" | "role" | "university" | "membership" | "faucet" | "system";
+  icon: "transfer" | "escrow" | "ticket" | "role" | "university" | "membership" | "faucet" | "marketplace" | "system";
   ledgerClosedAt: string;
   topicNative?: unknown[];
 }
@@ -280,12 +280,12 @@ export function decodeEvent(evt: {
     const price = vals ? Number(vals[0] ?? 0) / 10_000_000 : 0;
     return {
       ...baseEvent,
-      type: "system",
+      type: "marketplace",
       title: "Item Listed",
       message: `${shortAddr(seller)} listed item #${id} for sale`,
       details: `${price.toFixed(2)} CAMP`,
       color: "emerald",
-      icon: "system",
+      icon: "marketplace",
       topicNative: [...topicNative, uniCode],
     };
   }
