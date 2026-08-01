@@ -700,51 +700,79 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 ## 9. Screenshots
 
-> All screenshot files are stored in the root `/screenshots` folder. Drop your images there matching the placeholder paths below.
+> All screenshot files are stored in the root `/screenshots` folder.
 
 ### 9.1 Desktop
 
+*   **Landing Page:**
+    ![Landing Page](screenshots/desktop_landing.png)
 *   **Login & Wallet Connection:**
     ![Login & Wallet Connection](screenshots/desktop_login.png)
-*   **Wallet Dashboard (Balances & Quick Actions):**
-    ![Wallet Dashboard](screenshots/desktop_dashboard.png)
-*   **Send & Receive Tokens / Swap Faucet:**
-    ![Send & Receive](screenshots/desktop_send_receive.png)
-*   **Marketplace (P2P Listings & Escrow):**
+*   **Student Dashboard:**
+    ![Student Dashboard](screenshots/desktop_dashboard.png)
+*   **Wallet & Asset Balances (XLM & CAMP):**
+    ![Wallet Balances](screenshots/desktop_wallet.png)
+*   **Pay QR & Peer-to-Peer Transfers:**
+    ![Pay QR](screenshots/desktop_pay_qr.png)
+*   **Campus P2P Marketplace:**
     ![Marketplace](screenshots/desktop_marketplace.png)
-*   **Events Ticketing (Purchase & Creation):**
+*   **Canteen Food Ordering:**
+    ![Food Ordering](screenshots/desktop_food_ordering.png)
+*   **Student Canteen Order History & Tracking:**
+    ![My Orders](screenshots/desktop_my_orders.png)
+*   **Campus Events & Ticketing:**
     ![Events](screenshots/desktop_events.png)
-*   **Scholarship Stepper (Submission & Status):**
+*   **Scholarship Applications & Portal:**
     ![Scholarships](screenshots/desktop_scholarships.png)
-*   **Merchant Canteen Management & Order Tracking:**
-    ![Canteen Orders](screenshots/desktop_food_ordering.png)
-*   **University Admin Dashboard (Profile Verification):**
-    ![University Approvals](screenshots/desktop_university_approval.png)
-*   **Platform Admin Dashboard (Campus Claims):**
-    ![Platform Controls](screenshots/desktop_platform_controls.png)
+*   **User Profile & Settings:**
+    ![User Settings](screenshots/desktop_settings.png)
+*   **Student Personal Activity Log:**
+    ![Student Activity](screenshots/desktop_activity.png)
+*   **University Admin Dashboard:**
+    ![University Dashboard](screenshots/desktop_university_dashboard.png)
+*   **University Member Roster & Role Verifications:**
+    ![University Members](screenshots/desktop_university_members.png)
+*   **University Scholarship Creation:**
+    ![Scholarship Creation](screenshots/desktop_university_scholarship_create.png)
+*   **University Admin Activity Log:**
+    ![University Activity](screenshots/desktop_university_activity.png)
+*   **Platform Super-Admin Metrics Dashboard:**
+    ![Platform Admin Dashboard](screenshots/desktop_platform_admin_dashbaord.png)
+*   **Platform Admin University Onboarding Management:**
+    ![Platform Admin Universities](screenshots/desktop_platform_admin_universities_management.png)
+*   **Platform Admin Global Scholarship Oversight:**
+    ![Platform Admin Scholarships](screenshots/desktop_platform_admin_scholarship_management.png)
+*   **Platform Super-Admin System Audit Log:**
+    ![Platform Admin Activity](screenshots/desktop_platform_admin_activity.png)
 
 ### 9.2 Mobile
 
-*   **Responsive Mobile Layout:**
+*   **Mobile Landing Page:**
+    ![Mobile Landing](screenshots/mobile_landing.png)
+*   **Mobile Login & Wallet Selection:**
+    ![Mobile Login](screenshots/mobile_login.png)
+*   **Mobile Student Dashboard:**
     ![Mobile Dashboard](screenshots/mobile_dashboard.png)
-*   **QR Code Payment Scanner (Scan & Pay):**
-    ![Mobile Scan & Pay](screenshots/mobile_scan_pay.png)
-*   **NFT Ticket Redemption (Verification):**
-    ![Mobile Ticket Wallet](screenshots/mobile_ticket_wallet.png)
+*   **Mobile Wallet & Asset View:**
+    ![Mobile Wallet](screenshots/mobile_wallet.png)
+*   **Mobile QR Code Scanner & Payments:**
+    ![Mobile Scan & Pay](screenshots/mobile_pay_qr.png)
+*   **Mobile Campus Marketplace:**
+    ![Mobile Marketplace](screenshots/mobile_marketplace.png)
+*   **Mobile User Settings:**
+    ![Mobile Settings](screenshots/mobile_settings.png)
 
 ### 9.3 Test
 
 *   **Smart Contract Rust Unit/Integration Tests (`cargo test`):**
     ![Rust Contract Tests](screenshots/test_cargo_test.png)
-*   **Frontend component & hook unit/integration tests (`npm run test`):**
+*   **Frontend Component & Hook Unit/Integration Tests (`npm run test`):**
     ![Frontend Tests](screenshots/test_frontend_test.png)
 
 ### 9.4 CI/CD
 
-*   **GitHub Actions CI Workflow checks passing on PR/Push:**
-    ![GitHub Actions CI checks](screenshots/cicd_pr_checks.png)
-*   **Vercel build and deployment pipeline status (Production release):**
-    ![Vercel Deployment dashboard](screenshots/cicd_vercel_deploy.png)
+*   **GitHub Actions CI Workflow checks passing (`cicd_checks.png`):**
+    ![GitHub Actions CI checks](screenshots/cicd_checks.png)
 
 ---
 
