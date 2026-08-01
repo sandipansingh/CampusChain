@@ -22,6 +22,7 @@ import {
   Shield,
   ArrowDown,
   ArrowUp,
+  ShoppingBag,
 } from "lucide-react";
 
 function getEventIcon(icon: string) {
@@ -38,6 +39,8 @@ function getEventIcon(icon: string) {
       return <UserCheck className="h-4.5 w-4.5" />;
     case "university":
       return <Building className="h-4.5 w-4.5" />;
+    case "marketplace":
+      return <ShoppingBag className="h-4.5 w-4.5" />;
     default:
       return <Shield className="h-4.5 w-4.5" />;
   }
@@ -128,6 +131,7 @@ export function ActivityFeed({
                 { value: "faucet", label: "Faucet", icon: <Coins className="h-4 w-4 text-emerald-500" /> },
                 { value: "role", label: "Verifications", icon: <UserCheck className="h-4 w-4 text-purple-500" /> },
                 { value: "university", label: "Universities", icon: <Building className="h-4 w-4 text-pink-500" /> },
+                { value: "marketplace", label: "Marketplace", icon: <ShoppingBag className="h-4 w-4 text-teal-500" /> },
               ]}
               value={typeFilter}
               onChange={setTypeFilter}
