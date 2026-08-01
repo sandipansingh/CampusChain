@@ -28,6 +28,9 @@ export function Scholarships() {
       setNotice(`Application submitted successfully! Transaction hash: ${txHash}`);
       setSelectedProgram(null);
       await applications.refetch();
+      if (typeof window !== "undefined") {
+        window.dispatchEvent(new Event("campuschain:transaction-submitted"));
+      }
     } catch (error) {
       setNotice(error instanceof Error ? error.message : "Application failed.");
     }

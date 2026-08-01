@@ -1106,11 +1106,18 @@ impl CampusService {
             status: ApprovalStatus::Pending,
             applied_at: env.ledger().timestamp(),
             decided_at: 0,
-            decided_by: student,
+            decided_by: student.clone(),
         };
 
         env.storage().persistent().set(&key, &application);
         extend_persistent(&env, &key);
+
+        let uni_code = active_code(&env, &student).unwrap_or_else(|_| scholarship.created_by.to_string().into());
+        env.events().publish(
+            (Symbol::new(&env, "ScholarshipApplied"), id, scholarship_id, student, uni_code),
+            (scholarship.amount, scholarship.title),
+        );
+
         Ok(id)
     }
 
@@ -1158,10 +1165,24 @@ impl CampusService {
         }
 
         application.decided_at = env.ledger().timestamp();
-        application.decided_by = university;
+        application.decided_by = university.clone();
 
         env.storage().persistent().set(&app_key, &application);
         extend_persistent(&env, &app_key);
+
+        let uni_code = active_code(&env, &university).unwrap_or_else(|_| university.to_string().into());
+        if approved {
+            env.events().publish(
+                (Symbol::new(&env, "ScholarshipAppApproved"), application_id, application.scholarship_id, application.student, uni_code),
+                (scholarship.amount, university),
+            );
+        } else {
+            env.events().publish(
+                (Symbol::new(&env, "ScholarshipAppRejected"), application_id, application.scholarship_id, application.student, uni_code),
+                university,
+            );
+        }
+
         Ok(())
     }
 

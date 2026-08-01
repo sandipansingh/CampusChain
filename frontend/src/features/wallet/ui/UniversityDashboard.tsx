@@ -505,6 +505,7 @@ export function UniversityDashboard() {
                                               setSchNotice(null);
                                               const txHash = await reviewApp.mutateAsync({ universityId: address!, applicationId: app.id, approved: true });
                                               setSchNotice(`Application approved successfully! Tx: ${txHash}`);
+                                              if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
                                             } catch (err) {
                                               setSchNotice(err instanceof Error ? err.message : "Approval failed.");
                                             }
@@ -520,6 +521,7 @@ export function UniversityDashboard() {
                                               setSchNotice(null);
                                               const txHash = await reviewApp.mutateAsync({ universityId: address!, applicationId: app.id, approved: false });
                                               setSchNotice(`Application rejected successfully! Tx: ${txHash}`);
+                                              if (typeof window !== "undefined") window.dispatchEvent(new Event("campuschain:transaction-submitted"));
                                             } catch (err) {
                                               setSchNotice(err instanceof Error ? err.message : "Rejection failed.");
                                             }

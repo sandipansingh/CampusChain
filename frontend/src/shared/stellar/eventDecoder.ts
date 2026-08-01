@@ -332,6 +332,78 @@ export function decodeEvent(evt: {
     };
   }
 
+  if (eventName === "ScholarshipApplied") {
+    const appId = decodeNative(topicNative[1]) ?? 0;
+    const scholarshipId = decodeNative(topicNative[2]) ?? 0;
+    const student = typeof topicNative[3] === "string" ? topicNative[3] : "";
+    const uniCode = typeof topicNative[4] === "string" ? topicNative[4] : "";
+    const vals = valueNative as unknown as [number, string] | null;
+    const amount = vals ? Number(vals[0] ?? 0) / 10_000_000 : 0;
+    const title = vals ? String(vals[1] ?? "") : "";
+    return {
+      ...baseEvent,
+      type: "role",
+      title: "Scholarship Application Submitted",
+      message: `Student ${shortAddr(student)} applied for ${title || `#${scholarshipId}`}`,
+      details: `${uniCode} · ${amount.toFixed(2)} CAMP`,
+      color: "amber",
+      icon: "role",
+    };
+  }
+
+  if (eventName === "ScholarshipAppApproved") {
+    const appId = decodeNative(topicNative[1]) ?? 0;
+    const scholarshipId = decodeNative(topicNative[2]) ?? 0;
+    const student = typeof topicNative[3] === "string" ? topicNative[3] : "";
+    const uniCode = typeof topicNative[4] === "string" ? topicNative[4] : "";
+    const vals = valueNative as unknown as [number, string] | null;
+    const amount = vals ? Number(vals[0] ?? 0) / 10_000_000 : 0;
+    const university = vals ? String(vals[1] ?? "") : "";
+    return {
+      ...baseEvent,
+      type: "role",
+      title: "Scholarship Application Approved",
+      message: `App #${appId} (Scholarship #${scholarshipId}) for ${shortAddr(student)} approved by ${shortAddr(university)}`,
+      details: `+${amount.toFixed(2)} CAMP`,
+      color: "emerald",
+      icon: "role",
+    };
+  }
+
+  if (eventName === "ScholarshipAppRejected") {
+    const appId = decodeNative(topicNative[1]) ?? 0;
+    const scholarshipId = decodeNative(topicNative[2]) ?? 0;
+    const student = typeof topicNative[3] === "string" ? topicNative[3] : "";
+    const uniCode = typeof topicNative[4] === "string" ? topicNative[4] : "";
+    const university = typeof valueNative === "string" ? valueNative : "";
+    return {
+      ...baseEvent,
+      type: "role",
+      title: "Scholarship Application Rejected",
+      message: `App #${appId} (Scholarship #${scholarshipId}) for ${shortAddr(student)} rejected by ${shortAddr(university)}`,
+      details: "Rejected",
+      color: "orange",
+      icon: "role",
+    };
+  }
+
+  if (eventName === "camp_withdrawn") {
+    const student = typeof topicNative[1] === "string" ? topicNative[1] : "";
+    const uniCode = typeof topicNative[2] === "string" ? topicNative[2] : "";
+    const vals = valueNative as unknown as [number, number] | null;
+    const campAmt = vals ? Number(vals[0] ?? 0) / 10_000_000 : 0;
+    const xlmAmt = vals ? Number(vals[1] ?? 0) / 10_000_000 : 0;
+    return {
+      ...baseEvent,
+      type: "faucet",
+      title: "CAMP Withdrawn to XLM",
+      message: `${shortAddr(student)} withdrawn ${campAmt.toFixed(2)} CAMP to ${xlmAmt.toFixed(2)} XLM`,
+      details: `-${campAmt.toFixed(2)} CAMP`,
+      color: "amber",
+      icon: "faucet",
+    };
+  }
+
   return { ...baseEvent, type: "system", title: eventName || "Contract Event", message: `Ledger ${evt.ledger}`, details: evt.txHash.slice(0, 8), color: "gray", icon: "system" };
 }
 
