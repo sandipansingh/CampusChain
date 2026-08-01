@@ -60,7 +60,10 @@ function getCacheKeysForEvent(eventName: string): string[][] {
     case "ScholarshipApproved":
     case "ScholarshipRejected":
     case "ScholarshipSuspended":
-      return [["scholarship-programs"], ["ledger-events"]];
+    case "ScholarshipApplied":
+    case "ScholarshipAppApproved":
+    case "ScholarshipAppRejected":
+      return [["scholarship-programs"], ["scholarship-applications"], ["campus-balance"], ["ledger-events"]];
 
     default:
       return [];
@@ -209,6 +212,39 @@ export function useContractEventStream(address: string | null | undefined) {
               evt.message = evt.eventName === "ProfileVerified"
                 ? "Your profile has been verified"
                 : "Your profile was rejected";
+              filteredDecoded.push(evt);
+            }
+            continue;
+          }
+
+          // 3b. Scholarship Application notifications
+          if (
+            evt.eventName === "ScholarshipApplied" ||
+            evt.eventName === "ScholarshipAppApproved" ||
+            evt.eventName === "ScholarshipAppRejected"
+          ) {
+            const studentAddr = typeof evt.topicNative?.[3] === "string" ? evt.topicNative[3] : "";
+            const eventUniCode = typeof evt.topicNative?.[4] === "string" ? evt.topicNative[4].toUpperCase() : "";
+
+            if (studentAddr.toLowerCase() === address.toLowerCase()) {
+              if (evt.eventName === "ScholarshipApplied") {
+                evt.title = "Scholarship Application Submitted";
+                evt.message = "Your application was submitted successfully.";
+                evt.color = "amber";
+              } else if (evt.eventName === "ScholarshipAppApproved") {
+                evt.title = "Scholarship Application Approved!";
+                evt.message = `Congratulations! Your application was approved and funds were disbursed: ${evt.details}`;
+                evt.color = "emerald";
+              } else {
+                evt.title = "Scholarship Application Rejected";
+                evt.message = "Your scholarship application was not approved.";
+                evt.color = "orange";
+              }
+              filteredDecoded.push(evt);
+            } else if (profile?.role === 4 && eventUniCode === myUnivCode && evt.eventName === "ScholarshipApplied") {
+              evt.title = "New Scholarship Application";
+              evt.message = `Student ${shortAddr(studentAddr)} applied for a scholarship program.`;
+              evt.color = "amber";
               filteredDecoded.push(evt);
             }
             continue;

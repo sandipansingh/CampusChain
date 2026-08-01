@@ -206,7 +206,7 @@ export function WalletDashboard() {
                     </h3>
                   )}
                 </div>
-                <div className="flex gap-3 mt-8 flex-wrap sm:flex-nowrap">
+                <div className="flex gap-3 mt-8">
                   <button
                     onClick={() => router.push(`/${role}/wallet`)}
                     className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
@@ -220,13 +220,6 @@ export function WalletDashboard() {
                   >
                     <ArrowDownLeft className="h-4 w-4" />
                     Receive
-                  </button>
-                  <button
-                    onClick={() => setShowWithdrawModal(true)}
-                    className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
-                  >
-                    <ArrowDownLeft className="h-4 w-4" />
-                    Withdraw to XLM
                   </button>
                 </div>
               </div>
@@ -382,6 +375,9 @@ export function WalletDashboard() {
           </div>
           <div>
             <h1 className="text-lg font-bold leading-tight">CampusChain</h1>
+            <p className="text-xs font-semibold text-muted-foreground capitalize">
+              {role === "student" ? "Student" : role === "merchant" ? "Merchant" : role === "organizer" ? "Organizer" : role ? role.replace("-", " ") : "Student"}
+            </p>
           </div>
         </div>
 

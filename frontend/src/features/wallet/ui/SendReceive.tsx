@@ -17,6 +17,7 @@ import {
   useBuyCampTokensMutation,
   useClaimFaucetMutation,
   useHasClaimedFaucet,
+  useWithdrawCampMutation,
 } from "@/features/wallet/hooks/useWallet";
 import { Dropdown } from "@/shared/ui/Dropdown";
 import { Skeleton } from "@/shared/ui/Skeleton";
@@ -50,6 +51,12 @@ export function SendReceive() {
   const faucet = useHasClaimedFaucet(address ?? undefined);
   const claim = useClaimFaucetMutation();
   const [faucetNotice, setFaucetNotice] = useState<string | null>(null);
+
+  // Withdraw state
+  const [showWithdrawModal, setShowWithdrawModal] = useState(false);
+  const [withdrawAmount, setWithdrawAmount] = useState("");
+  const [withdrawNotice, setWithdrawNotice] = useState<string | null>(null);
+  const withdrawMutation = useWithdrawCampMutation();
 
   const handleClaimFaucet = async () => {
     if (!address) return;
@@ -174,15 +181,26 @@ export function SendReceive() {
     <div className="w-full max-w-5xl mx-auto grid lg:grid-cols-12 gap-6 items-start animate-in fade-in duration-300">
       {/* Left Column: CAMP Balance Card & Buy CAMP Card */}
       <section className="lg:col-span-5 space-y-6">
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
-          <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Available CAMP</p>
-          {isBalanceLoading ? (
-            <Skeleton className="h-10 w-40 mt-3" />
-          ) : (
-            <p className="mt-2 text-3xl font-bold text-foreground">
-              {campBalance?.toLocaleString() ?? "0"} CAMP
-            </p>
-          )}
+        <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+          <div>
+            <p className="text-xs font-bold uppercase tracking-wider text-muted-foreground">Available CAMP</p>
+            {isBalanceLoading ? (
+              <Skeleton className="h-10 w-40 mt-3" />
+            ) : (
+              <p className="mt-2 text-3xl font-bold text-foreground">
+                {campBalance?.toLocaleString() ?? "0"} CAMP
+              </p>
+            )}
+          </div>
+          <div className="pt-2 border-t border-border">
+            <button
+              onClick={() => setShowWithdrawModal(true)}
+              className="w-full bg-zinc-900 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-all cursor-pointer shadow-sm"
+            >
+              <ArrowUpRight className="h-4 w-4" />
+              Withdraw CAMP to XLM
+            </button>
+          </div>
         </div>
 
         <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
@@ -421,6 +439,101 @@ export function SendReceive() {
           )}
         </div>
       </section>
+
+      {/* Withdraw to XLM Modal */}
+      {showWithdrawModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-background/80 backdrop-blur-sm animate-in fade-in duration-200">
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault();
+              if (!address || !withdrawAmount || Number(withdrawAmount) <= 0) return;
+              try {
+                setWithdrawNotice(null);
+                const txHash = await withdrawMutation.mutateAsync({
+                  student: address,
+                  campAmount: Number(withdrawAmount),
+                });
+                setWithdrawNotice(`Successfully withdrawn ${withdrawAmount} CAMP to XLM! Tx: ${txHash}`);
+                setWithdrawAmount("");
+              } catch (err) {
+                setWithdrawNotice(err instanceof Error ? err.message : "Withdrawal failed.");
+              }
+            }}
+            className="w-full max-w-md bg-card border border-border rounded-xl p-6 space-y-4 shadow-xl"
+          >
+            <div className="flex justify-between items-center">
+              <h3 className="font-bold text-foreground text-sm flex items-center gap-2">
+                <ArrowUpRight className="h-5 w-5 text-foreground" /> Withdraw CAMP to XLM
+              </h3>
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  setWithdrawNotice(null);
+                }}
+                className="text-muted-foreground hover:text-foreground text-xs font-bold cursor-pointer"
+              >
+                ✕
+              </button>
+            </div>
+
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              Burn your CAMP tokens on-chain to receive native XLM directly into your Stellar wallet.
+              <br />
+              <strong className="text-foreground">Conversion Rate: 100 CAMP = 1 XLM</strong>
+            </p>
+
+            {withdrawNotice && (
+              <div
+                className={`text-xs p-2.5 rounded-lg border ${
+                  withdrawNotice.includes("Successfully")
+                    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                    : "text-destructive bg-destructive/5 border-destructive/20"
+                }`}
+              >
+                {withdrawNotice}
+              </div>
+            )}
+
+            <div className="space-y-1.5">
+              <label className="text-xs font-semibold text-foreground">CAMP Amount to Withdraw</label>
+              <input
+                type="number"
+                min="1"
+                step="1"
+                value={withdrawAmount}
+                onChange={(e) => setWithdrawAmount(e.target.value)}
+                placeholder="e.g. 100"
+                className="w-full px-3 py-2 bg-background border border-border rounded-lg text-xs focus:outline-none focus:ring-1 focus:ring-primary"
+                required
+              />
+              <p className="text-[10px] text-muted-foreground">
+                Estimated XLM payout: <strong>{(Number(withdrawAmount || 0) / 100).toFixed(2)} XLM</strong>
+              </p>
+            </div>
+
+            <div className="flex justify-end gap-3 pt-2">
+              <button
+                type="button"
+                onClick={() => {
+                  setShowWithdrawModal(false);
+                  setWithdrawNotice(null);
+                }}
+                className="h-10 px-4 border border-border rounded-lg text-xs font-bold cursor-pointer hover:bg-muted"
+              >
+                Cancel
+              </button>
+              <button
+                type="submit"
+                disabled={withdrawMutation.isPending || !withdrawAmount}
+                className="h-10 px-4 bg-zinc-900 hover:bg-zinc-800 text-white rounded-lg text-xs font-bold disabled:opacity-50 cursor-pointer"
+              >
+                {withdrawMutation.isPending ? "Processing..." : "Confirm Withdrawal"}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
     </div>
   );
 }

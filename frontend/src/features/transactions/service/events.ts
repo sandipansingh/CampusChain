@@ -23,7 +23,8 @@ type RawEvent = {
 function eventInvolvesAddress(event: { topic: unknown[] }, address?: string): boolean {
   if (!address) return true;
   try {
-    return JSON.stringify((event.topic as never[]).map((t) => scValToNative(t as never))).includes(address);
+    const jsonStr = JSON.stringify((event.topic as never[]).map((t) => scValToNative(t as never)));
+    return jsonStr.toLowerCase().includes(address.toLowerCase());
   } catch {
     return false;
   }

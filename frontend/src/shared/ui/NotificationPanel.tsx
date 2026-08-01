@@ -144,7 +144,10 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                 evt.eventName === "transfer" ||
                 evt.eventName === "mint_purchase" ||
                 evt.eventName === "OrderPlaced" ||
-                evt.eventName === "OrderStatusChanged";
+                evt.eventName === "OrderStatusChanged" ||
+                evt.eventName === "ScholarshipApplied" ||
+                evt.eventName === "ScholarshipAppApproved" ||
+                evt.eventName === "ScholarshipAppRejected";
 
               const handleClick = () => {
                 // Mark read on click
@@ -166,6 +169,13 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
                   onClose();
                 } else if (evt.eventName === "OrderStatusChanged") {
                   window.dispatchEvent(new CustomEvent("campuschain:navigate", { detail: "my-orders" }));
+                  onClose();
+                } else if (
+                  evt.eventName === "ScholarshipApplied" ||
+                  evt.eventName === "ScholarshipAppApproved" ||
+                  evt.eventName === "ScholarshipAppRejected"
+                ) {
+                  window.dispatchEvent(new CustomEvent("campuschain:navigate", { detail: "scholarships" }));
                   onClose();
                 }
               };
