@@ -203,25 +203,27 @@ export function SendReceive() {
           </div>
         </div>
 
-        <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
-          <h3 className="font-bold text-base text-foreground">Testnet Faucet</h3>
-          <p className="text-xs text-muted-foreground">
-            Claim test CAMP tokens. One 100 CAMP claim per wallet under the current contract.
-          </p>
-          {faucetNotice && (
-            <div className={faucetNotice.includes("confirmed") ? "text-xs text-emerald-700 break-all bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg" : "text-xs text-destructive break-words bg-destructive/5 border border-destructive/20 p-2.5 rounded-lg"}>
-              {faucetNotice}
-            </div>
-          )}
-          <button
-            onClick={handleClaimFaucet}
-            disabled={!address || faucet.data || faucet.isLoading || claim.isPending}
-            className="h-11 w-full border border-border rounded-lg text-sm font-bold disabled:opacity-50 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-muted"
-          >
-            <Coins className="h-4 w-4" />
-            {faucet.data ? "Already claimed" : claim.isPending ? "Confirming claim" : "Claim 100 CAMP"}
-          </button>
-        </div>
+        {(!faucet.data || (faucetNotice && faucetNotice.includes("confirmed"))) && (
+          <div className="bg-card border border-border rounded-xl p-6 shadow-sm space-y-4">
+            <h3 className="font-bold text-base text-foreground">Testnet Faucet</h3>
+            <p className="text-xs text-muted-foreground">
+              Claim test CAMP tokens. One 100 CAMP claim per wallet under the current contract.
+            </p>
+            {faucetNotice && (
+              <div className={faucetNotice.includes("confirmed") ? "text-xs text-emerald-700 break-all bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg" : "text-xs text-destructive break-words bg-destructive/5 border border-destructive/20 p-2.5 rounded-lg"}>
+                {faucetNotice}
+              </div>
+            )}
+            <button
+              onClick={handleClaimFaucet}
+              disabled={!address || faucet.data || faucet.isLoading || claim.isPending}
+              className="h-11 w-full border border-border rounded-lg text-sm font-bold disabled:opacity-50 inline-flex items-center justify-center gap-2 cursor-pointer transition-colors hover:bg-muted"
+            >
+              <Coins className="h-4 w-4" />
+              {faucet.data ? "Already claimed" : claim.isPending ? "Confirming claim" : "Claim 100 CAMP"}
+            </button>
+          </div>
+        )}
 
         <div className="bg-card border border-border rounded-xl p-6 space-y-4 shadow-sm">
           <h3 className="font-bold text-base text-foreground">Buy CAMP with XLM</h3>
