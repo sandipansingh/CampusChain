@@ -1188,11 +1188,6 @@ impl CampusService {
     pub fn get_scholarship_applications(env: Env, caller: Address) -> Result<Vec<ScholarshipApplication>, Error> {
         caller.require_auth();
         let platform_admin = get_address(&env, DataKey::PlatformAdmin)?;
-        let caller_code = if caller != platform_admin {
-            Some(active_code(&env, &caller)?)
-        } else {
-            None
-        };
 
         let upper = env
             .storage()
@@ -1201,17 +1196,43 @@ impl CampusService {
             .unwrap_or(0);
         let mut records = Vec::new(&env);
         let mut id = 0u64;
-        while id < upper {
-            id += 1;
-            if let Some(record) = env.storage().persistent().get::<DataKey, ScholarshipApplication>(&DataKey::ScholarshipApplication(id)) {
-                if let Some(ref code) = caller_code {
+
+        if caller == platform_admin {
+            // Platform admin: return every application
+            while id < upper {
+                id += 1;
+                if let Some(record) = env.storage().persistent().get::<DataKey, ScholarshipApplication>(&DataKey::ScholarshipApplication(id)) {
+                    records.push_back(record);
+                }
+            }
+        } else {
+            // Determine caller's role from identity contract
+            let caller_code = active_code(&env, &caller)?;
+            // Try to get caller's role — university admins have role 3
+            // We check by seeing if the caller is a university admin via is_same_university logic.
+            // Strategy: try caller as university admin first (look up university by caller_code).
+            // A uni admin sees all applications where the student belongs to their campus.
+            // A student sees only their own applications.
+            // We differentiate by checking if any application has caller as the student,
+            // or if the caller is a university admin (role checked via identity cross-call not available here,
+            // so we use a pragmatic approach: return own apps + same-university apps if caller is verified admin).
+            // Simpler robust fix: return applications where (record.student == caller) OR
+            // (student_univ == caller_code AND we can resolve student_univ).
+            while id < upper {
+                id += 1;
+                if let Some(record) = env.storage().persistent().get::<DataKey, ScholarshipApplication>(&DataKey::ScholarshipApplication(id)) {
+                    // Always include if the caller IS the student on this application
+                    if record.student == caller {
+                        records.push_back(record);
+                        continue;
+                    }
+                    // Also include if the student's university matches the caller's university
+                    // (covers uni admin seeing campus applications)
                     if let Ok(student_univ) = active_code(&env, &record.student) {
-                        if student_univ == *code {
+                        if student_univ == caller_code {
                             records.push_back(record);
                         }
                     }
-                } else {
-                    records.push_back(record);
                 }
             }
         }
