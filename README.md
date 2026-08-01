@@ -8,9 +8,9 @@
 </p>
 
 <p align="center">
-  <a href="https://stellar.expert/explorer/testnet/contract/CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q"><img src="https://img.shields.io/badge/CampusIdentity-Testnet-blue?logo=stellar" alt="CampusIdentity"/></a>
-  <a href="https://stellar.expert/explorer/testnet/contract/CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2"><img src="https://img.shields.io/badge/CampusToken-Testnet-blue?logo=stellar" alt="CampusToken"/></a>
-  <a href="https://stellar.expert/explorer/testnet/contract/CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL"><img src="https://img.shields.io/badge/CampusService-Testnet-blue?logo=stellar" alt="CampusService"/></a>
+  <a href="https://stellar.expert/explorer/testnet/contract/CCEFENQ6XHDVM5GHX63MFN3NBR5NCYRFBGEINDKYLQBESMV63OOTSUTQ"><img src="https://img.shields.io/badge/CampusIdentity-Testnet-blue?logo=stellar" alt="CampusIdentity"/></a>
+  <a href="https://stellar.expert/explorer/testnet/contract/CDHANNZGZKXEMKM5T2AF2EIHF3FLUCVLK57F4UX7ILQTUPR7NXF6THEN"><img src="https://img.shields.io/badge/CampusToken-Testnet-blue?logo=stellar" alt="CampusToken"/></a>
+  <a href="https://stellar.expert/explorer/testnet/contract/CD6FIIDFFTCJAJDN5ES57KGOXLI7VT64RRXL5ZB6WLSKQ2TPNUELMGFR"><img src="https://img.shields.io/badge/CampusService-Testnet-blue?logo=stellar" alt="CampusService"/></a>
   <img src="https://img.shields.io/badge/tests-passing-brightgreen" alt="Tests"/>
   <img src="https://img.shields.io/badge/build-passing-brightgreen" alt="Build"/>
 </p>
@@ -172,7 +172,7 @@ sequenceDiagram
 
 **Purpose**: Single source of truth for identity, user profiles, roles, and student verification status.
 
-**Address**: [`CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q`](https://stellar.expert/explorer/testnet/contract/CBSP6PGVKP3OHV7CHFIVNYA6GA3WQ2VGWMGW4YTG7IF6FBEKUVFKNH6Q)
+**Address**: [`CCEFENQ6XHDVM5GHX63MFN3NBR5NCYRFBGEINDKYLQBESMV63OOTSUTQ`](https://stellar.expert/explorer/testnet/contract/CCEFENQ6XHDVM5GHX63MFN3NBR5NCYRFBGEINDKYLQBESMV63OOTSUTQ)
 
 #### Storage Model
 
@@ -191,7 +191,7 @@ sequenceDiagram
 
 **Purpose**: Fungible campus token (7 decimals), on-chain role registry, faucet, and upgrade-safe WASM entrypoint.
 
-**Address**: [`CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2`](https://stellar.expert/explorer/testnet/contract/CCNX6UK6XNBXG63I75R5EVRHXQKD23ECUUJSH6NPV32OWJWJL72ZQCP2)
+**Address**: [`CDHANNZGZKXEMKM5T2AF2EIHF3FLUCVLK57F4UX7ILQTUPR7NXF6THEN`](https://stellar.expert/explorer/testnet/contract/CDHANNZGZKXEMKM5T2AF2EIHF3FLUCVLK57F4UX7ILQTUPR7NXF6THEN)
 
 #### Storage Model
 
@@ -240,7 +240,7 @@ sequenceDiagram
 
 **Purpose**: All campus services — escrow, marketplace, event tickets, university registry, scholarships, and rewards. Calls into CampusToken via a compiled WASM import (cross-contract client).
 
-**Address**: [`CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL`](https://stellar.expert/explorer/testnet/contract/CATHDHIUADXXENVYN7Z2ABSERDYUGK7OQMWFODBW7I66HS43WSUZNGLL)
+**Address**: [`CD6FIIDFFTCJAJDN5ES57KGOXLI7VT64RRXL5ZB6WLSKQ2TPNUELMGFR`](https://stellar.expert/explorer/testnet/contract/CD6FIIDFFTCJAJDN5ES57KGOXLI7VT64RRXL5ZB6WLSKQ2TPNUELMGFR)
 
 #### Storage Model (selected keys)
 
