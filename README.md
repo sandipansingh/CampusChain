@@ -1,4 +1,8 @@
 <p align="center">
+  <img src="frontend/public/icon.png" alt="CampusChain Logo" width="96" height="96"/>
+</p>
+
+<p align="center">
   <strong>CampusChain — Unified Campus Economy on Stellar</strong><br/>
   <em>A decentralised platform replacing disconnected cash and manual-verification portals with a single Stellar-powered payment, escrow, ticketing, and university registry ecosystem.</em>
 </p>
