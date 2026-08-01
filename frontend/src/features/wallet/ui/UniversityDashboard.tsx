@@ -475,10 +475,13 @@ export function UniversityDashboard() {
                                           Student Name: <span className="font-semibold">{studentProfile.fullName}</span>
                                         </p>
                                         <p className="text-[11px] text-muted-foreground">
+                                          Student ID: <span className="font-mono text-[10px] font-bold text-foreground">{app.id}</span>
+                                        </p>
+                                        <p className="text-[11px] text-muted-foreground">
                                           Wallet: <span className="font-mono text-[10px]">{app.studentId}</span>
                                         </p>
                                         <div className="text-[11px] text-muted-foreground bg-muted/40 p-1.5 rounded font-medium mt-1">
-                                          🎓 Dept: {studentProfile.details?.department || "N/A"} | Program: {studentProfile.details?.program || "N/A"} | Grad: {studentProfile.details?.graduationYear || "N/A"}
+                                          🎓 Dept: {String(studentProfile.details?.department || "N/A")} | Program: {String(studentProfile.details?.program || "N/A")} | Grad: {String(studentProfile.details?.graduationYear || "N/A")}
                                         </div>
                                       </div>
                                     ) : (
@@ -593,7 +596,9 @@ export function UniversityDashboard() {
   };
 
   const renderActivityFeed = () => {
-    return <ActivityFeed />;
+    // University admin sees the full campus-scoped activity feed.
+    // universityCode prop enables campus filtering at the RPC level.
+    return <ActivityFeed universityCode={universityCode || undefined} />;
   };
 
   const renderContentView = () => {

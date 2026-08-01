@@ -4,6 +4,7 @@ import { useMemo, useState } from "react";
 import { BookOpen, FileText, FlaskConical, Lock, PackageOpen, Plus, Search, Smartphone } from "lucide-react";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { useMarketplaceListings } from "@/features/marketplace/hooks/useMarketplace";
+import { useWallet } from "@/shared/stellar/useWallet";
 
 const categories = ["All", "Books", "Electronics", "Notes", "Hostel Items", "Others"];
 const categoryName: Record<number, string> = { 1: "Books", 2: "Electronics", 3: "Notes", 4: "Hostel Items", 5: "Others" };
@@ -12,9 +13,10 @@ const categoryIcon: Record<number, React.ComponentType<React.SVGProps<SVGSVGElem
 interface MarketplaceGridProps { onSelectItem: (id: string) => void; onSellItem: () => void; }
 
 export function MarketplaceGrid({ onSelectItem, onSellItem }: MarketplaceGridProps) {
+  const { address } = useWallet();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("All");
-  const { data: listings = [], isLoading, isError, error, refetch } = useMarketplaceListings();
+  const { data: listings = [], isLoading, isError, error, refetch } = useMarketplaceListings(address ?? undefined);
   const visibleListings = useMemo(() => listings.filter((listing) => listing.status === 1).filter((listing) => {
     const matchesCategory = selectedCategory === "All" || categoryName[listing.category] === selectedCategory;
     const query = searchQuery.toLowerCase().trim();

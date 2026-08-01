@@ -3,17 +3,31 @@ import { useState, useEffect, useCallback } from "react";
 import { fetchLedgerEventsRaw, fetchEventsPaginated } from "../service/events";
 import { DecodedEvent } from "@/shared/stellar/eventDecoder";
 
+/** Notification panel — last ~50 events across all contracts, auto-refreshes every 15s. */
 export function useLedgerEvents() {
   return useQuery({
     queryKey: ["ledger-events"],
-    queryFn: async () => {
-      return fetchLedgerEventsRaw();
-    },
-    refetchInterval: 15000,
+    queryFn: () => fetchLedgerEventsRaw(),
+    refetchInterval: 15_000,
   });
 }
 
-export function useActivityFeed(address?: string) {
+interface ActivityFeedOptions {
+  /** Own-wallet address — filters to events involving this address (students, merchants, sub-roles). */
+  address?: string;
+  /** Campus university code — filters to all events from this campus (university admins). */
+  universityCode?: string;
+}
+
+/**
+ * Activity feed hook used on the Activity page.
+ *
+ * Behaviour:
+ * - `universityCode` provided → campus-scoped feed (all members' events for that campus)
+ * - `address` only → own-wallet feed (own transactions only)
+ * - neither → global feed (platform admin; all events)
+ */
+export function useActivityFeed({ address, universityCode }: ActivityFeedOptions = {}) {
   const [events, setEvents] = useState<DecodedEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
@@ -23,37 +37,47 @@ export function useActivityFeed(address?: string) {
   const [typeFilter, setTypeFilter] = useState("all");
   const [sortBy, setSortBy] = useState<"newest" | "oldest">("newest");
 
-  const fetchEvents = useCallback(async (nextCursor: string | null, isLoadMore = false) => {
-    try {
-      if (isLoadMore) setLoadingMore(true);
-      else setLoading(true);
+  const fetchEvents = useCallback(
+    async (nextCursor: string | null, isLoadMore = false) => {
+      try {
+        if (isLoadMore) setLoadingMore(true);
+        else setLoading(true);
 
-      const res = await fetchEventsPaginated(nextCursor, 40, address);
+        const res = await fetchEventsPaginated(nextCursor, 40, address, universityCode);
 
-      if (isLoadMore) {
-        setEvents((prev) => {
-          const existingIds = new Set(prev.map((e: DecodedEvent) => e.id));
-          const newEvents = res.events.filter((e: DecodedEvent) => !existingIds.has(e.id));
-          return [...prev, ...newEvents];
-        });
-      } else {
-        setEvents(res.events);
+        if (isLoadMore) {
+          setEvents((prev) => {
+            const existingIds = new Set(prev.map((e) => e.id));
+            return [...prev, ...res.events.filter((e) => !existingIds.has(e.id))];
+          });
+        } else {
+          setEvents(res.events);
+        }
+
+        setHasMore(res.hasMore);
+        setCursor(res.cursor);
+      } catch {
+        // fail silently — stale data is fine
+      } finally {
+        setLoading(false);
+        setLoadingMore(false);
       }
+    },
+    [address, universityCode]
+  );
 
-      setHasMore(res.hasMore);
-      setCursor(res.cursor);
-    } catch {
-      // silent
-    } finally {
-      setLoading(false);
-      setLoadingMore(false);
-    }
-  }, [address]);
-
+  // Initial load + re-fetch when filters change
   useEffect(() => {
     void fetchEvents(null);
-  }, [address, fetchEvents]);
+  }, [fetchEvents]);
 
+  // Auto-refresh every 30 seconds for real-time feel
+  useEffect(() => {
+    const interval = setInterval(() => void fetchEvents(null), 30_000);
+    return () => clearInterval(interval);
+  }, [fetchEvents]);
+
+  // Instant refresh after any on-chain transaction in this session
   useEffect(() => {
     const refresh = () => void fetchEvents(null);
     window.addEventListener("campuschain:transaction-submitted", refresh);
@@ -62,7 +86,8 @@ export function useActivityFeed(address?: string) {
 
   const filteredEvents = events.filter((e) => {
     const query = searchQuery.toLowerCase().trim();
-    const matchesSearch = !query ||
+    const matchesSearch =
+      !query ||
       e.message.toLowerCase().includes(query) ||
       e.details.toLowerCase().includes(query) ||
       e.title.toLowerCase().includes(query) ||
@@ -72,13 +97,9 @@ export function useActivityFeed(address?: string) {
     return matchesSearch && matchesType;
   });
 
-  const sortedEvents = [...filteredEvents].sort((a, b) => {
-    if (sortBy === "newest") {
-      return b.ledger - a.ledger;
-    } else {
-      return a.ledger - b.ledger;
-    }
-  });
+  const sortedEvents = [...filteredEvents].sort((a, b) =>
+    sortBy === "newest" ? b.ledger - a.ledger : a.ledger - b.ledger
+  );
 
   return {
     events,
@@ -92,6 +113,7 @@ export function useActivityFeed(address?: string) {
     setTypeFilter,
     sortBy,
     setSortBy,
+    refresh: () => void fetchEvents(null),
     loadMore: () => {
       if (!loadingMore && hasMore) void fetchEvents(cursor, true);
     },

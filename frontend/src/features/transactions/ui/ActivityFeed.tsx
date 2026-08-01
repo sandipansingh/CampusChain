@@ -43,12 +43,27 @@ function getEventIcon(icon: string) {
   }
 }
 
-export function ActivityFeed({ global = false }: { global?: boolean } = {}) {
+export function ActivityFeed({
+  global = false,
+  universityCode,
+}: {
+  global?: boolean;
+  universityCode?: string;
+} = {}) {
   const { address } = useWallet();
   const [expandedTxId, setExpandedTxId] = useState<string | null>(null);
   const [copiedId, setCopiedId] = useState<string | null>(null);
 
-  // Hook pagination logic
+  // Determine feed mode:
+  // - global=true → platform admin: no address filter (all events)
+  // - universityCode provided → university admin: campus-scoped feed
+  // - default → own-wallet: sub-role personal activity
+  const feedOptions = global
+    ? {}
+    : universityCode
+    ? { address: address ?? undefined, universityCode }
+    : { address: address ?? undefined };
+
   const {
     filteredEvents,
     loading,
@@ -61,7 +76,7 @@ export function ActivityFeed({ global = false }: { global?: boolean } = {}) {
     sortBy,
     setSortBy,
     loadMore,
-  } = useActivityFeed(global ? undefined : (address ?? undefined));
+  } = useActivityFeed(feedOptions);
 
   // Toggle detail rows
   const handleToggleDetails = (id: string) => {

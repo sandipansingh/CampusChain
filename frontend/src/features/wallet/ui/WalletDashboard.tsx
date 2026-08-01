@@ -77,7 +77,7 @@ export function WalletDashboard() {
   const { data: campBalance, isLoading: isBalanceLoading } = useCampusBalance(address);
   const { data: userRole } = useCampusUserRole(address);
   const { data: profile } = useCampusProfile(address);
-  const { filteredEvents: ledgerEvents, loading: isEventsLoading } = useActivityFeed(address ?? undefined);
+  const { filteredEvents: ledgerEvents, loading: isEventsLoading } = useActivityFeed({ address: address ?? undefined });
 
   // isLocked is true if profile verification is not Approved (status 2).
   // Updates live via on-chain ProfileVerified / ProfileRejected events invalidating the 'campus-profile' query cache.
@@ -161,6 +161,7 @@ export function WalletDashboard() {
       case "scholarships":
         return <Scholarships />;
       case "activity":
+        // Sub-roles (students, merchants, organizers) see only their own wallet's activity
         return <ActivityFeed />;
       case "merchant":
         return <MerchantDashboard />;
@@ -364,7 +365,6 @@ export function WalletDashboard() {
           </div>
           <div>
             <h1 className="text-lg font-bold leading-tight">CampusChain</h1>
-            <p className="text-xs text-muted-foreground">Radical Utility</p>
           </div>
         </div>
 

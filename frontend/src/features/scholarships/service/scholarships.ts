@@ -28,7 +28,7 @@ export interface ScholarshipApplication {
   id: number;
   scholarshipId: number;
   studentId: string;
-  status: "pending" | "approved" | "rejected";
+  status: "pending" | "approved" | "rejected" | "suspended";
   appliedAt: number;
   decidedAt: number;
   decidedBy: string;

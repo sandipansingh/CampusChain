@@ -112,6 +112,8 @@ export function useCreateListingMutation() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["marketplace-listings"] });
+      // Signal the activity feed to refresh immediately
+      window.dispatchEvent(new CustomEvent("campuschain:transaction-submitted"));
     },
   });
 }
