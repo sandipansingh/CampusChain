@@ -133,7 +133,7 @@ run_idempotent \
 
 # Step 3: Register Student Profile
 DUMMY_HASH="0101010101010101010101010101010101010101010101010101010101010101"
-DETAILS_JSON="{\"Student\":{\"student_identifier_hash\":\"$DUMMY_HASH\",\"department\":\"Engineering\",\"program\":\"Computer Science\",\"graduation_year\":2027}}"
+DETAILS_JSON="{\"Student\":{\"student_id\":\"DEMO-STUDENT-001\",\"student_identifier_hash\":\"$DUMMY_HASH\",\"department\":\"Engineering\",\"program\":\"Computer Science\",\"graduation_year\":2027}}"
 
 run_idempotent \
     "Step 3: Registering Student Profile" \
