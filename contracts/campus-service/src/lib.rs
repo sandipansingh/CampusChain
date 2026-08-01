@@ -32,6 +32,7 @@ pub enum Error {
     CapacityReached = 7,
     IdentityCheckFailed = 8,
     InvalidInput = 9,
+    AlreadyClaimed = 10,
 }
 
 #[contracttype]
@@ -62,6 +63,7 @@ pub enum DataKey {
     MenuItem(u64),
     FoodOrderCounter,
     FoodOrder(u64),
+    FaucetClaimed(Address),
 }
 
 #[contracttype]
@@ -902,10 +904,22 @@ impl CampusService {
         Ok(())
     }
 
+    pub fn has_claimed_faucet(env: Env, address: Address) -> bool {
+        env.storage().persistent().has(&DataKey::FaucetClaimed(address))
+    }
+
     pub fn claim_faucet(env: Env, recipient: Address) -> Result<(), Error> {
         recipient.require_auth();
         // Active code lookup is the profile/university verification guard.
         active_code(&env, &recipient)?;
+
+        let key = DataKey::FaucetClaimed(recipient.clone());
+        if env.storage().persistent().has(&key) {
+            return Err(Error::AlreadyClaimed);
+        }
+        env.storage().persistent().set(&key, &true);
+        extend_persistent(&env, &key);
+
         token_client(&env)?.mint_purchase(
             &env.current_contract_address(),
             &recipient,
