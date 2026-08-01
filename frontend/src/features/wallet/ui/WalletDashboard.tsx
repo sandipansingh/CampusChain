@@ -376,7 +376,7 @@ export function WalletDashboard() {
             alt="CampusChain Logo"
             width={40}
             height={40}
-            className="w-10 h-10 rounded-xl object-contain bg-zinc-900 p-1"
+            className="w-10 h-10 rounded-xl object-contain"
           />
           <div>
             <h1 className="text-lg font-bold leading-tight">CampusChain</h1>
@@ -436,7 +436,7 @@ export function WalletDashboard() {
               alt="CampusChain Logo"
               width={28}
               height={28}
-              className="h-7 w-7 rounded-lg object-contain bg-zinc-900 p-0.5 md:hidden"
+              className="h-7 w-7 rounded-lg object-contain md:hidden"
             />
             <h2 className="text-lg md:text-xl font-bold capitalize">{activeTab}</h2>
           </div>
