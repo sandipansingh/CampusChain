@@ -53,6 +53,7 @@ export function UniversityDashboard() {
   const [progDeadline, setProgDeadline] = useState("");
   const [progSlots, setProgSlots] = useState("");
   const [schNotice, setSchNotice] = useState<string | null>(null);
+  const [expandedProgramId, setExpandedProgramId] = useState<number | null>(null);
 
   const { data: profile } = useCampusProfile(address);
   const universityCode = profile?.universityCode ?? "";
@@ -442,75 +443,106 @@ export function UniversityDashboard() {
                       </div>
                     </div>
 
-                    <div className="space-y-3">
-                      <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Applicant Queue</h5>
-                      {isLoadingApps ? (
-                        <Skeleton className="h-10 w-full" />
-                      ) : programApps.length === 0 ? (
-                        <p className="text-xs text-muted-foreground">No applications submitted yet.</p>
-                      ) : (
-                        <div className="space-y-2">
-                          {programApps.map((app) => (
-                            <div key={app.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 border border-border rounded-lg bg-card gap-4">
-                              <div>
-                                <p className="text-xs font-semibold text-foreground">
-                                  Student: <span className="font-mono">{app.studentId}</span>
-                                </p>
-                                <p className="text-[10px] text-muted-foreground mt-1">
-                                  Applied on: {new Date(app.appliedAt).toLocaleDateString()}
-                                </p>
-                              </div>
-                              <div className="flex items-center gap-2">
-                                {app.status === "pending" ? (
-                                  <>
-                                    <button
-                                      disabled={reviewApp.isPending}
-                                      onClick={async () => {
-                                        try {
-                                          setSchNotice(null);
-                                          const txHash = await reviewApp.mutateAsync({ universityId: address!, applicationId: app.id, approved: true });
-                                          setSchNotice(`Application approved successfully! Tx: ${txHash}`);
-                                        } catch (err) {
-                                          setSchNotice(err instanceof Error ? err.message : "Approval failed.");
-                                        }
-                                      }}
-                                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
-                                    >
-                                      Approve
-                                    </button>
-                                    <button
-                                      disabled={reviewApp.isPending}
-                                      onClick={async () => {
-                                        try {
-                                          setSchNotice(null);
-                                          const txHash = await reviewApp.mutateAsync({ universityId: address!, applicationId: app.id, approved: false });
-                                          setSchNotice(`Application rejected successfully! Tx: ${txHash}`);
-                                        } catch (err) {
-                                          setSchNotice(err instanceof Error ? err.message : "Rejection failed.");
-                                        }
-                                      }}
-                                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
-                                    >
-                                      Reject
-                                    </button>
-                                  </>
-                                ) : (
-                                  <span
-                                    className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
-                                      app.status === "approved"
-                                        ? "bg-emerald-50 text-emerald-700 border-emerald-200"
-                                        : "bg-rose-50 text-rose-700 border-rose-200"
-                                    }`}
-                                  >
-                                    {app.status.toUpperCase()}
-                                  </span>
-                                )}
-                              </div>
-                            </div>
-                          ))}
-                        </div>
-                      )}
+                    <div className="pt-2">
+                      <button
+                        onClick={() => setExpandedProgramId(expandedProgramId === p.id ? null : p.id)}
+                        className="text-xs font-semibold text-primary hover:underline cursor-pointer flex items-center gap-1.5"
+                      >
+                        {expandedProgramId === p.id ? "Hide Applicant Queue" : `View Applicant Queue (${programApps.length})`}
+                      </button>
                     </div>
+
+                    {expandedProgramId === p.id && (
+                      <div className="space-y-3 pt-3 border-t border-border mt-3 animate-in fade-in duration-200">
+                        <h5 className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Applicant Queue</h5>
+                        {isLoadingApps ? (
+                          <Skeleton className="h-10 w-full" />
+                        ) : programApps.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">No applications submitted yet.</p>
+                        ) : (
+                          <div className="space-y-2">
+                            {programApps.map((app) => {
+                              const studentProfile = members.find(
+                                (m) => m.address.toLowerCase() === app.studentId.toLowerCase()
+                              );
+
+                              return (
+                                <div key={app.id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3.5 border border-border rounded-lg bg-card gap-4">
+                                  <div>
+                                    {studentProfile ? (
+                                      <div className="space-y-1">
+                                        <p className="text-xs font-bold text-foreground">
+                                          Student Name: <span className="font-semibold">{studentProfile.fullName}</span>
+                                        </p>
+                                        <p className="text-[11px] text-muted-foreground">
+                                          Wallet: <span className="font-mono text-[10px]">{app.studentId}</span>
+                                        </p>
+                                        <div className="text-[11px] text-muted-foreground bg-muted/40 p-1.5 rounded font-medium mt-1">
+                                          🎓 Dept: {studentProfile.details?.department || "N/A"} | Program: {studentProfile.details?.program || "N/A"} | Grad: {studentProfile.details?.graduationYear || "N/A"}
+                                        </div>
+                                      </div>
+                                    ) : (
+                                      <p className="text-xs font-semibold text-foreground">
+                                        Student Wallet: <span className="font-mono">{app.studentId}</span>
+                                      </p>
+                                    )}
+                                    <p className="text-[10px] text-muted-foreground mt-1">
+                                      Applied on: {new Date(app.appliedAt).toLocaleDateString()}
+                                    </p>
+                                  </div>
+                                  <div className="flex items-center gap-2">
+                                    {app.status === "pending" ? (
+                                      <>
+                                        <button
+                                          disabled={reviewApp.isPending}
+                                          onClick={async () => {
+                                            try {
+                                              setSchNotice(null);
+                                              const txHash = await reviewApp.mutateAsync({ universityId: address!, applicationId: app.id, approved: true });
+                                              setSchNotice(`Application approved successfully! Tx: ${txHash}`);
+                                            } catch (err) {
+                                              setSchNotice(err instanceof Error ? err.message : "Approval failed.");
+                                            }
+                                          }}
+                                          className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
+                                        >
+                                          Approve
+                                        </button>
+                                        <button
+                                          disabled={reviewApp.isPending}
+                                          onClick={async () => {
+                                            try {
+                                              setSchNotice(null);
+                                              const txHash = await reviewApp.mutateAsync({ universityId: address!, applicationId: app.id, approved: false });
+                                              setSchNotice(`Application rejected successfully! Tx: ${txHash}`);
+                                            } catch (err) {
+                                              setSchNotice(err instanceof Error ? err.message : "Rejection failed.");
+                                            }
+                                          }}
+                                          className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold cursor-pointer disabled:opacity-50"
+                                        >
+                                          Reject
+                                        </button>
+                                      </>
+                                    ) : (
+                                      <span
+                                        className={`px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                                          app.status === "approved"
+                                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                                            : "bg-rose-50 text-rose-700 border-rose-200"
+                                        }`}
+                                      >
+                                        {app.status.toUpperCase()}
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        )}
+                      </div>
+                    )}
                   </div>
                 );
               })}
