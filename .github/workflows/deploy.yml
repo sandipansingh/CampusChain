@@ -76,17 +76,14 @@ jobs:
         run: npm ci
 
       # Deploy to Vercel (production)
-      # 1. Pull environment & project config inside `frontend/`
-      # 2. Build Next.js app inside `frontend/` to generate `frontend/.vercel/output`
-      # 3. Deploy prebuilt output from repo root (where rootDirectory = "frontend" is respected)
+      # Pull environment & project config, build Next.js app, and deploy prebuilt output.
+      # All commands run from repo root where rootDirectory="frontend" in Vercel project settings is respected.
       - name: Deploy to Vercel
         if: env.VERCEL_TOKEN != ''
         run: |
           npm install --global vercel@latest
-          cd frontend
           vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
           vercel build --prod --token="$VERCEL_TOKEN"
-          cd ..
           vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN"
 
       # Fallback: upload build artefact
