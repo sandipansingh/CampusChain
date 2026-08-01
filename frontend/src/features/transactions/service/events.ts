@@ -19,12 +19,33 @@ type RawEvent = {
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
+/**
+ * Safely converts any native ScVal topic value (String, Symbol, Number, BigInt, or Stellar SDK Address object)
+ * into a clean JavaScript string representation (e.g. base32 Stellar address "GDPJB...").
+ */
+export function extractString(val: unknown): string {
+  if (val === null || val === undefined) return "";
+  if (typeof val === "string") return val;
+  if (typeof val === "number" || typeof val === "bigint") return String(val);
+  if (typeof val === "object") {
+    if ("toString" in val && typeof (val as { toString: () => string }).toString === "function") {
+      const str = (val as { toString: () => string }).toString();
+      if (str && str !== "[object Object]") return str;
+    }
+    const record = val as Record<string, unknown>;
+    if (typeof record._value === "string") return record._value;
+    return JSON.stringify(record);
+  }
+  return String(val);
+}
+
 /** Returns true if the given address appears anywhere in the event's topic list. */
 function eventInvolvesAddress(event: { topic: unknown[] }, address?: string): boolean {
   if (!address) return true;
   try {
-    const jsonStr = JSON.stringify((event.topic as never[]).map((t) => scValToNative(t as never)));
-    return jsonStr.toLowerCase().includes(address.toLowerCase());
+    const topics = (event.topic as never[]).map((t) => extractString(scValToNative(t as never)));
+    const topicsStr = topics.join(" ").toLowerCase();
+    return topicsStr.includes(address.toLowerCase());
   } catch {
     return false;
   }
@@ -32,11 +53,11 @@ function eventInvolvesAddress(event: { topic: unknown[] }, address?: string): bo
 
 /**
  * Returns true if the university_code (last topic element) matches the given campus code.
- * After the contract upgrade, all campus-service events have university_code as the last topic.
+ * All campus-service events have university_code in their topic vector.
  */
 function eventBelongsToCampus(event: { topic: unknown[] }, universityCode: string): boolean {
   try {
-    const topics = (event.topic as never[]).map((t) => scValToNative(t as never));
+    const topics = (event.topic as never[]).map((t) => extractString(scValToNative(t as never)));
     const lastTopic = topics[topics.length - 1];
     return typeof lastTopic === "string" && lastTopic.toUpperCase() === universityCode.toUpperCase();
   } catch {
@@ -59,15 +80,7 @@ function decodeOrNull(evt: RawEvent): DecodedEvent | null {
   }
 }
 
-// ── Base filters for all three contracts ──────────────────────────────────────
-
-const BASE_FILTERS = [
-  { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] },
-  { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] },
-  { type: "contract" as const, contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID] },
-];
-
-async function getStartLedger(lookbackBlocks = 2000): Promise<number> {
+async function getStartLedger(lookbackBlocks = 5000): Promise<number> {
   const server = getRpcServer();
   const latest = await server.getLatestLedger();
   return Math.max(1, latest.sequence - lookbackBlocks);
@@ -106,29 +119,44 @@ export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
 }
 
 /**
- * Paginated event fetch for the Activity page.
+ * Event fetch for the Activity page.
  *
  * - `address` → own-wallet filter (students, merchants, sub-roles)
  * - `universityCode` → campus-scoped filter (university admins)
  * - neither → global filter (platform admins)
  */
 export async function fetchEventsPaginated(
-  cursor: string | null,
-  limit = 40,
+  _cursor: string | null,
+  limit = 50,
   address?: string,
   universityCode?: string
 ) {
   const server = getRpcServer();
+  const startLedger = await getStartLedger(5000);
 
-  let res: { events: RawEvent[]; cursor?: string | null };
-  if (cursor) {
-    res = (await getEventsSafe(server, { filters: BASE_FILTERS, cursor, limit })) as never;
-  } else {
-    const startLedger = await getStartLedger(5000);
-    res = (await getEventsSafe(server, { startLedger, filters: BASE_FILTERS, limit })) as never;
-  }
+  const [sRes, tRes, iRes] = (await Promise.all([
+    getEventsSafe(server, {
+      startLedger,
+      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] }],
+      limit,
+    }),
+    getEventsSafe(server, {
+      startLedger,
+      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] }],
+      limit,
+    }),
+    getEventsSafe(server, {
+      startLedger,
+      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID] }],
+      limit,
+    }),
+  ])) as [{ events: RawEvent[] }, { events: RawEvent[] }, { events: RawEvent[] }];
 
-  const events = res.events.filter((event) => {
+  const combined = [...sRes.events, ...tRes.events, ...iRes.events].sort(
+    (a, b) => b.ledger - a.ledger
+  );
+
+  const events = combined.filter((event) => {
     if (universityCode) {
       // University admin: events from campus-service matching university_code topic
       // OR identity events that involve the campus (profile verified, role changed)
@@ -142,7 +170,7 @@ export async function fetchEventsPaginated(
 
   return {
     events: decodedEvents,
-    cursor: res.cursor ?? null,
-    hasMore: res.events.length >= limit,
+    cursor: null,
+    hasMore: false,
   };
 }

@@ -29,6 +29,7 @@ import { eventMonitor, captureError } from "@/shared/lib/observability";
 import { fetchFoodOrder } from "@/features/food-ordering/service";
 import { FoodOrderStatus, FoodOrderStatusLabels } from "@/features/food-ordering/types";
 import { fetchUserProfile } from "@/features/wallet/service/campusIdentity";
+import { extractString } from "@/features/transactions/service/events";
 
 const POLL_INTERVAL_MS = 4000;
 
@@ -180,28 +181,24 @@ export function useContractEventStream(address: string | null | undefined) {
             }
             continue;
           }
-
           // 2. University Admin personal notifications (New Verification Requests)
-          if (profile?.role === 4) {
-            if (evt.eventName === "ProfileSubmittedForVerification") {
-              const eventCode = evt.details.toUpperCase();
-              if (eventCode === myUnivCode) {
-                try {
-                  const applicantAddress = typeof evt.topicNative?.[1] === "string" ? evt.topicNative[1] : "";
-                  const applicantProfile = await fetchUserProfile(applicantAddress, address || undefined);
-                  const applicantName = applicantProfile?.fullName || shortAddr(applicantAddress);
-                  evt.title = "Verification Request";
-                  evt.message = `New verification request from ${applicantName}`;
-                  filteredDecoded.push(evt);
-                } catch (err) {
-                  console.warn("Failed fetching applicant profile for notification", err);
-                  evt.title = "Verification Request";
-                  evt.message = `New verification request from ${shortAddr(evt.topicNative?.[1] as string)}`;
-                  filteredDecoded.push(evt);
-                }
+          if (profile?.role === 4 && evt.eventName === "ProfileSubmittedForVerification") {
+            const eventCode = evt.details.toUpperCase();
+            if (eventCode === myUnivCode) {
+              try {
+                const applicantAddress = extractString(evt.topicNative?.[1]);
+                const applicantProfile = await fetchUserProfile(applicantAddress, address || undefined);
+                const applicantName = applicantProfile?.fullName || shortAddr(applicantAddress);
+                evt.title = "Verification Request";
+                evt.message = `New verification request from ${applicantName}`;
+                filteredDecoded.push(evt);
+              } catch (err) {
+                console.warn("Failed fetching applicant profile for notification", err);
+                evt.title = "Verification Request";
+                evt.message = `New verification request from ${shortAddr(extractString(evt.topicNative?.[1]))}`;
+                filteredDecoded.push(evt);
               }
             }
-            continue;
           }
 
           // 3. User Identity personal notifications (Student/Merchant/Organizer Profile Verification status)
@@ -223,8 +220,8 @@ export function useContractEventStream(address: string | null | undefined) {
             evt.eventName === "ScholarshipAppApproved" ||
             evt.eventName === "ScholarshipAppRejected"
           ) {
-            const studentAddr = typeof evt.topicNative?.[2] === "string" ? evt.topicNative[2] : "";
-            const eventUniCode = typeof evt.topicNative?.[3] === "string" ? evt.topicNative[3].toUpperCase() : "";
+            const studentAddr = extractString(evt.topicNative?.[2]);
+            const eventUniCode = extractString(evt.topicNative?.[3]).toUpperCase();
 
             if (studentAddr.toLowerCase() === address.toLowerCase()) {
               if (evt.eventName === "ScholarshipApplied") {
