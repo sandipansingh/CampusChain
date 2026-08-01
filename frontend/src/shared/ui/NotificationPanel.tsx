@@ -137,7 +137,7 @@ export function NotificationPanel({ isOpen, onClose }: NotificationPanelProps) {
               </div>
             </div>
           ) : (
-            items.map((evt) => {
+            [...items].sort((a, b) => b.ledger - a.ledger).map((evt) => {
               const isActionable = 
                 evt.eventName === "UniversityRegistered" || 
                 evt.eventName === "ProfileSubmittedForVerification" ||

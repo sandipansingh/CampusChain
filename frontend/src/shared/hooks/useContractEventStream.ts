@@ -133,7 +133,7 @@ export function useContractEventStream(address: string | null | undefined) {
         if (destroyed) return;
 
         const rawEvents = [...sRes.events, ...tRes.events, ...iRes.events].sort(
-          (a, b) => a.ledger - b.ledger
+          (a, b) => b.ledger - a.ledger
         );
 
         if (rawEvents.length === 0) return;

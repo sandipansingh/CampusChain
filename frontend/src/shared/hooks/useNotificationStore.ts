@@ -31,11 +31,15 @@ export const useNotificationStore = create<NotificationState>((set, get) => ({
     
     if (fresh.length === 0) return;
 
-    set((state) => ({
-      // Newest first, capped at MAX_NOTIFICATION_ITEMS
-      items: [...fresh, ...state.items].slice(0, MAX_NOTIFICATION_ITEMS),
-      unreadCount: Math.min(state.unreadCount + fresh.length, 99),
-    }));
+    set((state) => {
+      const combined = [...fresh, ...state.items];
+      // Always sort by ledger desc (newest first)
+      const sorted = combined.sort((a, b) => b.ledger - a.ledger);
+      return {
+        items: sorted.slice(0, MAX_NOTIFICATION_ITEMS),
+        unreadCount: Math.min(state.unreadCount + fresh.length, 99),
+      };
+    });
   },
 
   markAllRead: () => {
