@@ -15,6 +15,7 @@ import {
   HelpCircle,
   Inbox,
   Check,
+  ShoppingBag,
 } from "lucide-react";
 
 interface NotificationPanelProps {
@@ -32,6 +33,7 @@ function EventIcon({ icon }: { icon: string }) {
     case "membership": return <Users className={cls} />;
     case "faucet":   return <Droplets className={cls} />;
     case "role":     return <ShieldCheck className={cls} />;
+    case "marketplace": return <ShoppingBag className={cls} />;
     default:         return <HelpCircle className={cls} />;
   }
 }
