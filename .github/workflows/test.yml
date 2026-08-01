@@ -59,13 +59,13 @@ jobs:
       - name: Setup Node.js 22 (LTS)
         uses: actions/setup-node@v4
         with:
-          node-version: "22"
+          node-version: "24"
           cache: "npm"
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies (npm ci)
         working-directory: frontend
-        run: npm ci --omit=optional
+        run: npm ci
 
       # Vitest runs in headless jsdom mode — no Freighter popup, no network calls.
       - name: Run frontend tests
