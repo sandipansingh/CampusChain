@@ -485,7 +485,7 @@ export function SendReceive() {
 
             {withdrawNotice && (
               <div
-                className={`text-xs p-2.5 rounded-lg border ${
+                className={`text-xs p-2.5 rounded-lg border break-all ${
                   withdrawNotice.includes("Successfully")
                     ? "text-emerald-700 bg-emerald-50 border-emerald-200"
                     : "text-destructive bg-destructive/5 border-destructive/20"
