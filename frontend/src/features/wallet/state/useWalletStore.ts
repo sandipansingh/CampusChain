@@ -124,7 +124,7 @@ export const useWalletStore = create<WalletState>((set, get) => {
       // Initialize the Kit with the configured network passphrase
       StellarWalletsKit.init({
         modules: defaultModules(),
-        network: NEXT_PUBLIC_STELLAR_PASSPHRASE as any,
+        network: NEXT_PUBLIC_STELLAR_PASSPHRASE as Networks,
       });
 
       setupListeners();
