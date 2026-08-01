@@ -12,6 +12,7 @@ fn text(env: &Env, value: &str) -> String {
 
 fn student_details(env: &Env, hash_val: u8) -> ProfileDetails {
     ProfileDetails::Student(StudentDetails {
+        student_id: text(env, "NIT/2025/0433"),
         student_identifier_hash: BytesN::from_array(env, &[hash_val; 32]),
         department: text(env, "Engineering"),
         program: text(env, "Computer Science"),

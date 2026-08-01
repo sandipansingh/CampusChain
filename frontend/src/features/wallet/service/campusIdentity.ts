@@ -90,13 +90,17 @@ async function profileDetailsScVal(registration: ProfileRegistration): Promise<x
     return enumScVal("Student", structScVal(
       {
         department: registration.department,
-        program: registration.program,
         graduation_year: registration.graduationYear,
+        program: registration.program,
+        student_id: registration.studentIdentifier,
         student_identifier_hash: digest,
       },
       {
-        department: ["symbol", "string"], program: ["symbol", "string"],
-        graduation_year: ["symbol", "u32"], student_identifier_hash: ["symbol", "bytes"],
+        department: ["symbol", "string"],
+        graduation_year: ["symbol", "u32"],
+        program: ["symbol", "string"],
+        student_id: ["symbol", "string"],
+        student_identifier_hash: ["symbol", "bytes"],
       }
     ));
   }
@@ -127,6 +131,7 @@ export function normalizeProfileDetails(detailsRaw: unknown): Record<string, any
 
   if (type === "Student") {
     return {
+      studentId: String(payload.student_id ?? ""),
       department: String(payload.department ?? ""),
       program: String(payload.program ?? ""),
       graduationYear: Number(payload.graduation_year ?? 0),

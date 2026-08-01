@@ -31,11 +31,7 @@ export function Settings() {
 
   if (!profile) return null;
 
-  // Retrieve raw Student ID from local storage for the connected wallet
-  const localStudentId = address ? localStorage.getItem(`campus_student_id_${address}`) : null;
-  const studentIdDisplay = localStudentId || (profile.details?.studentIdentifierHash
-    ? `Hashed: ${String(profile.details.studentIdentifierHash).slice(0, 10)}...`
-    : "N/A");
+  const studentIdDisplay = String(profile.details?.studentId || "N/A");
 
   return (
     <section className="mx-auto max-w-2xl rounded-xl border border-border bg-card p-6 shadow-sm">

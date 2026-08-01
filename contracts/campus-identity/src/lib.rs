@@ -75,6 +75,7 @@ pub enum MerchantCategory {
 #[contracttype]
 #[derive(Clone, Debug, Eq, PartialEq)]
 pub struct StudentDetails {
+    pub student_id: String,
     pub student_identifier_hash: BytesN<32>,
     pub department: String,
     pub program: String,

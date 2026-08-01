@@ -205,7 +205,7 @@ export function UniversityDashboard() {
                       {/* Role-Specific Metadata */}
                       {r.role === 1 && (
                         <p className="text-xs text-muted-foreground mt-1 bg-muted/30 p-1.5 rounded font-medium">
-                          🎓 Dept: {String(r.details?.department || "N/A")} | Program: {String(r.details?.program || "N/A")} | Class: {String(r.details?.graduationYear || "N/A")}
+                          🎓 Dept: {String(r.details?.department || "N/A")} | Program: {String(r.details?.program || "N/A")} | Class: {String(r.details?.graduationYear || "N/A")} | ID: {String(r.details?.studentId || "N/A")}
                         </p>
                       )}
                       {r.role === 2 && (
