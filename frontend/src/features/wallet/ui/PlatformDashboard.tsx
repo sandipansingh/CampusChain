@@ -85,12 +85,17 @@ export function PlatformDashboard() {
   const approvedUniversities = universities.filter((u) => u.approvalStatus === 2 || u.approvalStatus === 4);
 
   const renderOverview = () => {
+    const pendingScholarships = (scholarshipsQuery.data ?? []).filter((s) => s.adminApprovalStatus === "pending");
+    const activeScholarshipsCount = (scholarshipsQuery.data ?? []).filter((s) => s.adminApprovalStatus === "approved").length;
+    const totalPending = pendingUniversities.length + pendingScholarships.length;
+
     return (
       <div className="space-y-6">
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
             { label: "Registered Universities", value: universities.length, icon: Building2 },
-            { label: "Pending Approvals", value: pendingUniversities.length, icon: Clock3 },
+            { label: "Active Scholarships", value: activeScholarshipsCount, icon: GraduationCap },
+            { label: "Pending Approvals", value: totalPending, icon: Clock3 },
             { label: "Platform Operations", value: "Stellar Testnet", icon: Coins },
           ].map((stat) => {
             const Icon = stat.icon;
@@ -109,36 +114,108 @@ export function PlatformDashboard() {
         </div>
 
         {/* Pending approvals queue preview */}
-        <div className="bg-card rounded-xl border border-border shadow-sm p-6">
-          <h3 className="text-base font-bold mb-4">University Claims Awaiting Review</h3>
-          {pendingUniversities.length === 0 ? (
-            <p className="text-sm text-muted-foreground">No universities awaiting approval.</p>
-          ) : (
-            <div className="space-y-3">
-              {pendingUniversities.slice(0, 3).map((u) => (
-                <div key={u.code} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-lg bg-muted/10 gap-4">
-                  <div>
-                    <p className="font-bold text-sm">{u.name} <span className="text-xs text-muted-foreground font-mono">({u.code})</span></p>
-                    <p className="text-xs text-muted-foreground mt-0.5">Admin: {u.adminAddress}</p>
+        <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-6">
+          <h3 className="text-base font-bold text-foreground">Awaiting Review & Approvals</h3>
+
+          {/* Section 1: University registrations */}
+          <div>
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+              University Registration Claims ({pendingUniversities.length})
+            </h4>
+            {pendingUniversities.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No universities awaiting approval.</p>
+            ) : (
+              <div className="space-y-3">
+                {pendingUniversities.slice(0, 3).map((u) => (
+                  <div key={u.code} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-lg bg-muted/10 gap-4">
+                    <div>
+                      <p className="font-bold text-sm">{u.name} <span className="text-xs text-muted-foreground font-mono">({u.code})</span></p>
+                      <p className="text-xs text-muted-foreground mt-0.5">Admin: {u.adminAddress}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => approveUniv.mutate(u.code)}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <CheckCircle2 className="size-3.5" /> Approve
+                      </button>
+                      <button
+                        onClick={() => rejectUniv.mutate(u.code)}
+                        className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
+                      >
+                        <XCircle className="size-3.5" /> Reject
+                      </button>
+                    </div>
                   </div>
-                  <div className="flex gap-2">
-                    <button
-                      onClick={() => approveUniv.mutate(u.code)}
-                      className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
-                    >
-                      <CheckCircle2 className="size-3.5" /> Approve
-                    </button>
-                    <button
-                      onClick={() => rejectUniv.mutate(u.code)}
-                      className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer"
-                    >
-                      <XCircle className="size-3.5" /> Reject
-                    </button>
+                ))}
+              </div>
+            )}
+          </div>
+
+          {/* Section 2: Scholarships */}
+          <div className="border-t border-border pt-6">
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">
+              Scholarship Programs ({pendingScholarships.length})
+            </h4>
+            {schNotice && (
+              <div
+                className={`text-xs p-2.5 rounded-lg border mb-3 ${
+                  schNotice.includes("successfully")
+                    ? "text-emerald-700 bg-emerald-50 border-emerald-200"
+                    : "text-destructive bg-destructive/5 border-destructive/20"
+                }`}
+              >
+                {schNotice}
+              </div>
+            )}
+            {pendingScholarships.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No scholarship programs awaiting approval.</p>
+            ) : (
+              <div className="space-y-3">
+                {pendingScholarships.slice(0, 3).map((s) => (
+                  <div key={s.id} className="flex flex-col sm:flex-row sm:items-center sm:justify-between p-4 border border-border rounded-lg bg-muted/10 gap-4">
+                    <div>
+                      <p className="font-bold text-sm">{s.title} <span className="text-xs text-muted-foreground">({s.amount.toLocaleString()} CAMP)</span></p>
+                      <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed truncate max-w-[400px]">{s.description}</p>
+                      <p className="text-[10px] text-muted-foreground mt-0.5">Univ: {s.createdByUniversityId}</p>
+                    </div>
+                    <div className="flex gap-2">
+                      <button
+                        disabled={reviewScholarship.isPending}
+                        onClick={async () => {
+                          try {
+                            setSchNotice(null);
+                            const txHash = await reviewScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id, approved: true });
+                            setSchNotice(`Scholarship approved successfully! Tx: ${txHash}`);
+                          } catch (err) {
+                            setSchNotice(err instanceof Error ? err.message : "Approval failed.");
+                          }
+                        }}
+                        className="px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <CheckCircle2 className="size-3.5" /> Approve
+                      </button>
+                      <button
+                        disabled={reviewScholarship.isPending}
+                        onClick={async () => {
+                          try {
+                            setSchNotice(null);
+                            const txHash = await reviewScholarship.mutateAsync({ adminId: address!, scholarshipId: s.id, approved: false });
+                            setSchNotice(`Scholarship rejected successfully! Tx: ${txHash}`);
+                          } catch (err) {
+                            setSchNotice(err instanceof Error ? err.message : "Rejection failed.");
+                          }
+                        }}
+                        className="px-3 py-1.5 border border-border hover:bg-muted text-red-600 rounded-lg text-xs font-bold flex items-center gap-1 cursor-pointer disabled:opacity-50"
+                      >
+                        <XCircle className="size-3.5" /> Reject
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          )}
+                ))}
+              </div>
+            )}
+          </div>
         </div>
       </div>
     );
