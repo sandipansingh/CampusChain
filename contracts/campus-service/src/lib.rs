@@ -322,6 +322,44 @@ fn assert_food_merchant(env: &Env, merchant: &Address) -> Result<(), Error> {
     }
 }
 
+fn create_escrow_internal(
+    env: &Env,
+    buyer: &Address,
+    seller: &Address,
+    amount: i128,
+) -> Result<u64, Error> {
+    if amount <= 0 {
+        return Err(Error::InvalidAmount);
+    }
+    assert_same_university(env, buyer, seller)?;
+    let university_code = active_code(env, buyer)?;
+    token_client(env)?.transfer_from(
+        &env.current_contract_address(),
+        buyer,
+        &env.current_contract_address(),
+        &amount,
+    );
+    let id = next_id(env, DataKey::EscrowCounter);
+    let key = DataKey::Escrow(id);
+    env.storage().persistent().set(
+        &key,
+        &EscrowAgreement {
+            id,
+            buyer: buyer.clone(),
+            seller: seller.clone(),
+            university_code: university_code.clone(),
+            amount,
+            status: 1,
+        },
+    );
+    extend_persistent(env, &key);
+    env.events().publish(
+        (Symbol::new(env, "escrow_created"), id, buyer.clone(), seller.clone(), university_code),
+        amount,
+    );
+    Ok(id)
+}
+
 fn next_id(env: &Env, key: DataKey) -> u64 {
     let next = env
         .storage()
@@ -405,36 +443,7 @@ impl CampusService {
         amount: i128,
     ) -> Result<u64, Error> {
         buyer.require_auth();
-        if amount <= 0 {
-            return Err(Error::InvalidAmount);
-        }
-        assert_same_university(&env, &buyer, &seller)?;
-        let university_code = active_code(&env, &buyer)?;
-        token_client(&env)?.transfer_from(
-            &env.current_contract_address(),
-            &buyer,
-            &env.current_contract_address(),
-            &amount,
-        );
-        let id = next_id(&env, DataKey::EscrowCounter);
-        let key = DataKey::Escrow(id);
-        env.storage().persistent().set(
-            &key,
-            &EscrowAgreement {
-                id,
-                buyer: buyer.clone(),
-                seller: seller.clone(),
-                university_code: university_code.clone(),
-                amount,
-                status: 1,
-            },
-        );
-        extend_persistent(&env, &key);
-        env.events().publish(
-            (Symbol::new(&env, "escrow_created"), id, buyer, seller, university_code),
-            amount,
-        );
-        Ok(id)
+        create_escrow_internal(&env, &buyer, &seller, amount)
     }
 
     pub fn get_escrow(env: Env, id: u64, caller: Address) -> Result<EscrowAgreement, Error> {
