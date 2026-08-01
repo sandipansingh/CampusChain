@@ -1,6 +1,0 @@
-# DEPRECATED — replaced by pr-checks.yml and deploy.yml
-#
-# This file is kept here only as a reference. It has no `on:` trigger so it
-# will never run. Delete this file once the two replacement workflows have
-# been confirmed working.
-# (no `on:` block — workflow is effectively disabled)
