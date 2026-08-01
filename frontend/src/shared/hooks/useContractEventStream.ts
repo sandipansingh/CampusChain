@@ -38,7 +38,13 @@ function getCacheKeysForEvent(eventName: string): string[][] {
     case "transfer":
     case "mint_purchase":
     case "burn":
-      return [["campus-balance"], ["ledger-events"]];
+      return [["campus-balance"], ["marketplace-listings"], ["ledger-events"]];
+
+    case "item_listed":
+      return [["marketplace-listings"], ["ledger-events"]];
+
+    case "escrow_created":
+      return [["marketplace-listings"], ["campus-balance"], ["ledger-events"]];
 
     case "UniversityRegistered":
     case "UniversityApproved":
@@ -248,6 +254,34 @@ export function useContractEventStream(address: string | null | undefined) {
           }
 
           // 4. Token Transfer & Minting personal notifications (CAMP sent/received)
+          if (evt.eventName === "item_listed") {
+            const seller = typeof evt.topicNative?.[2] === "string" ? evt.topicNative[2] : "";
+            if (seller.toLowerCase() === address.toLowerCase()) {
+              evt.title = "Item Listed";
+              evt.message = `You successfully listed an item for sale: ${evt.details}`;
+              evt.color = "emerald";
+              filteredDecoded.push(evt);
+            }
+            continue;
+          }
+
+          if (evt.eventName === "escrow_created") {
+            const buyer = typeof evt.topicNative?.[2] === "string" ? evt.topicNative[2] : "";
+            const seller = typeof evt.topicNative?.[3] === "string" ? evt.topicNative[3] : "";
+            if (buyer.toLowerCase() === address.toLowerCase()) {
+              evt.title = "Escrow Created";
+              evt.message = `You funded an escrow of ${evt.details} for item purchase`;
+              evt.color = "amber";
+              filteredDecoded.push(evt);
+            } else if (seller.toLowerCase() === address.toLowerCase()) {
+              evt.title = "Escrow Created";
+              evt.message = `Buyer funded an escrow of ${evt.details} for your listing`;
+              evt.color = "emerald";
+              filteredDecoded.push(evt);
+            }
+            continue;
+          }
+
           if (evt.eventName === "mint_purchase") {
             const recipient = typeof evt.topicNative?.[1] === "string" ? evt.topicNative[1] : "";
             if (recipient.toLowerCase() === address.toLowerCase()) {
