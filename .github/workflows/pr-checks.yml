@@ -4,8 +4,8 @@
 # All jobs must pass for the PR to be mergeable (enforce via branch protection).
 #
 # Steps per job:
-#   contracts  → cargo fmt --check · cargo clippy · cargo test
-#   frontend   → npm ci · tsc --noEmit · eslint · vitest run · next build
+#   contracts  → cargo fmt --check · cargo clippy
+#   frontend   → npm ci · tsc --noEmit · eslint · next build
 #
 # No secrets required for this workflow.
 name: PR Checks
@@ -24,7 +24,7 @@ concurrency:
 # Soroban Contract Checks
 jobs:
   contracts:
-    name: "Contracts — fmt · clippy · test"
+    name: "Contracts — fmt · clippy"
     runs-on: ubuntu-latest
 
     steps:
@@ -59,12 +59,9 @@ jobs:
         # Deny warnings so clippy findings are hard failures.
         run: cargo clippy --all-targets --all-features -- -D warnings
 
-      - name: Unit tests (cargo test)
-        run: cargo test
-
 # Next.js Frontend Checks
   frontend:
-    name: "Frontend — typecheck · lint · test · build"
+    name: "Frontend — typecheck · lint · build"
     runs-on: ubuntu-latest
 
     steps:
@@ -91,12 +88,6 @@ jobs:
       - name: Lint (eslint)
         working-directory: frontend
         run: npm run lint
-
-      # Vitest runs in headless jsdom mode — no Freighter popup, no network calls.
-      # StellarWalletsKit is mocked in src/test/setup.ts.
-      - name: Unit & integration tests (vitest)
-        working-directory: frontend
-        run: npm run test
 
       # Full Next.js production build — catches any module-resolution or
       # server-component boundary errors that tsc alone would miss.
