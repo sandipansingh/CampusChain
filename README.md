@@ -410,6 +410,15 @@ sequenceDiagram
 | Hosting | Vercel (frontend) |
 | Observability | Custom structured logger + `captureError` + `txMonitor` + `eventMonitor` |
 
+### 🛠️ Tech Stack
+
+[![Tech Stack](https://skillicons.dev/icons?i=rust,nextjs,react,tailwind,ts,docker,githubactions,vercel,git,vite&perline=10)](https://skillicons.dev)
+
+![Stellar](https://img.shields.io/badge/Stellar-7B2CBF?style=for-the-badge&logo=stellar&logoColor=white)
+![Soroban RPC](https://img.shields.io/badge/Soroban_RPC-00B2FF?style=for-the-badge&logo=data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHdpZHRoPSIyNCIgaGVpZ2h0PSIyNCIgZmlsbD0id2hpdGUiPjxwYXRoIGQ9Ik0xMiAyQzYuNDggMiAyIDYuNDggMiAxMnM0LjQ4IDEwIDEwIDEwIDEwLTQuNDggMTAtMTBTMTcuNTIgMiAxMiAyem0wIDE4Yy00LjQxIDAtOC0zLjU5LTgtOHMzLjU5LTggOC04IDggMy41OSA4IDgtMy41OSA4LTggOHoiLz48L3N2Zz4=)
+![React Query](https://img.shields.io/badge/React_Query-FF4154?style=for-the-badge&logo=reactquery&logoColor=white)
+![Vitest](https://img.shields.io/badge/Vitest-729B1B?style=for-the-badge&logo=vitest&logoColor=white)
+
 ### 5.1 Campus Food Ordering
 
 CampusChain includes a comprehensive Canteen Canteen/Food Ordering system integrated directly with the university scoped identity checks and payment flows.
