@@ -434,7 +434,7 @@ impl CampusService {
         get_address(&env, DataKey::NativeTokenContract)
     }
 
-    // --- Escrow ---
+    // Escrow
 
     pub fn create_escrow(
         env: Env,
@@ -539,7 +539,7 @@ impl CampusService {
         Ok(())
     }
 
-    // --- Events ---
+    // Events
 
     pub fn create_event(env: Env, host: Address, price: i128, capacity: u32) -> Result<u64, Error> {
         host.require_auth();
@@ -694,7 +694,7 @@ impl CampusService {
         Ok(())
     }
 
-    // --- Marketplace (both Student and Merchant roles may list) ---
+    // Marketplace (both Student and Merchant roles may list)
 
     pub fn create_listing(
         env: Env,
@@ -868,7 +868,7 @@ impl CampusService {
         Ok(env.storage().persistent().get(&key))
     }
 
-    // --- Payments ---
+    // Payments
 
     pub fn pay_camp(
         env: Env,
@@ -969,13 +969,13 @@ impl CampusService {
         }
         let uni_code = active_code(&env, &student)?;
 
-        // 1. Calculate equivalent XLM amount (100 CAMP = 1 XLM)
+        // Conversion rate: 100 CAMP = 1 XLM
         let xlm_amount = camp_amount / PURCHASE_RATE;
         if xlm_amount <= 0 {
             return Err(Error::InvalidAmount);
         }
 
-        // 2. Check native XLM liquidity reserve balance of contract vault FIRST
+        // Check native XLM liquidity reserve balance of contract vault
         let native = get_address(&env, DataKey::NativeTokenContract)?;
         let native_client = soroban_sdk::token::Client::new(&env, &native);
         let contract_bal = native_client.balance(&env.current_contract_address());
@@ -984,10 +984,8 @@ impl CampusService {
             return Err(Error::CapacityReached);
         }
 
-        // 3. Burn CAMP tokens from student balance via token contract
         token_client(&env)?.burn(&student, &camp_amount);
 
-        // 4. Transfer native XLM directly from contract vault to student wallet
         native_client.transfer(&env.current_contract_address(), &student, &xlm_amount);
 
         env.events().publish(
@@ -997,7 +995,7 @@ impl CampusService {
         Ok(())
     }
 
-    // --- Scholarships and merchant rewards are university-scoped too ---
+    // Scholarships and merchant rewards are university-scoped too
 
     pub fn create_scholarship(
         env: Env,
@@ -1417,7 +1415,7 @@ impl CampusService {
         Ok(())
     }
 
-    // --- Food ordering ---
+    // Food ordering
 
     pub fn publish_menu_item(
         env: Env,

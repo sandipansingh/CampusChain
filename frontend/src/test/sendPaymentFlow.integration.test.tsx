@@ -122,25 +122,22 @@ describe("Send Payment Integration Flow", () => {
 
     render(<WalletPage />, { wrapper: makeWrapper() });
 
-    // 1. Wait for initial balance to load
     await waitFor(() =>
       expect(screen.getByTestId("balance-value")).toHaveTextContent("1000.00 CAMP")
     );
 
-    // 2. Click Send
     await userEvent.click(screen.getByTestId("send-button"));
 
-    // 3. Confirm tx hash appears
     await waitFor(() =>
       expect(screen.getByTestId("tx-hash")).toHaveTextContent("confirmed-tx-hash-abc")
     );
 
-    // 4. Balance should have been invalidated and refetched (new value: 950)
+    // Balance should have been invalidated and refetched (new value: 950)
     await waitFor(() =>
       expect(screen.getByTestId("balance-value")).toHaveTextContent("950.00 CAMP")
     );
 
-    // 5. The service was called with the correct arguments
+    // The service was called with the correct arguments
     expect(mockExecuteTransfer).toHaveBeenCalledWith(SENDER, RECIPIENT, 50);
     expect(mockFetchBalance).toHaveBeenCalledTimes(2);
   });
