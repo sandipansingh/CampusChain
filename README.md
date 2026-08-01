@@ -13,6 +13,40 @@
 
 ---
 
+## Table of Contents
+
+- [1. Product Overview & Problem Statement](#1-product-overview--problem-statement)
+- [2. Architecture](#2-architecture)
+  - [2.1 Role Hierarchy & Scoping Model](#21-role-hierarchy--scoping-model)
+  - [2.2 University Scoping & Inter-Contract Verification](#22-university-scoping--inter-contract-verification)
+- [3. Smart Contract Design](#3-smart-contract-design)
+  - [3.1 CampusIdentity](#31-campusidentity)
+  - [3.2 CampusToken (CAMP)](#32-campustoken-camp)
+  - [3.3 CampusService](#33-campusservice)
+  - [3.4 Roles & Verification](#34-roles--verification)
+  - [3.5 University Scoping](#35-university-scoping)
+- [4. Inter-Contract Communication](#4-inter-contract-communication)
+- [5. Features & Tech Stack](#5-features--tech-stack)
+  - [5.1 Campus Food Ordering](#51-campus-food-ordering)
+- [6. Local Development Setup](#6-local-development-setup)
+- [7. CI/CD & Deployment](#7-cicd--deployment)
+  - [7.1 Automated CI & Testing (Pull Requests & Pushes)](#71-automated-ci--testing-pull-requests--pushes)
+  - [7.2 Automated Deploy (merge to main)](#72-automated-deploy-merge-to-main)
+  - [7.3 Contract Deployment (Manual — One-Time or After WASM Change)](#73-contract-deployment-manual--one-time-or-after-wasm-change)
+- [8. Security Considerations](#8-security-considerations)
+- [9. Screenshots](#9-screenshots)
+  - [9.1 Desktop](#91-desktop)
+  - [9.2 Mobile](#92-mobile)
+  - [9.3 Test](#93-test)
+  - [9.4 CI/CD](#94-cicd)
+- [10. Contract Addresses & On-Chain Verification](#10-contract-addresses--on-chain-verification)
+- [11. Resources & Links](#11-resources--links)
+- [12. Feedback & Responses](#12-feedback--responses)
+- [Contributing](#contributing)
+- [License](#license)
+
+---
+
 ## 1. Product Overview & Problem Statement
 
 University campuses run on a patchwork of incompatible payment systems: cash-only canteens, manual ticket desks, paper scholarship forms, and unverifiable second-hand marketplaces. Students overpay in friction, clubs underfund events, and administrators lack auditability.
