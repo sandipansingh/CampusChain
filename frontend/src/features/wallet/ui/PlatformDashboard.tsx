@@ -5,6 +5,7 @@ import { useParams, useRouter } from "next/navigation";
 import Image from "next/image";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
+import { ThemeToggle } from "@/shared/ui/ThemeToggle";
 import {
   LayoutDashboard,
   Building2,
@@ -671,12 +672,13 @@ export function PlatformDashboard() {
             <h2 className="text-lg md:text-xl font-bold capitalize">
               {activeTab === "queue" ? "Approval Requests" : activeTab}
             </h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-emerald-100 text-emerald-800 text-[10px] font-bold border border-emerald-200">
+            <span className="px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 text-[10px] font-bold border border-emerald-500/20">
               Platform Admin
             </span>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-4">
+            <ThemeToggle variant="compact" />
             <button
               onClick={() => setIsFeedOpen(true)}
               className="text-muted-foreground hover:text-foreground p-2 rounded-full hover:bg-muted transition-colors relative cursor-pointer"
@@ -690,17 +692,17 @@ export function PlatformDashboard() {
               )}
             </button>
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">
                 PA
               </div>
-              <button onClick={disconnect} className="text-xs text-muted-foreground hover:text-destructive transition-colors font-medium">
+              <button onClick={disconnect} className="text-xs text-muted-foreground hover:text-destructive transition-colors font-medium cursor-pointer">
                 Logout
               </button>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 bg-[#F7F7F5]">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 bg-background transition-colors">
           {renderContentView()}
         </main>
       </div>

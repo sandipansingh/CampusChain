@@ -132,7 +132,7 @@ export function Select({
         <label
           id={labelId}
           htmlFor={selectId}
-          className="text-sm font-semibold text-primary select-none"
+          className="text-sm font-semibold text-foreground select-none"
         >
           {label}
         </label>
@@ -150,16 +150,16 @@ export function Select({
           onKeyDown={handleKeyDown}
           onClick={() => !disabled && setIsOpen(!isOpen)}
           className={cn(
-            "w-full flex items-center justify-between rounded-lg border border-outline-variant bg-surface-container-lowest px-4 py-3 text-body-md text-primary focus:outline-none focus:ring-1 focus:ring-primary focus:border-primary transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer",
+            "w-full flex items-center justify-between rounded-lg border border-border bg-card px-4 py-3 text-sm text-foreground focus:outline-none focus:ring-1 focus:ring-ring focus:border-ring transition-all text-left disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer shadow-sm",
             error && "border-destructive focus:ring-destructive focus:border-destructive"
           )}
         >
-          <span className={cn(!currentOption && "text-outline")}>
+          <span className={cn(!currentOption && "text-muted-foreground")}>
             {currentOption ? currentOption.label : placeholder}
           </span>
           <ChevronDown
             className={cn(
-              "h-5 w-5 text-secondary transition-transform duration-200",
+              "h-5 w-5 text-muted-foreground transition-transform duration-200",
               isOpen && "rotate-180"
             )}
           />
@@ -170,7 +170,7 @@ export function Select({
             role="listbox"
             tabIndex={-1}
             aria-labelledby={label ? labelId : undefined}
-            className="absolute z-50 mt-1.5 max-h-60 w-full overflow-auto rounded-lg border border-outline-variant bg-surface-container-lowest p-1 shadow-lg focus:outline-none"
+            className="absolute z-50 mt-1.5 max-h-60 w-full overflow-auto rounded-lg border border-border bg-card p-1 shadow-xl focus:outline-none animate-in fade-in duration-150"
           >
             {options.map((opt, idx) => {
               const isSelected = opt.value === value;
@@ -188,9 +188,9 @@ export function Select({
                     onClick={() => selectOption(opt)}
                     onMouseEnter={() => setHighlightedIndex(idx)}
                     className={cn(
-                      "w-full cursor-pointer select-none rounded-md px-3 py-2 text-left text-body-md text-primary outline-none transition-colors",
-                      isHighlighted && "bg-surface-container-low font-semibold",
-                      isSelected && "bg-primary text-on-primary font-bold hover:bg-primary/90"
+                      "w-full cursor-pointer select-none rounded-md px-3 py-2 text-left text-sm text-foreground outline-none transition-colors",
+                      isHighlighted && "bg-muted font-semibold",
+                      isSelected && "bg-primary text-primary-foreground font-bold hover:bg-primary/90"
                     )}
                   >
                     {opt.label}
@@ -206,3 +206,5 @@ export function Select({
     </div>
   );
 }
+
+export default Select;

@@ -7,6 +7,7 @@ import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { NotificationPanel } from "@/shared/ui/NotificationPanel";
 import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
+import { ThemeToggle } from "@/shared/ui/ThemeToggle";
 import {
   LayoutDashboard,
   Wallet,
@@ -210,7 +211,7 @@ export function WalletDashboard() {
                 <div className="flex gap-3 mt-8">
                   <button
                     onClick={() => router.push(`/${role}/wallet`)}
-                    className="flex-1 bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+                    className="flex-1 bg-foreground hover:opacity-90 text-background font-semibold rounded-lg py-2.5 px-4 text-xs flex items-center justify-center gap-1.5 transition-opacity cursor-pointer"
                   >
                     <ArrowUpRight className="h-4 w-4" />
                     Send
@@ -441,7 +442,8 @@ export function WalletDashboard() {
             <h2 className="text-lg md:text-xl font-bold capitalize">{activeTab}</h2>
           </div>
           
-          <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-4">
+            <ThemeToggle variant="compact" />
             <button
               onClick={() => setIsFeedOpen(true)}
               className="text-muted-foreground hover:text-foreground p-2 rounded-full hover:bg-muted transition-colors relative cursor-pointer"

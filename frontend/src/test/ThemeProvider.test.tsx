@@ -51,16 +51,12 @@ describe("ThemeProvider & useTheme", () => {
     document.documentElement.className = "";
   });
 
-  it("throws an error when useTheme is used outside ThemeProvider", () => {
-    const originalError = console.error;
-    console.error = vi.fn();
-
-    expect(() => render(<TestConsumer />)).toThrow(
-      "useTheme must be used within a ThemeProvider"
-    );
-
-    console.error = originalError;
+  it("provides safe fallback defaults when useTheme is used outside ThemeProvider", () => {
+    render(<TestConsumer />);
+    expect(screen.getByTestId("theme").textContent).toBe("system");
+    expect(screen.getByTestId("resolved").textContent).toBe("light");
   });
+
 
   it("initializes with default system theme and sets appropriate class", () => {
     matchesDark = false;

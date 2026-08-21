@@ -87,10 +87,10 @@ export function TransactionStatusToast() {
           {status === "confirmed" && (
             <div className="space-y-4">
               <div className="flex items-center gap-3 bg-emerald-500/10 border border-emerald-500/20 p-3 rounded-lg">
-                <CheckCircle2 className="h-5 w-5 text-emerald-600 shrink-0" />
+                <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400 shrink-0" />
                 <div>
-                  <p className="text-xs font-semibold text-emerald-800">Transaction Confirmed</p>
-                  <p className="text-[10px] text-emerald-700/80 mt-0.5">Mined successfully on-chain.</p>
+                  <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">Transaction Confirmed</p>
+                  <p className="text-[10px] text-emerald-700/80 dark:text-emerald-400/80 mt-0.5">Mined successfully on-chain.</p>
                 </div>
               </div>
 

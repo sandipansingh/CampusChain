@@ -409,14 +409,18 @@ export function SendReceive() {
               </label>
 
               {qrDataUrl ? (
-                <Image
-                  src={qrDataUrl}
-                  width={256}
-                  height={256}
-                  unoptimized
-                  alt="CampusChain payment request QR code"
-                  className="mx-auto border border-border rounded-lg"
-                />
+                <div className="flex justify-center">
+                  <div className="bg-white p-2 rounded-xl border border-border shadow-sm">
+                    <Image
+                      src={qrDataUrl}
+                      width={240}
+                      height={240}
+                      unoptimized
+                      alt="CampusChain payment request QR code"
+                      className="rounded-lg"
+                    />
+                  </div>
+                </div>
               ) : (
                 <div className="h-56 border border-dashed border-border rounded-lg flex flex-col items-center justify-center text-muted-foreground">
                   <QrCode className="h-10 w-10" />

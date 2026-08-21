@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { NotificationPanel } from "@/shared/ui/NotificationPanel";
+import { ThemeToggle } from "@/shared/ui/ThemeToggle";
 import {
   LayoutDashboard,
   Users,
@@ -403,7 +404,7 @@ export function UniversityDashboard() {
               <button
                 type="submit"
                 disabled={createProgram.isPending}
-                className="bg-zinc-950 hover:bg-zinc-800 text-white font-semibold rounded-lg py-2.5 px-6 text-xs cursor-pointer disabled:opacity-50 h-10"
+                className="bg-foreground hover:opacity-90 text-background font-semibold rounded-lg py-2.5 px-6 text-xs cursor-pointer disabled:opacity-50 h-10 transition-opacity"
               >
                 {createProgram.isPending ? "Creating..." : "Create Scholarship"}
               </button>
@@ -702,12 +703,13 @@ export function UniversityDashboard() {
               className="h-7 w-7 rounded-lg object-contain md:hidden"
             />
             <h2 className="text-lg md:text-xl font-bold capitalize">{activeTab}</h2>
-            <span className="px-2.5 py-0.5 rounded-full bg-zinc-100 text-zinc-800 text-[10px] font-bold border border-zinc-200">
+            <span className="px-2.5 py-0.5 rounded-full bg-muted text-foreground text-[10px] font-bold border border-border">
               Admin: {universityCode}
             </span>
           </div>
 
-          <div className="flex items-center gap-3 md:gap-6">
+          <div className="flex items-center gap-3 md:gap-4">
+            <ThemeToggle variant="compact" />
             <button
               onClick={() => setIsFeedOpen(true)}
               className="text-muted-foreground hover:text-foreground p-2 rounded-full hover:bg-muted transition-colors relative cursor-pointer"
@@ -722,17 +724,17 @@ export function UniversityDashboard() {
             </button>
 
             <div className="flex items-center gap-2 md:gap-3">
-              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold">
+              <div className="w-8 h-8 rounded-full bg-muted flex items-center justify-center text-xs font-bold text-foreground">
                 UA
               </div>
-              <button onClick={disconnect} className="text-xs text-muted-foreground hover:text-destructive transition-colors font-medium">
+              <button onClick={disconnect} className="text-xs text-muted-foreground hover:text-destructive transition-colors font-medium cursor-pointer">
                 Logout
               </button>
             </div>
           </div>
         </header>
 
-        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 bg-[#F7F7F5]">
+        <main className="flex-1 overflow-y-auto p-4 md:p-6 pb-24 md:pb-6 bg-background transition-colors">
           {renderContentView()}
         </main>
       </div>

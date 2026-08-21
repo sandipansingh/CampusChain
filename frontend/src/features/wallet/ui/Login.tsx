@@ -23,6 +23,7 @@ import {
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Skeleton } from "@/shared/ui/Skeleton";
 import { Dropdown } from "@/shared/ui/Dropdown";
+import { ThemeToggle } from "@/shared/ui/ThemeToggle";
 import { NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS } from "@/shared/stellar/client";
 import {
   fetchUniversities,
@@ -262,8 +263,11 @@ export function Login({ showOnboarding = false }: LoginProps) {
   }
 
   return (
-    <div className="min-h-screen w-full bg-[#F7F7F5] text-zinc-950 flex items-center justify-center p-6">
-      <main className="w-full max-w-md rounded-xl border border-zinc-200 bg-white p-8 shadow-sm">
+    <div className="relative min-h-screen w-full bg-background text-foreground flex items-center justify-center p-6 transition-colors">
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle variant="compact" />
+      </div>
+      <main className="w-full max-w-md rounded-xl border border-border bg-card p-8 shadow-sm">
         {!showOnboarding ? (
           <div className="space-y-6 text-center">
             <div className="flex items-center justify-center gap-3">
@@ -276,14 +280,14 @@ export function Login({ showOnboarding = false }: LoginProps) {
               />
               <h1 className="text-4xl font-bold">CampusChain</h1>
             </div>
-            <p className="text-sm text-zinc-500">
+            <p className="text-sm text-muted-foreground">
               Your campus wallet for payments, marketplace, events and
               scholarships.
             </p>
             <button
               onClick={() => void connect()}
               disabled={pending}
-              className="w-full rounded-lg bg-zinc-950 px-6 py-4 font-semibold text-white hover:bg-zinc-800 transition-colors disabled:opacity-50 cursor-pointer"
+              className="w-full rounded-lg bg-foreground px-6 py-4 font-semibold text-background hover:opacity-90 transition-opacity disabled:opacity-50 cursor-pointer"
             >
               Connect Stellar Wallet{" "}
               <ArrowRight className="ml-2 inline size-4" />
@@ -296,7 +300,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
             <h1 className="mt-4 text-2xl font-semibold">
               Platform Admin detected
             </h1>
-            <p className="mt-2 text-sm text-zinc-500">
+            <p className="mt-2 text-sm text-muted-foreground">
               Your immutable Platform Admin profile is already provisioned.
               Opening the dashboard…
             </p>
@@ -305,7 +309,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
           <div className="space-y-5">
             <header className="text-center">
               <h1 className="text-2xl font-semibold">Complete your profile</h1>
-              <p className="mt-1 text-sm text-zinc-500">
+              <p className="mt-1 text-sm text-muted-foreground">
                 Set up your university-scoped CampusChain identity.
               </p>
             </header>
@@ -689,12 +693,12 @@ function WalletPill({
   disabled = false,
 }: WalletPillProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 rounded-xl border border-zinc-200 bg-zinc-50/80 p-2.5 text-xs text-zinc-600 shadow-2xs">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 rounded-xl border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground shadow-2xs">
       <div className="flex items-center gap-2">
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-white border border-zinc-200">
-          <Wallet className="size-3.5 text-zinc-700" />
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-card border border-border">
+          <Wallet className="size-3.5 text-foreground" />
         </div>
-        <span className="font-mono font-medium text-zinc-800">
+        <span className="font-mono font-medium text-foreground">
           {address.slice(0, 6)}…{address.slice(-6)}
         </span>
         <button
@@ -702,24 +706,24 @@ function WalletPill({
           onClick={onCopy}
           title={copied ? "Copied" : "Copy address"}
           aria-label="Copy wallet address"
-          className="rounded p-1 hover:bg-zinc-200/70 text-zinc-500 hover:text-zinc-800 transition-colors cursor-pointer"
+          className="rounded p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
         >
           {copied ? (
-            <Check className="size-3.5 text-emerald-600" />
+            <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
           ) : (
             <Copy className="size-3.5" />
           )}
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-200">
+      <div className="flex items-center gap-1.5 justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-border">
         {onChangeWallet && (
           <button
             type="button"
             onClick={onChangeWallet}
             disabled={disabled}
             title="Change connected wallet"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-white hover:bg-zinc-100 border border-zinc-200 text-zinc-700 hover:text-zinc-900 transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-card hover:bg-muted border border-border text-foreground transition-colors cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className="size-3" />
             <span>Change</span>
@@ -731,7 +735,7 @@ function WalletPill({
             onClick={onDisconnect}
             disabled={disabled}
             title="Disconnect wallet"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-red-600 hover:bg-red-50 hover:text-red-700 border border-transparent hover:border-red-200 transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-red-600 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors cursor-pointer disabled:opacity-50"
           >
             <LogOut className="size-3" />
             <span>Disconnect</span>
@@ -750,7 +754,7 @@ function Field({
   children: React.ReactNode;
 }) {
   return (
-    <label className="block space-y-1.5 text-sm font-semibold">
+    <label className="block space-y-1.5 text-sm font-semibold text-foreground">
       {label}
       {children}
     </label>
@@ -759,7 +763,7 @@ function Field({
 
 function Error({ message }: { message: string }) {
   return (
-    <p className="rounded-lg border border-red-200 bg-red-50 p-3 text-xs text-red-700 break-words whitespace-pre-wrap max-h-60 overflow-y-auto">
+    <p className="rounded-lg border border-red-500/30 bg-red-500/10 p-3 text-xs text-red-600 dark:text-red-400 break-words whitespace-pre-wrap max-h-60 overflow-y-auto">
       {message}
     </p>
   );
@@ -777,16 +781,19 @@ function Guard({
   onSwitchWallet?: () => void;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#F7F7F5] p-6">
-      <div className="max-w-md w-full rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
+    <main className="relative flex min-h-screen items-center justify-center bg-background text-foreground p-6 transition-colors">
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle variant="compact" />
+      </div>
+      <div className="max-w-md w-full rounded-xl border border-border bg-card p-8 text-center shadow-sm">
         <AlertCircle className="mx-auto size-10 text-red-600" />
-        <h1 className="mt-4 text-2xl font-semibold text-zinc-900">{title}</h1>
-        <p className="mt-2 text-sm text-zinc-500">{message}</p>
+        <h1 className="mt-4 text-2xl font-semibold text-foreground">{title}</h1>
+        <p className="mt-2 text-sm text-muted-foreground">{message}</p>
         <div className="mt-6 flex flex-col gap-2">
           {onSwitchWallet && (
             <button
               onClick={onSwitchWallet}
-              className="w-full rounded-lg bg-zinc-950 px-4 py-2.5 text-sm font-semibold text-white hover:bg-zinc-800 transition-colors cursor-pointer"
+              className="w-full rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90 transition-opacity cursor-pointer"
             >
               Switch Wallet
             </button>
@@ -794,7 +801,7 @@ function Guard({
           {onDisconnect && (
             <button
               onClick={onDisconnect}
-              className="w-full rounded-lg border border-zinc-200 bg-white px-4 py-2.5 text-sm font-semibold text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
+              className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
             >
               Disconnect Wallet
             </button>
@@ -815,26 +822,29 @@ export function PendingState({
   onChangeWallet?: () => void;
 }) {
   return (
-    <main className="flex min-h-screen items-center justify-center bg-[#F7F7F5] p-6">
-      <div className="max-w-md w-full rounded-xl border border-zinc-200 bg-white p-8 text-center shadow-sm">
-        <Clock3 className="mx-auto size-10 text-amber-600" />
-        <h1 className="mt-4 text-2xl font-semibold text-zinc-900">
+    <main className="relative flex min-h-screen items-center justify-center bg-background text-foreground p-6 transition-colors">
+      <div className="absolute top-6 right-6 z-20">
+        <ThemeToggle variant="compact" />
+      </div>
+      <div className="max-w-md w-full rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+        <Clock3 className="mx-auto size-10 text-amber-500" />
+        <h1 className="mt-4 text-2xl font-semibold text-foreground">
           {university
             ? "Awaiting Platform Admin Approval"
             : "Verification Pending"}
         </h1>
-        <p className="mt-2 text-sm text-zinc-500">
+        <p className="mt-2 text-sm text-muted-foreground">
           {university
             ? "Your university claim is recorded on-chain but remains unavailable until the Platform Admin approves it. Dashboard access is locked until then."
             : "Your profile was submitted on-chain. Your University Admin must verify it before campus actions and dashboard access are unlocked."}
         </p>
         {(onChangeWallet || onDisconnect) && (
-          <div className="mt-6 pt-5 border-t border-zinc-100 flex flex-col sm:flex-row items-center justify-center gap-3">
+          <div className="mt-6 pt-5 border-t border-border flex flex-col sm:flex-row items-center justify-center gap-3">
             {onChangeWallet && (
               <button
                 type="button"
                 onClick={onChangeWallet}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg border border-zinc-200 bg-white text-zinc-700 hover:bg-zinc-50 transition-colors cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg border border-border bg-card text-foreground hover:bg-muted transition-colors cursor-pointer"
               >
                 <RefreshCw className="size-3" />
                 Change Wallet
@@ -844,7 +854,7 @@ export function PendingState({
               <button
                 type="button"
                 onClick={onDisconnect}
-                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-50 hover:text-red-700 transition-colors cursor-pointer"
+                className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2 text-xs font-semibold rounded-lg text-red-600 hover:bg-red-500/10 transition-colors cursor-pointer"
               >
                 <LogOut className="size-3" />
                 Disconnect

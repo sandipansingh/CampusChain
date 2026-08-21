@@ -113,10 +113,14 @@ export function ThemeProvider({
   return <ThemeContext.Provider value={value}>{children}</ThemeContext.Provider>;
 }
 
+const defaultContextValue: ThemeContextType = {
+  theme: "system",
+  resolvedTheme: "light",
+  setTheme: () => {},
+};
+
 export function useTheme(): ThemeContextType {
   const context = useContext(ThemeContext);
-  if (!context) {
-    throw new Error("useTheme must be used within a ThemeProvider");
-  }
-  return context;
+  return context ?? defaultContextValue;
 }
+

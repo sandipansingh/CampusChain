@@ -37,13 +37,13 @@ export function CustomToggle({
         onClick={() => !disabled && onChange(!checked)}
         onKeyDown={handleKeyDown}
         className={cn(
-          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:opacity-50 disabled:cursor-not-allowed",
-          checked ? "bg-primary" : "bg-outline-variant"
+          "relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 focus:ring-offset-background disabled:opacity-50 disabled:cursor-not-allowed",
+          checked ? "bg-primary" : "bg-muted"
         )}
       >
         <span
           className={cn(
-            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-surface-container-lowest shadow ring-0 transition duration-200 ease-in-out",
+            "pointer-events-none inline-block h-5 w-5 transform rounded-full bg-background shadow ring-0 transition duration-200 ease-in-out",
             checked ? "translate-x-5" : "translate-x-0"
           )}
         />
@@ -52,7 +52,7 @@ export function CustomToggle({
       {label && (
         <label
           htmlFor={toggleId}
-          className="text-sm font-semibold text-primary cursor-pointer"
+          className="text-sm font-semibold text-foreground cursor-pointer"
           onClick={() => !disabled && onChange(!checked)}
         >
           {label}
@@ -61,3 +61,5 @@ export function CustomToggle({
     </div>
   );
 }
+
+export default CustomToggle;
