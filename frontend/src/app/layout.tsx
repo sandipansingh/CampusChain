@@ -35,13 +35,30 @@ export const metadata: Metadata = {
   },
 };
 
+const themeInitScript = `
+  (function() {
+    try {
+      var stored = localStorage.getItem('campuschain-theme') || 'system';
+      var isDark = stored === 'dark' || (stored === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+      if (isDark) {
+        document.documentElement.classList.add('dark');
+      } else {
+        document.documentElement.classList.remove('dark');
+      }
+    } catch (_) {}
+  })();
+`;
+
 export default function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
+      <head>
+        <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
+      </head>
       <body className="min-h-screen bg-background text-foreground font-sans antialiased">
         <Providers>
           {children}
@@ -52,3 +69,4 @@ export default function RootLayout({
     </html>
   );
 }
+

@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@custom-variant dark (&:where(.dark, .dark *));
+
 @theme {
   --color-border: var(--border);
   --color-input: var(--input);
@@ -55,28 +57,34 @@
     --input: hsl(0 0% 89.8%);
     --ring: hsl(0 0% 3.9%);
     --radius: 0.5rem;
+    --scrollbar-track: #fafafa;
+    --scrollbar-thumb: #e4e4e4;
+    --scrollbar-thumb-hover: #d1d1d1;
   }
 
   .dark {
-    --background: hsl(0 0% 3.9%);
+    --background: hsl(240 6% 9%);
     --foreground: hsl(0 0% 98%);
-    --card: hsl(0 0% 3.9%);
+    --card: hsl(240 5% 12%);
     --card-foreground: hsl(0 0% 98%);
-    --popover: hsl(0 0% 3.9%);
+    --popover: hsl(240 5% 12%);
     --popover-foreground: hsl(0 0% 98%);
     --primary: hsl(0 0% 98%);
-    --primary-foreground: hsl(0 0% 9%);
-    --secondary: hsl(0 0% 14.9%);
+    --primary-foreground: hsl(240 6% 9%);
+    --secondary: hsl(240 4% 16%);
     --secondary-foreground: hsl(0 0% 98%);
-    --muted: hsl(0 0% 14.9%);
-    --muted-foreground: hsl(0 0% 63.9%);
-    --accent: hsl(0 0% 14.9%);
+    --muted: hsl(240 4% 16%);
+    --muted-foreground: hsl(240 5% 65%);
+    --accent: hsl(240 4% 16%);
     --accent-foreground: hsl(0 0% 98%);
-    --destructive: hsl(0 62.8% 30.6%);
+    --destructive: hsl(0 62.8% 45%);
     --destructive-foreground: hsl(0 0% 98%);
-    --border: hsl(0 0% 14.9%);
-    --input: hsl(0 0% 14.9%);
-    --ring: hsl(0 0% 83.1%);
+    --border: hsl(240 4% 18%);
+    --input: hsl(240 4% 18%);
+    --ring: hsl(240 5% 65%);
+    --scrollbar-track: hsl(240 6% 9%);
+    --scrollbar-thumb: hsl(240 4% 24%);
+    --scrollbar-thumb-hover: hsl(240 4% 32%);
   }
 }
 
@@ -107,27 +115,27 @@
     cursor: not-allowed;
   }
 
-  /* Custom premium scrollbar in white / off-white design */
+  /* Adaptive custom scrollbar */
   ::-webkit-scrollbar {
     width: 8px;
     height: 8px;
   }
   ::-webkit-scrollbar-track {
-    background: #fafafa;
+    background: var(--scrollbar-track);
   }
   ::-webkit-scrollbar-thumb {
-    background: #e4e4e4;
+    background: var(--scrollbar-thumb);
     border-radius: 8px;
-    border: 2px solid #fafafa;
+    border: 2px solid var(--scrollbar-track);
   }
   ::-webkit-scrollbar-thumb:hover {
-    background: #d1d1d1;
+    background: var(--scrollbar-thumb-hover);
   }
   
   /* Firefox scrollbar styling */
   * {
     scrollbar-width: thin;
-    scrollbar-color: #e4e4e4 #fafafa;
+    scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
   }
 }
 
