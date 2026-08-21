@@ -25,7 +25,7 @@ export function Navbar({ onGetStarted }: { onGetStarted: () => void }) {
               alt="CampusChain Logo"
               width={32}
               height={32}
-              className="h-8 w-8 rounded-lg object-contain"
+              className="h-8 w-8 rounded-lg object-contain dark:invert transition-[filter] duration-150"
               priority
             />
             <span>CampusChain</span>

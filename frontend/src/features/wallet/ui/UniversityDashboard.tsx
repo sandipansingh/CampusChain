@@ -639,7 +639,7 @@ export function UniversityDashboard() {
             alt="CampusChain Logo"
             width={40}
             height={40}
-            className="w-10 h-10 rounded-xl object-contain"
+            className="w-10 h-10 rounded-xl object-contain dark:invert transition-[filter] duration-150"
           />
           <div>
             <h1 className="text-lg font-bold leading-tight">CampusChain</h1>
@@ -700,7 +700,7 @@ export function UniversityDashboard() {
               alt="CampusChain Logo"
               width={28}
               height={28}
-              className="h-7 w-7 rounded-lg object-contain md:hidden"
+              className="h-7 w-7 rounded-lg object-contain md:hidden dark:invert transition-[filter] duration-150"
             />
             <h2 className="text-lg md:text-xl font-bold capitalize">{activeTab}</h2>
             <span className="px-2.5 py-0.5 rounded-full bg-muted text-foreground text-[10px] font-bold border border-border">
