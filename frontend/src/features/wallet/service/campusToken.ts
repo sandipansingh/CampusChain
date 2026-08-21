@@ -204,4 +204,3 @@ export async function executeWithdrawCampTokens(student: string, campAmount: num
     signTx
   );
 }
-

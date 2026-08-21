@@ -228,7 +228,7 @@ export function SendReceive() {
         <div className="bg-card border border-border rounded-xl p-6 space-y-4 shadow-sm">
           <h3 className="font-bold text-base text-foreground">Buy CAMP with XLM</h3>
           <p className="text-xs text-muted-foreground">
-            The contract rate is 1 XLM = 100 CAMP. This flow approves the native XLM Stellar Asset Contract, then confirms the CampusService purchase.
+            The contract rate is 1 XLM = 100 CAMP. Your wallet will request approval first, then confirm the purchase.
           </p>
           {buyNotice && (
             <div className={buyNotice.includes("confirmed") ? "text-xs text-emerald-700 break-all bg-emerald-50 border border-emerald-200 p-2.5 rounded-lg" : "text-xs text-destructive break-words bg-destructive/5 border border-destructive/20 p-2.5 rounded-lg"}>
