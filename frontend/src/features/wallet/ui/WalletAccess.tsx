@@ -14,27 +14,27 @@ export interface WalletAccessProps {
   redirectExistingProfile?: boolean;
 }
 
+const ROLE_STRINGS: Record<number, string> = {
+  1: "student",
+  2: "merchant",
+  3: "organizer",
+  4: "university",
+  5: "platform",
+};
+
 export function WalletAccess({
   allowedRoles,
   children,
   redirectExistingProfile = false,
 }: WalletAccessProps) {
   const router = useRouter();
-  const { isConnected, address, initialize } = useWallet();
+  const { isConnected, address, initialize, connect, disconnect } = useWallet();
   const { data: profile, isLoading: isLoadingProfile } = useCampusProfile(address);
   const isPlatformAdmin = address === NEXT_PUBLIC_CAMPUS_ADMIN_ADDRESS;
 
   // University Admin: check their university's on-chain approval status
   const universityCode = profile?.role === 4 ? profile.universityCode : null;
   const { data: university, isLoading: isLoadingUniv } = useCampusUniversity(universityCode, address);
-
-  const ROLE_STRINGS: Record<number, string> = {
-    1: "student",
-    2: "merchant",
-    3: "organizer",
-    4: "university",
-    5: "platform",
-  };
 
   useEffect(() => { initialize(); }, [initialize]);
   
@@ -87,7 +87,13 @@ export function WalletAccess({
   // University Admin route guard: check if university is approved (status 2)
   if (profile.role === 4) {
     if (!university || university.approvalStatus !== 2) {
-      return <PendingState university />;
+      return (
+        <PendingState
+          university
+          onChangeWallet={() => void connect()}
+          onDisconnect={() => void disconnect()}
+        />
+      );
     }
   }
 
