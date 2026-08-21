@@ -9,20 +9,20 @@ const benefits = [
 
 export function ForUniversities() {
   return (
-    <section id="universities" className="overflow-hidden bg-[#fbfbfa] py-16 sm:py-24 border-b border-zinc-200/60">
+    <section id="universities" className="overflow-hidden bg-muted/10 py-16 sm:py-24 border-b border-border transition-colors">
       <div className="mx-auto grid max-w-7xl grid-cols-1 items-center gap-12 px-6 lg:grid-cols-2 lg:gap-16">
         <div>
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Administration</span>
-          <h2 className="mt-2 text-3xl font-bold leading-tight tracking-[-0.03em] text-zinc-950 sm:text-4xl sm:leading-11">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Administration</span>
+          <h2 className="mt-2 text-3xl font-bold leading-tight tracking-[-0.03em] text-foreground sm:text-4xl sm:leading-11">
             Built for administrative clarity
           </h2>
-          <p className="mt-4 text-base font-medium leading-relaxed text-zinc-500 sm:mt-6 sm:text-lg">
+          <p className="mt-4 text-base font-medium leading-relaxed text-muted-foreground sm:mt-6 sm:text-lg">
             Deploy a secure payment and services ecosystem in minutes. CampusChain provides university admins with real-time financial oversight, automated scholarship distribution, canteen merchant validation, and member registry controls.
           </p>
           <ul className="mt-8 space-y-4">
             {benefits.map((benefit) => (
-              <li key={benefit} className="flex items-center gap-3 text-sm font-semibold text-zinc-800 sm:text-base">
-                <CheckCircle2 size={18} className="text-zinc-900 shrink-0" />
+              <li key={benefit} className="flex items-center gap-3 text-sm font-semibold text-foreground/90 sm:text-base">
+                <CheckCircle2 size={18} className="text-emerald-500 shrink-0" />
                 {benefit}
               </li>
             ))}
@@ -40,13 +40,13 @@ function DesktopMockup() {
   return (
     <div className="relative w-full">
       {/* Abstract Admin Panel Card */}
-      <div className="relative z-10 mx-auto w-full max-w-lg rounded-2xl border border-zinc-200/80 bg-white p-6 shadow-lg transition-shadow hover:shadow-xl sm:p-8">
-        <div className="mb-6 flex items-center justify-between border-b border-zinc-100 pb-4">
+      <div className="relative z-10 mx-auto w-full max-w-lg rounded-2xl border border-border bg-card p-6 shadow-lg transition-shadow hover:shadow-xl sm:p-8">
+        <div className="mb-6 flex items-center justify-between border-b border-border pb-4">
           <div className="flex items-center gap-2">
-            <span className="size-2.5 rounded-full bg-zinc-900" />
-            <span className="text-sm font-bold tracking-tight text-zinc-950">University Registry Admin</span>
+            <span className="size-2.5 rounded-full bg-primary" />
+            <span className="text-sm font-bold tracking-tight text-foreground">University Registry Admin</span>
           </div>
-          <span className="rounded-full bg-green-50 border border-green-200 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-green-700">
+          <span className="rounded-full bg-emerald-500/10 border border-emerald-500/20 px-2.5 py-0.5 text-[10px] font-bold tracking-wide text-emerald-600 dark:text-emerald-400">
             Connected
           </span>
         </div>
@@ -54,41 +54,43 @@ function DesktopMockup() {
         <div className="space-y-5">
           {/* Stat Cards Row */}
           <div className="grid grid-cols-2 gap-4">
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
-              <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Total Members</div>
-              <div className="mt-1 text-2xl font-extrabold text-zinc-950">1,248</div>
+            <div className="rounded-xl border border-border bg-muted/40 p-4">
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Total Members</div>
+              <div className="mt-1 text-2xl font-extrabold text-foreground">1,248</div>
             </div>
-            <div className="rounded-xl border border-zinc-100 bg-zinc-50/50 p-4">
-              <div className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Scholarships Paid</div>
-              <div className="mt-1 text-2xl font-extrabold text-zinc-950">45k CAMP</div>
+            <div className="rounded-xl border border-border bg-muted/40 p-4">
+              <div className="text-xs font-bold text-muted-foreground uppercase tracking-wider">Scholarships Paid</div>
+              <div className="mt-1 text-2xl font-extrabold text-foreground">45k CAMP</div>
             </div>
           </div>
 
           {/* Pending Tasks Section */}
-          <div className="rounded-xl border border-zinc-100 p-4">
-            <div className="mb-3 text-xs font-bold text-zinc-400 uppercase tracking-wider">Administrative Approvals</div>
+          <div className="rounded-xl border border-border p-4 bg-muted/20">
+            <div className="mb-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Administrative Approvals</div>
             <div className="space-y-3">
               <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 font-semibold text-zinc-800">
-                  <Store size={14} className="text-zinc-500" />
+                <div className="flex items-center gap-2 font-semibold text-foreground/90">
+                  <Store size={14} className="text-muted-foreground" />
                   <span>Engineering Cafe (Merchant Request)</span>
                 </div>
-                <span className="rounded bg-zinc-900 px-2 py-0.5 font-bold text-white">Approve</span>
+                <span className="rounded bg-foreground px-2 py-0.5 font-bold text-background">Approve</span>
               </div>
               <div className="flex items-center justify-between text-xs">
-                <div className="flex items-center gap-2 font-semibold text-zinc-800">
-                  <ShieldCheck size={14} className="text-zinc-500" />
+                <div className="flex items-center gap-2 font-semibold text-foreground/90">
+                  <ShieldCheck size={14} className="text-muted-foreground" />
                   <span>Student #8291 (Verify Identity)</span>
                 </div>
-                <span className="rounded bg-zinc-900 px-2 py-0.5 font-bold text-white">Verify</span>
+                <span className="rounded bg-foreground px-2 py-0.5 font-bold text-background">Verify</span>
               </div>
             </div>
           </div>
         </div>
       </div>
       {/* Background visual accents */}
-      <div className="absolute -right-6 -top-6 -z-10 size-64 rounded-full border border-zinc-200/50 opacity-60" />
-      <div className="absolute -bottom-8 -left-8 -z-10 size-48 rounded-full bg-zinc-100 blur-3xl opacity-50" />
+      <div className="absolute -right-6 -top-6 -z-10 size-64 rounded-full border border-border/50 opacity-60" />
+      <div className="absolute -bottom-8 -left-8 -z-10 size-48 rounded-full bg-muted blur-3xl opacity-50" />
     </div>
   );
 }
+
+export default ForUniversities;

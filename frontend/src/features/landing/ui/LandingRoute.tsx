@@ -8,7 +8,7 @@ import { Navbar } from "./Navbar";
 
 export function LandingRoute({ onGetStarted }: { onGetStarted: () => void }) {
   return (
-    <div className="min-h-screen overflow-x-hidden bg-white text-[#111111]">
+    <div className="min-h-screen overflow-x-hidden bg-background text-foreground transition-colors">
       <Navbar onGetStarted={onGetStarted} />
       <main>
         <Hero onGetStarted={onGetStarted} />
@@ -21,3 +21,5 @@ export function LandingRoute({ onGetStarted }: { onGetStarted: () => void }) {
     </div>
   );
 }
+
+export default LandingRoute;

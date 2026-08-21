@@ -70,14 +70,14 @@ const features: Feature[] = [
 
 export function FeaturesGrid() {
   return (
-    <section id="features" className="bg-white py-16 sm:py-24">
+    <section id="features" className="bg-background py-16 sm:py-24 transition-colors">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-12 text-left sm:mb-20 sm:text-center">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Capabilities</span>
-          <h2 className="mt-2 text-3xl font-bold leading-tight tracking-[-0.03em] text-zinc-950 sm:text-5xl">
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Capabilities</span>
+          <h2 className="mt-2 text-3xl font-bold leading-tight tracking-[-0.03em] text-foreground sm:text-5xl">
             Engineered for modern campus life
           </h2>
-          <p className="mx-auto mt-4 max-w-2xl text-base font-medium text-zinc-500 sm:text-lg">
+          <p className="mx-auto mt-4 max-w-2xl text-base font-medium text-muted-foreground sm:text-lg">
             A secure, instant, and transparent payment and services ecosystem built on Stellar Soroban smart contracts.
           </p>
         </div>
@@ -95,25 +95,27 @@ export function FeaturesGrid() {
 function FeatureCard({ feature }: { feature: Feature }) {
   const Icon = feature.icon;
   return (
-    <article className="group relative flex flex-col justify-between rounded-2xl border border-zinc-200/80 bg-zinc-50/20 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-zinc-300 hover:bg-zinc-50/50 hover:shadow-md">
+    <article className="group relative flex flex-col justify-between rounded-2xl border border-border bg-card/60 p-6 shadow-sm transition-all duration-200 hover:-translate-y-1 hover:border-border hover:bg-card hover:shadow-md">
       <div>
         <div className="flex items-center justify-between">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-zinc-50 border border-zinc-200/60 shadow-sm transition-colors group-hover:bg-white group-hover:border-zinc-300">
-            <Icon size={22} className="text-zinc-700 transition-colors group-hover:text-zinc-950" strokeWidth={1.75} />
+          <div className="flex size-11 items-center justify-center rounded-xl bg-muted border border-border shadow-sm transition-colors group-hover:bg-muted/80">
+            <Icon size={22} className="text-foreground transition-colors" strokeWidth={1.75} />
           </div>
           {feature.badge && (
-            <span className="rounded-full bg-zinc-100 px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-zinc-600 transition-colors group-hover:bg-zinc-200/60 group-hover:text-zinc-900">
+            <span className="rounded-full bg-muted px-2.5 py-0.5 text-[10px] font-bold uppercase tracking-wider text-muted-foreground transition-colors group-hover:text-foreground">
               {feature.badge}
             </span>
           )}
         </div>
-        <h3 className="mt-6 text-lg font-bold tracking-tight text-zinc-950 sm:text-xl">
+        <h3 className="mt-6 text-lg font-bold tracking-tight text-foreground sm:text-xl">
           {feature.title}
         </h3>
-        <p className="mt-2 text-sm font-medium leading-relaxed text-zinc-500 sm:mt-3">
+        <p className="mt-2 text-sm font-medium leading-relaxed text-muted-foreground sm:mt-3">
           {feature.description}
         </p>
       </div>
     </article>
   );
 }
+
+export default FeaturesGrid;

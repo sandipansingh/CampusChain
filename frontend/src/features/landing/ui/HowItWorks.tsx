@@ -32,12 +32,12 @@ const steps: Step[] = [
 
 export function HowItWorks() {
   return (
-    <section id="how-it-works" className="bg-[#fcfcfa] py-16 sm:py-24 border-y border-zinc-200/60">
+    <section id="how-it-works" className="bg-muted/30 py-16 sm:py-24 border-y border-border transition-colors">
       <div className="mx-auto max-w-7xl px-6">
         <div className="mb-12 sm:mb-16">
-          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-zinc-500">Lifecycle</span>
-          <h2 className="mt-2 text-3xl font-bold leading-tight tracking-[-0.03em] text-zinc-950 sm:text-5xl">How it works</h2>
-          <div className="mt-4 hidden h-1 w-16 bg-zinc-950 sm:block" />
+          <span className="text-xs font-semibold uppercase tracking-[0.2em] text-muted-foreground">Lifecycle</span>
+          <h2 className="mt-2 text-3xl font-bold leading-tight tracking-[-0.03em] text-foreground sm:text-5xl">How it works</h2>
+          <div className="mt-4 hidden h-1 w-16 bg-foreground sm:block" />
         </div>
         <div className="hidden grid-cols-1 gap-6 sm:grid sm:grid-cols-2 lg:grid-cols-4">
           {steps.map((step, index) => <DesktopStep key={step.title} step={step} number={index + 1} />)}
@@ -53,13 +53,13 @@ export function HowItWorks() {
 function DesktopStep({ step, number }: { step: Step; number: number }) {
   const Icon = step.icon;
   return (
-    <article className="rounded-2xl border border-zinc-200/80 bg-white p-8 shadow-sm hover:shadow-md transition-all duration-200">
-      <div className="mb-6 flex size-12 items-center justify-center rounded-xl bg-zinc-50 border border-zinc-200/50 shadow-inner">
-        <Icon size={22} className="text-zinc-700" />
+    <article className="rounded-2xl border border-border bg-card p-8 shadow-sm hover:shadow-md transition-all duration-200">
+      <div className="mb-6 flex size-12 items-center justify-center rounded-xl bg-muted border border-border shadow-inner">
+        <Icon size={22} className="text-foreground" />
       </div>
-      <p className="mb-2 text-xs font-bold text-zinc-400">STEP {String(number).padStart(2, "0")}</p>
-      <h3 className="mb-3 text-xl font-bold tracking-tight text-zinc-950">{step.title}</h3>
-      <p className="text-sm font-medium leading-relaxed text-zinc-500">{step.description}</p>
+      <p className="mb-2 text-xs font-bold text-muted-foreground">STEP {String(number).padStart(2, "0")}</p>
+      <h3 className="mb-3 text-xl font-bold tracking-tight text-foreground">{step.title}</h3>
+      <p className="text-sm font-medium leading-relaxed text-muted-foreground">{step.description}</p>
     </article>
   );
 }
@@ -67,17 +67,19 @@ function DesktopStep({ step, number }: { step: Step; number: number }) {
 function MobileStep({ step, number }: { step: Step; number: number }) {
   const Icon = step.icon;
   return (
-    <article className="flex flex-col gap-4 rounded-xl border border-zinc-200/80 bg-white p-6 shadow-sm">
+    <article className="flex flex-col gap-4 rounded-xl border border-border bg-card p-6 shadow-sm">
       <div className="flex items-center justify-between">
-        <div className="flex size-10 items-center justify-center rounded-lg bg-zinc-50 border border-zinc-200/50">
-          <Icon size={20} className="text-zinc-700" />
+        <div className="flex size-10 items-center justify-center rounded-lg bg-muted border border-border">
+          <Icon size={20} className="text-foreground" />
         </div>
-        <span className="text-2xl font-extrabold text-zinc-200">{String(number).padStart(2, "0")}</span>
+        <span className="text-2xl font-extrabold text-muted-foreground/30">{String(number).padStart(2, "0")}</span>
       </div>
       <div>
-        <h3 className="text-lg font-bold tracking-tight text-zinc-950">{step.title}</h3>
-        <p className="mt-1 text-sm font-medium leading-relaxed text-zinc-500">{step.description}</p>
+        <h3 className="text-lg font-bold tracking-tight text-foreground">{step.title}</h3>
+        <p className="mt-1 text-sm font-medium leading-relaxed text-muted-foreground">{step.description}</p>
       </div>
     </article>
   );
 }
+
+export default HowItWorks;
