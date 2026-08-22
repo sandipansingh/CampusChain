@@ -931,10 +931,35 @@ CampusChain uses a multi-layered, role-based security architecture:
 
 ## 12. Feedback & Responses
 
-We appreciate your feedback and suggestions! Please use the following links to interact with our feedback portal:
+We actively collect user feedback to drive iterative improvements and guide our product evolution:
 
 *   📝 **Submit Feedback (Google Form):** [Feedback Form ↗](https://forms.gle/u2BEwqcTnCpGBBUg8)
 *   📊 **View Responses (Google Sheet):** [Feedback Responses Sheet ↗](https://docs.google.com/spreadsheets/d/1HNzt2QfXsF_n4LzUpJnpaSk4cKBfVsngAfEyxHbXqkU/edit?usp=sharing)
+
+### 12.1 Improvements Implemented from User Feedback
+
+Based on initial user testing and feedback from students and administrators, we implemented the following high-impact enhancements:
+
+| Feedback Received | Action Taken | Related Commit(s) |
+|---|---|---|
+| **Onboarding was too monolithic** with all roles in a single tall form. Users wanted step-by-step guidance. | Built a 3-step wizard with visual role discovery cards (Student, Merchant, Organizer, Admin) and dynamic form validation. | [`51e12db`](https://github.com/sandipansingh/CampusChain/commit/51e12db) · [`24754fa`](https://github.com/sandipansingh/CampusChain/commit/24754fa) |
+| **Verification waiting state felt static** with no progress visibility or way to check approval status. | Introduced a 3-stage live verification status hub with real-time polling and a manual "Check Status Now" action. | [`51e12db`](https://github.com/sandipansingh/CampusChain/commit/51e12db) · [`be32c77`](https://github.com/sandipansingh/CampusChain/commit/be32c77) |
+| **Borders felt too harsh** with solid black rings on light mode and squeezed wallet controls on mobile. | Refined with soft off-white/grayish borders, flexible badge sizing, and fluid responsive layouts for all viewports. | [`24754fa`](https://github.com/sandipansingh/CampusChain/commit/24754fa) |
+| **University admins needed activity feed filters** for incoming student verification requests. | Added rich Soroban event decoders for `ProfileSubmittedForVerification`, `ProfileVerified`, and `ProfileRejected` with category filters. | [`9ee3c32`](https://github.com/sandipansingh/CampusChain/commit/9ee3c32) · [`3bc9489`](https://github.com/sandipansingh/CampusChain/commit/3bc9489) |
+| **Robust test coverage** for onboarding wizard and edge cases. | Added Vitest suites covering multi-step navigation, input validation guards, and address matching. | [`89465d4`](https://github.com/sandipansingh/CampusChain/commit/89465d4) · [`ec2dede`](https://github.com/sandipansingh/CampusChain/commit/ec2dede) |
+
+### 12.2 Next Phase Evolution Roadmap
+
+Based on ongoing user feedback, the next phase of CampusChain development will focus on:
+
+1. **Automated Notification Webhooks**:
+   - Web Push and Telegram/Discord bot integration for instant alerts when a student verification request is approved or a canteen food order is ready for pickup.
+2. **Mobile Hardware-Accelerated QR Scanner**:
+   - Native camera stream optimizations and offline-capable PWA caching for fast canteen checkouts.
+3. **Multi-Campus Inter-University Exchanges**:
+   - Cross-campus athletic and cultural event ticketing with scoped visitor passes.
+4. **Enhanced Merchant POS Terminal**:
+   - Bulk item barcode scanning and receipt generation for campus bookshops and stationery merchants.
 
 ---
 
