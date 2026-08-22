@@ -39,30 +39,51 @@ export function extractString(val: unknown): string {
   return String(val);
 }
 
-/** Returns true if the given address appears anywhere in the event's topic list. */
-function eventInvolvesAddress(event: { topic: unknown[] }, address?: string): boolean {
+/** Returns true if the given address appears anywhere in the event's topic list or value. */
+export function eventInvolvesAddress(event: { topic: unknown[]; value?: unknown }, address?: string): boolean {
   if (!address) return true;
   try {
+    const target = address.toLowerCase();
     const topics = (event.topic as never[]).map((t) => extractString(scValToNative(t as never)));
     const topicsStr = topics.join(" ").toLowerCase();
-    return topicsStr.includes(address.toLowerCase());
+    if (topicsStr.includes(target)) return true;
+    if (event.value) {
+      const valNative = scValToNative(event.value as never);
+      const valStr = extractString(valNative).toLowerCase();
+      if (valStr.includes(target)) return true;
+      if (typeof valNative === "object" && valNative !== null) {
+        if (JSON.stringify(valNative).toLowerCase().includes(target)) return true;
+      }
+    }
   } catch {
     return false;
   }
+  return false;
 }
 
-function eventBelongsToCampus(event: { topic: unknown[]; value: unknown }, universityCode: string): boolean {
+export function eventBelongsToCampus(event: { topic: unknown[]; value: unknown }, universityCode: string): boolean {
+  if (!universityCode) return false;
   try {
+    const targetCode = universityCode.trim().toUpperCase();
     const topics = (event.topic as never[]).map((t) => extractString(scValToNative(t as never)));
-    const lastTopic = topics[topics.length - 1];
-    if (typeof lastTopic === "string" && lastTopic.toUpperCase() === universityCode.toUpperCase()) {
+    
+    // Check if universityCode matches any topic
+    if (topics.some((t) => t.trim().toUpperCase() === targetCode)) {
       return true;
     }
+    
+    // Check if universityCode is in event.value (e.g. string code, struct, or array)
     if (event.value) {
       const valNative = scValToNative(event.value as never);
-      const valStr = extractString(valNative);
-      if (valStr && valStr.toUpperCase() === universityCode.toUpperCase()) {
+      const valStr = extractString(valNative).trim().toUpperCase();
+      if (valStr === targetCode) {
         return true;
+      }
+      if (typeof valNative === "object" && valNative !== null) {
+        const jsonStr = JSON.stringify(valNative).toUpperCase();
+        if (jsonStr.includes(`"${targetCode}"`) || jsonStr.includes(targetCode)) {
+          return true;
+        }
       }
     }
   } catch {
@@ -86,7 +107,7 @@ function decodeOrNull(evt: RawEvent): DecodedEvent | null {
   }
 }
 
-async function getStartLedger(lookbackBlocks = 5000): Promise<number> {
+async function getStartLedger(lookbackBlocks = 100_000): Promise<number> {
   const server = getRpcServer();
   const latest = await server.getLatestLedger();
   return Math.max(1, latest.sequence - lookbackBlocks);
@@ -97,7 +118,7 @@ async function getStartLedger(lookbackBlocks = 5000): Promise<number> {
 /** Fetch the last ~50 events across all contracts — used in the notification panel. */
 export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
   const server = getRpcServer();
-  const startLedger = await getStartLedger(2000);
+  const startLedger = await getStartLedger(10_000);
 
   const [sRes, tRes, iRes] = (await Promise.all([
     getEventsSafe(server, {
@@ -133,12 +154,12 @@ export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
  */
 export async function fetchEventsPaginated(
   _cursor: string | null,
-  limit = 50,
+  limit = 100,
   address?: string,
   universityCode?: string
 ) {
   const server = getRpcServer();
-  const startLedger = await getStartLedger(5000);
+  const startLedger = await getStartLedger(100_000);
 
   const [sRes, tRes, iRes] = (await Promise.all([
     getEventsSafe(server, {
@@ -164,8 +185,7 @@ export async function fetchEventsPaginated(
 
   const events = combined.filter((event) => {
     if (universityCode) {
-      // University admin: events from campus-service matching university_code topic
-      // OR identity events that involve the campus (profile verified, role changed)
+      // University admin: events matching campus code OR involving admin address
       return eventBelongsToCampus(event, universityCode) || eventInvolvesAddress(event, address);
     }
     // Own-wallet filter or global (no filter)
