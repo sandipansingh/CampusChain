@@ -6,9 +6,9 @@ import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
 import * as useActivityFeedHook from "@/features/transactions/hooks/useActivityFeed";
 import { nativeToScVal, StrKey } from "@stellar/stellar-sdk";
 
-const ADDR_ADMIN = StrKey.encodeEd25519PublicKey(new Uint8Array(32).fill(1));
-const ADDR_STUDENT = StrKey.encodeEd25519PublicKey(new Uint8Array(32).fill(2));
-const ADDR_SELLER = StrKey.encodeEd25519PublicKey(new Uint8Array(32).fill(3));
+const ADDR_ADMIN = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 1));
+const ADDR_STUDENT = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 2));
+const ADDR_SELLER = StrKey.encodeEd25519PublicKey(Buffer.alloc(32, 3));
 
 // Mock useWallet
 vi.mock("@/shared/stellar/useWallet", () => ({
