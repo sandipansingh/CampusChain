@@ -27,6 +27,8 @@ import {
   ShieldAlert,
   Coffee,
   ClipboardList,
+  Clock3,
+  RefreshCw,
 } from "lucide-react";
 
 import {
@@ -129,19 +131,51 @@ export function WalletDashboard() {
 
   const LockedStateView = () => {
     const isRejected = profile?.verificationStatus === 3;
+    const [checking, setChecking] = useState(false);
+
+    const handleRefresh = () => {
+      setChecking(true);
+      setTimeout(() => {
+        setChecking(false);
+        window.location.reload();
+      }, 1000);
+    };
+
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 bg-card border border-border rounded-xl space-y-4 max-w-md mx-auto mt-12 shadow-sm">
-        <div className="w-12 h-12 rounded-full bg-red-50 border border-red-200 flex items-center justify-center text-red-600">
-          <ShieldAlert className="h-6 w-6 animate-pulse" />
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 sm:p-8 bg-card border border-border rounded-2xl space-y-4 max-w-lg mx-auto mt-8 shadow-sm">
+        <div className={`size-14 rounded-2xl border flex items-center justify-center ${
+          isRejected
+            ? "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"
+            : "bg-amber-500/10 border-amber-500/20 text-amber-600 dark:text-amber-400"
+        }`}>
+          {isRejected ? (
+            <ShieldAlert className="size-7" />
+          ) : (
+            <Clock3 className="size-7 animate-pulse" />
+          )}
         </div>
-        <h3 className="text-xl font-bold text-foreground">
-          {isRejected ? "Verification Rejected" : "Verification Pending"}
-        </h3>
-        <p className="text-sm text-muted-foreground leading-relaxed font-normal">
-          {isRejected
-            ? "Your identity profile verification was rejected by your University Administrator. All transactions and wallet services are locked."
-            : "Your identity profile is currently pending verification by your University Administrator. Wallet and campus features will unlock automatically once approved."}
-        </p>
+        <div className="space-y-1.5">
+          <h3 className="text-xl font-bold tracking-tight text-foreground">
+            {isRejected ? "Verification Rejected" : "Campus Verification Pending"}
+          </h3>
+          <p className="text-xs sm:text-sm text-muted-foreground leading-relaxed">
+            {isRejected
+              ? `Your on-chain profile was rejected for campus ${profile?.universityCode || "university"}. Please contact your administrator.`
+              : `Your profile is awaiting verification by your University Administrator (${profile?.universityCode || "campus"}). Features will unlock automatically once approved.`}
+          </p>
+        </div>
+
+        <div className="pt-2">
+          <button
+            type="button"
+            onClick={handleRefresh}
+            disabled={checking}
+            className="flex items-center justify-center gap-2 px-5 py-2.5 text-xs font-semibold rounded-xl bg-foreground text-background hover:opacity-90 active:scale-[0.98] transition-all cursor-pointer shadow-sm disabled:opacity-50"
+          >
+            <RefreshCw className={`size-3.5 ${checking ? "animate-spin" : ""}`} />
+            <span>{checking ? "Checking on-chain…" : "Check Verification Status"}</span>
+          </button>
+        </div>
       </div>
     );
   };
