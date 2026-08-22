@@ -90,6 +90,8 @@ export function WalletAccess({
       return (
         <PendingState
           university
+          address={address ?? undefined}
+          universityCode={universityCode ?? undefined}
           onChangeWallet={() => void connect()}
           onDisconnect={() => void disconnect()}
         />
