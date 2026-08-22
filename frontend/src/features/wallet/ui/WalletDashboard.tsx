@@ -142,7 +142,7 @@ export function WalletDashboard() {
     };
 
     return (
-      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 sm:p-8 bg-card border border-border rounded-2xl space-y-4 max-w-lg mx-auto mt-8 shadow-sm">
+      <div className="flex flex-col items-center justify-center min-h-[50vh] text-center p-6 sm:p-8 bg-card border border-zinc-200/80 dark:border-zinc-800 rounded-2xl space-y-4 max-w-lg mx-auto mt-8 shadow-sm">
         <div className={`size-14 rounded-2xl border flex items-center justify-center ${
           isRejected
             ? "bg-red-500/10 border-red-500/20 text-red-600 dark:text-red-400"

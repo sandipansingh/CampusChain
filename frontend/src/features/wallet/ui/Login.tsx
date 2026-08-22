@@ -323,13 +323,13 @@ export function Login({ showOnboarding = false }: LoginProps) {
   }
 
   return (
-    <div className="relative min-h-[100dvh] w-full bg-background text-foreground flex items-center justify-center p-4 sm:p-6 transition-colors">
-      <div className="absolute top-6 right-6 z-20">
+    <div className="relative min-h-[100dvh] w-full bg-background text-foreground flex items-center justify-center p-3 sm:p-6 transition-colors">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
         <ThemeToggle variant="compact" />
       </div>
-      <main className="w-full max-w-xl rounded-2xl border border-border bg-card p-6 sm:p-8 shadow-sm transition-all">
+      <main className="w-full max-w-md sm:max-w-lg md:max-w-xl rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-card p-5 sm:p-7 md:p-8 shadow-sm transition-all">
         {!showOnboarding ? (
-          <div className="space-y-6 text-center max-w-md mx-auto">
+          <div className="space-y-6 text-center max-w-md mx-auto py-2">
             <div className="flex items-center justify-center gap-3">
               <Image
                 src="/icon.png"
@@ -346,7 +346,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
             <button
               onClick={() => void connect()}
               disabled={pending}
-              className="w-full rounded-xl bg-foreground px-6 py-4 font-semibold text-background hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer shadow-sm flex items-center justify-center gap-2"
+              className="w-full rounded-xl bg-foreground px-6 py-3.5 sm:py-4 font-semibold text-background hover:opacity-90 active:scale-[0.98] transition-all disabled:opacity-50 cursor-pointer shadow-sm flex items-center justify-center gap-2"
             >
               <Wallet className="size-4" />
               <span>Connect Stellar Wallet</span>
@@ -365,12 +365,12 @@ export function Login({ showOnboarding = false }: LoginProps) {
             </p>
           </div>
         ) : (
-          <div className="space-y-6">
+          <div className="space-y-5 sm:space-y-6">
             {/* Header & Step Indicator */}
             <header className="space-y-3">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h1 className="text-2xl font-bold tracking-tight text-foreground">
+              <div className="flex items-center justify-between gap-2">
+                <div className="min-w-0">
+                  <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground truncate">
                     Complete your profile
                   </h1>
                   <p className="text-xs text-muted-foreground mt-0.5">
@@ -378,16 +378,16 @@ export function Login({ showOnboarding = false }: LoginProps) {
                   </p>
                 </div>
                 {/* Stepper Dots */}
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1.5 shrink-0">
                   {[1, 2, 3].map((s) => (
                     <div
                       key={s}
                       className={`h-2 rounded-full transition-all duration-300 ${
                         s === step
-                          ? "w-6 bg-foreground"
+                          ? "w-6 bg-zinc-600 dark:bg-zinc-300"
                           : s < step
                           ? "w-2 bg-emerald-500"
-                          : "w-2 bg-muted-foreground/30"
+                          : "w-2 bg-zinc-300 dark:bg-zinc-700"
                       }`}
                     />
                   ))}
@@ -417,11 +417,11 @@ export function Login({ showOnboarding = false }: LoginProps) {
                 <Skeleton className="h-12 w-full rounded-xl" />
               </div>
             ) : (
-              <form onSubmit={submit} className="space-y-6">
+              <form onSubmit={submit} className="space-y-5 sm:space-y-6">
                 {/* STEP 1: ROLE SELECTION */}
                 {step === 1 && (
                   <div className="space-y-4">
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                       <RoleCard
                         selected={role === "Student"}
                         onSelect={() => {
@@ -429,7 +429,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
                           setUniversityCode("");
                         }}
                         title="Student"
-                        icon={<GraduationCap className="size-5 text-sky-500" />}
+                        icon={<GraduationCap className="size-4.5 text-sky-500" />}
                         badge="CAMP Faucet & Pay"
                         description="Access marketplace escrow, canteen food ordering, events & scholarships."
                       />
@@ -440,7 +440,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
                           setUniversityCode("");
                         }}
                         title="Campus Merchant"
-                        icon={<Store className="size-5 text-emerald-500" />}
+                        icon={<Store className="size-4.5 text-emerald-500" />}
                         badge="Orders & Menu"
                         description="Accept CAMP tokens, manage canteen menus, and fulfill student orders."
                       />
@@ -451,7 +451,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
                           setUniversityCode("");
                         }}
                         title="Event Organizer"
-                        icon={<Calendar className="size-5 text-indigo-500" />}
+                        icon={<Calendar className="size-4.5 text-indigo-500" />}
                         badge="Tickets & Clubs"
                         description="Publish campus events, sell NFT tickets, and manage admissions."
                       />
@@ -462,8 +462,8 @@ export function Login({ showOnboarding = false }: LoginProps) {
                           setUniversityCode("");
                         }}
                         title="University Admin"
-                        icon={<Building className="size-5 text-amber-500" />}
-                        badge="Campus Management"
+                        icon={<Building className="size-4.5 text-amber-500" />}
+                        badge="Campus Admin"
                         description="Register campus, verify students, and oversee scholarship programs."
                       />
                     </div>
@@ -471,7 +471,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
                     <button
                       type="button"
                       onClick={() => setStep(2)}
-                      className="w-full rounded-xl bg-foreground px-5 py-3.5 font-semibold text-background hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
+                      className="w-full rounded-xl bg-foreground px-5 py-3.5 font-semibold text-background hover:opacity-90 active:scale-[0.98] transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm text-sm"
                     >
                       <span>Continue with {role === "UniversityAdmin" ? "University Admin" : role}</span>
                       <ArrowRight className="size-4" />
@@ -560,10 +560,10 @@ export function Login({ showOnboarding = false }: LoginProps) {
                 {step === 3 && (
                   <div className="space-y-4">
                     {/* Summary Identity Card */}
-                    <div className="rounded-xl border border-border bg-muted/40 p-4 space-y-3">
-                      <div className="flex items-center justify-between pb-3 border-b border-border">
+                    <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 p-4 space-y-3">
+                      <div className="flex items-center justify-between pb-3 border-b border-zinc-200/80 dark:border-zinc-800">
                         <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">Identity Summary</span>
-                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-foreground/10 text-foreground">
+                        <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-xs font-medium bg-zinc-200/70 dark:bg-zinc-800 text-foreground border border-zinc-300/80 dark:border-zinc-700">
                           {role}
                         </span>
                       </div>
@@ -630,7 +630,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
                       <button
                         type="button"
                         onClick={() => setStep(2)}
-                        className="w-1/3 rounded-xl border border-border bg-card px-4 py-3.5 font-semibold text-foreground hover:bg-muted active:scale-[0.98] transition-all text-xs cursor-pointer"
+                        className="w-1/3 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-card px-4 py-3.5 font-semibold text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-[0.98] transition-all text-xs cursor-pointer"
                       >
                         Back
                       </button>
@@ -659,7 +659,7 @@ export function Login({ showOnboarding = false }: LoginProps) {
           </div>
         )}
 
-        <footer className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground/70 border-t border-border pt-4">
+        <footer className="mt-6 flex items-center justify-center gap-2 text-xs font-medium text-muted-foreground/70 border-t border-zinc-200/80 dark:border-zinc-800 pt-4">
           <Lock className="size-3.5" />
           <span>Secured on Stellar Testnet</span>
         </footer>
@@ -686,20 +686,28 @@ function RoleCard({
   return (
     <div
       onClick={onSelect}
-      className={`group relative rounded-xl border p-4 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between gap-2.5 ${
+      className={`group relative rounded-xl border p-3.5 sm:p-4 cursor-pointer transition-all duration-200 text-left flex flex-col justify-between gap-2.5 ${
         selected
-          ? "border-foreground bg-accent/40 shadow-xs ring-1 ring-foreground"
-          : "border-border bg-card hover:border-foreground/40 hover:bg-muted/30"
+          ? "border-zinc-300 dark:border-zinc-700 bg-zinc-100/60 dark:bg-zinc-800/40 shadow-xs ring-1 ring-zinc-300/80 dark:ring-zinc-700/80"
+          : "border-zinc-200/80 dark:border-zinc-800 bg-card hover:border-zinc-300 dark:hover:border-zinc-700 hover:bg-zinc-50/50 dark:hover:bg-zinc-800/20"
       }`}
     >
-      <div className="flex items-center justify-between gap-2">
-        <div className="flex items-center gap-2.5">
-          <div className="size-9 rounded-lg bg-card border border-border flex items-center justify-center shrink-0">
+      <div className="flex items-start justify-between gap-2">
+        <div className="flex items-center gap-2.5 min-w-0">
+          <div className={`size-8 sm:size-9 rounded-lg border flex items-center justify-center shrink-0 transition-colors ${
+            selected
+              ? "bg-card border-zinc-300 dark:border-zinc-700"
+              : "bg-background border-zinc-200/80 dark:border-zinc-800"
+          }`}>
             {icon}
           </div>
-          <span className="font-semibold text-sm text-foreground">{title}</span>
+          <span className="font-semibold text-xs sm:text-sm text-foreground truncate">{title}</span>
         </div>
-        <span className="text-[10px] font-medium px-2 py-0.5 rounded-md bg-muted text-muted-foreground border border-border shrink-0">
+        <span className={`text-[10px] font-medium px-2 py-0.5 rounded-md border shrink-0 whitespace-nowrap transition-colors ${
+          selected
+            ? "bg-zinc-200/80 dark:bg-zinc-700/70 text-foreground border-zinc-300 dark:border-zinc-600"
+            : "bg-muted/80 text-muted-foreground border-zinc-200/70 dark:border-zinc-800"
+        }`}>
           {badge}
         </span>
       </div>
@@ -959,12 +967,12 @@ function WalletPill({
   disabled = false,
 }: WalletPillProps) {
   return (
-    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 rounded-xl border border-border bg-muted/40 p-2.5 text-xs text-muted-foreground shadow-2xs">
-      <div className="flex items-center gap-2">
-        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-card border border-border">
+    <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 p-2.5 text-xs text-muted-foreground shadow-2xs">
+      <div className="flex items-center gap-2 min-w-0">
+        <div className="flex size-7 shrink-0 items-center justify-center rounded-lg bg-card border border-zinc-200/80 dark:border-zinc-800">
           <Wallet className="size-3.5 text-foreground" />
         </div>
-        <span className="font-mono font-medium text-foreground">
+        <span className="font-mono font-medium text-foreground text-xs truncate">
           {address.slice(0, 6)}…{address.slice(-6)}
         </span>
         <button
@@ -972,7 +980,7 @@ function WalletPill({
           onClick={onCopy}
           title={copied ? "Copied" : "Copy address"}
           aria-label="Copy wallet address"
-          className="rounded p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer"
+          className="rounded p-1 hover:bg-muted text-muted-foreground hover:text-foreground transition-colors cursor-pointer shrink-0"
         >
           {copied ? (
             <Check className="size-3.5 text-emerald-600 dark:text-emerald-400" />
@@ -982,14 +990,14 @@ function WalletPill({
         </button>
       </div>
 
-      <div className="flex items-center gap-1.5 justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-border">
+      <div className="flex items-center gap-1.5 justify-end border-t sm:border-t-0 pt-2 sm:pt-0 border-zinc-200/80 dark:border-zinc-800 shrink-0">
         {onChangeWallet && (
           <button
             type="button"
             onClick={onChangeWallet}
             disabled={disabled}
             title="Change connected wallet"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-card hover:bg-muted border border-border text-foreground transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium bg-card hover:bg-zinc-100 dark:hover:bg-zinc-800 border border-zinc-200/80 dark:border-zinc-800 text-foreground transition-colors cursor-pointer disabled:opacity-50"
           >
             <RefreshCw className="size-3" />
             <span>Change</span>
@@ -1001,7 +1009,7 @@ function WalletPill({
             onClick={onDisconnect}
             disabled={disabled}
             title="Disconnect wallet"
-            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-red-600 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors cursor-pointer disabled:opacity-50"
+            className="flex items-center gap-1 px-2.5 py-1 rounded-md text-xs font-medium text-red-600 dark:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-colors cursor-pointer disabled:opacity-50"
           >
             <LogOut className="size-3" />
             <span>Disconnect</span>
@@ -1051,7 +1059,7 @@ function Guard({
       <div className="absolute top-6 right-6 z-20">
         <ThemeToggle variant="compact" />
       </div>
-      <div className="max-w-md w-full rounded-xl border border-border bg-card p-8 text-center shadow-sm">
+      <div className="max-w-md w-full rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-card p-6 sm:p-8 text-center shadow-sm">
         <AlertCircle className="mx-auto size-10 text-red-600" />
         <h1 className="mt-4 text-2xl font-semibold text-foreground">{title}</h1>
         <p className="mt-2 text-sm text-muted-foreground">{message}</p>
@@ -1059,7 +1067,7 @@ function Guard({
           {onSwitchWallet && (
             <button
               onClick={onSwitchWallet}
-              className="w-full rounded-lg bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90 transition-opacity cursor-pointer"
+              className="w-full rounded-xl bg-foreground px-4 py-2.5 text-sm font-semibold text-background hover:opacity-90 transition-opacity cursor-pointer"
             >
               Switch Wallet
             </button>
@@ -1067,7 +1075,7 @@ function Guard({
           {onDisconnect && (
             <button
               onClick={onDisconnect}
-              className="w-full rounded-lg border border-border bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-muted transition-colors cursor-pointer"
+              className="w-full rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-card px-4 py-2.5 text-sm font-semibold text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 transition-colors cursor-pointer"
             >
               Disconnect Wallet
             </button>
@@ -1107,17 +1115,17 @@ export function PendingState({
 
   return (
     <main className="relative flex min-h-[100dvh] items-center justify-center bg-background text-foreground p-4 sm:p-6 transition-colors">
-      <div className="absolute top-6 right-6 z-20">
+      <div className="absolute top-4 right-4 sm:top-6 sm:right-6 z-20">
         <ThemeToggle variant="compact" />
       </div>
-      <div className="max-w-lg w-full rounded-2xl border border-border bg-card p-6 sm:p-8 text-center shadow-sm space-y-6">
+      <div className="max-w-md sm:max-w-lg w-full rounded-2xl border border-zinc-200/80 dark:border-zinc-800 bg-card p-5 sm:p-8 text-center shadow-sm space-y-6">
         {/* Animated Badge */}
         <div className="relative mx-auto size-14 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-600 dark:text-amber-400">
           <Clock3 className="size-7 animate-pulse" />
         </div>
 
         <div className="space-y-2">
-          <h1 className="text-2xl font-bold tracking-tight text-foreground">
+          <h1 className="text-xl sm:text-2xl font-bold tracking-tight text-foreground">
             {university
               ? "Awaiting Platform Admin Approval"
               : "Verification Pending"}
@@ -1130,7 +1138,7 @@ export function PendingState({
         </div>
 
         {/* 3-Stage Progress Stepper */}
-        <div className="rounded-xl border border-border bg-muted/30 p-4 text-left space-y-3.5">
+        <div className="rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-zinc-50/60 dark:bg-zinc-900/40 p-4 text-left space-y-3.5">
           <div className="flex items-start gap-3">
             <div className="size-6 rounded-full bg-emerald-500/15 border border-emerald-500/30 flex items-center justify-center text-emerald-600 dark:text-emerald-400 shrink-0 mt-0.5">
               <Check className="size-3.5" />
@@ -1186,7 +1194,7 @@ export function PendingState({
             <button
               type="button"
               onClick={onChangeWallet}
-              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium rounded-xl border border-border bg-card text-foreground hover:bg-muted active:scale-[0.98] transition-all cursor-pointer"
+              className="w-full sm:w-auto flex items-center justify-center gap-1.5 px-4 py-2.5 text-xs font-medium rounded-xl border border-zinc-200/80 dark:border-zinc-800 bg-card text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 active:scale-[0.98] transition-all cursor-pointer"
             >
               <Wallet className="size-3.5" />
               <span>Change Wallet</span>
