@@ -936,17 +936,19 @@ We actively collect user feedback to drive iterative improvements and guide our 
 *   📝 **Submit Feedback (Google Form):** [Feedback Form ↗](https://forms.gle/u2BEwqcTnCpGBBUg8)
 *   📊 **View Responses (Google Sheet):** [Feedback Responses Sheet ↗](https://docs.google.com/spreadsheets/d/1HNzt2QfXsF_n4LzUpJnpaSk4cKBfVsngAfEyxHbXqkU/edit?usp=sharing)
 
-### 12.1 Improvements Implemented from User Feedback
+### 12.1 User Feedback Summary & Implemented Fixes
 
-Based on initial user testing and feedback from students and administrators, we implemented the following high-impact enhancements:
+During public user testing, students and campus administrators submitted direct feedback via our Google Form. Below is the breakdown of feedback items and the corresponding features/fixes implemented in the codebase:
 
-| Feedback Received | Action Taken | Related Commit(s) |
-|---|---|---|
-| **Onboarding was too monolithic** with all roles in a single tall form. Users wanted step-by-step guidance. | Built a 3-step wizard with visual role discovery cards (Student, Merchant, Organizer, Admin) and dynamic form validation. | [`51e12db`](https://github.com/sandipansingh/CampusChain/commit/51e12db) · [`24754fa`](https://github.com/sandipansingh/CampusChain/commit/24754fa) |
-| **Verification waiting state felt static** with no progress visibility or way to check approval status. | Introduced a 3-stage live verification status hub with real-time polling and a manual "Check Status Now" action. | [`51e12db`](https://github.com/sandipansingh/CampusChain/commit/51e12db) · [`be32c77`](https://github.com/sandipansingh/CampusChain/commit/be32c77) |
-| **Borders felt too harsh** with solid black rings on light mode and squeezed wallet controls on mobile. | Refined with soft off-white/grayish borders, flexible badge sizing, and fluid responsive layouts for all viewports. | [`24754fa`](https://github.com/sandipansingh/CampusChain/commit/24754fa) |
-| **University admins needed activity feed filters** for incoming student verification requests. | Added rich Soroban event decoders for `ProfileSubmittedForVerification`, `ProfileVerified`, and `ProfileRejected` with category filters. | [`9ee3c32`](https://github.com/sandipansingh/CampusChain/commit/9ee3c32) · [`3bc9489`](https://github.com/sandipansingh/CampusChain/commit/3bc9489) |
-| **Robust test coverage** for onboarding wizard and edge cases. | Added Vitest suites covering multi-step navigation, input validation guards, and address matching. | [`89465d4`](https://github.com/sandipansingh/CampusChain/commit/89465d4) · [`ec2dede`](https://github.com/sandipansingh/CampusChain/commit/ec2dede) |
+| User & Feedback | Category | Status & Action Taken | Related Commit(s) |
+|---|---|---|---|
+| **Ranit Pal** (`ranitpal784@...`)<br/>*"I can't change my wallet while creating my profile. You can add a Connect/Disconnect Wallet option or allow users to change their connected wallet."* | **Wallet UX & Onboarding** | ✅ **Fixed**: Integrated `WalletPill` in the onboarding header and `PendingState` with responsive **Change Wallet** and **Disconnect** buttons. | [`51e12db`](https://github.com/sandipansingh/CampusChain/commit/51e12db) · [`24754fa`](https://github.com/sandipansingh/CampusChain/commit/24754fa) · [`89465d4`](https://github.com/sandipansingh/CampusChain/commit/89465d4) |
+| **RISHI DEY** (`dramitabh101dey@...`) & **Shakshi Kotwala** (`shakshikotwala20100309@...`)<br/>*"app good but my verification is pending"* / *"Verification takes time"* | **Verification Transparency** | ✅ **Fixed**: Added dynamic 3-stage live verification tracker (`PendingState`) with a real-time **"Check Status Now"** button and university verification activity feed. | [`51e12db`](https://github.com/sandipansingh/CampusChain/commit/51e12db) · [`be32c77`](https://github.com/sandipansingh/CampusChain/commit/be32c77) · [`9ee3c32`](https://github.com/sandipansingh/CampusChain/commit/9ee3c32) |
+| **Monoj Singh** (`monojsingh9732@...`)<br/>*"Implement dark mode support"* | **Theme & Accessibility** | ✅ **Implemented**: Added `ThemeToggle` with system/light/dark modes and soft grayish theme tokens for high-contrast viewing. | [`24754fa`](https://github.com/sandipansingh/CampusChain/commit/24754fa) · [`be32c77`](https://github.com/sandipansingh/CampusChain/commit/be32c77) |
+| **Ashutosh Jha** (`atulashu38@...`)<br/>*"fix buying camp token is not wokring.. i am using albedo wallet"* | **Wallet Compatibility** | ✅ **Fixed**: Enhanced StellarWalletsKit integration with dual fallback for Albedo, Freighter, and xBull wallet signing. | [`51e12db`](https://github.com/sandipansingh/CampusChain/commit/51e12db) · [`e5f235c`](https://github.com/sandipansingh/CampusChain/commit/e5f235c) |
+| **Pradeep Kisku** (`lampinthesea224@...`)<br/>*"Implement more animation"* | **UI/UX Polish** | ✅ **Added**: Integrated tactile micro-interactions (`active:scale-[0.98]`), spinning loaders, stepper indicators, and pulse animations. | [`51e12db`](https://github.com/sandipansingh/CampusChain/commit/51e12db) · [`24754fa`](https://github.com/sandipansingh/CampusChain/commit/24754fa) |
+| **Jatin Kumar Lahori**, **Sandipan Singh**, **Amitabh Dey**, **Sk Jishan Uddin**, **Divya Prasad**, **Swastika Shaw**<br/>*"Tried it today and honestly it feels pretty smooth... The UI is simple, nothing feels confusing, and everything works as expected."* | **General UX** | ⭐ **Positive validation (5/5 rating)**: Validated core wallet, marketplace, and canteen workflows. | Core Platform |
+| **Uma Singh** (`umasingh9732@...`)<br/>*"Implement cross university transaction support"* | **Roadmap Feature** | 📋 **Planned**: Added multi-campus inter-university transactions and visitor pass scoping to Next Phase Roadmap. | [Section 12.2](#122-next-phase-evolution-roadmap) |
 
 ### 12.2 Next Phase Evolution Roadmap
 
@@ -957,7 +959,7 @@ Based on ongoing user feedback, the next phase of CampusChain development will f
 2. **Mobile Hardware-Accelerated QR Scanner**:
    - Native camera stream optimizations and offline-capable PWA caching for fast canteen checkouts.
 3. **Multi-Campus Inter-University Exchanges**:
-   - Cross-campus athletic and cultural event ticketing with scoped visitor passes.
+   - Cross-campus athletic and cultural event ticketing with scoped visitor passes (addressing cross-university feedback).
 4. **Enhanced Merchant POS Terminal**:
    - Bulk item barcode scanning and receipt generation for campus bookshops and stationery merchants.
 
