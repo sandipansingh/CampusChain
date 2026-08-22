@@ -46,6 +46,7 @@
 - [10. Contract Addresses & On-Chain Verification](#10-contract-addresses--on-chain-verification)
 - [11. Resources & Links](#11-resources--links)
 - [12. Feedback & Responses](#12-feedback--responses)
+- [13. Active Usage Proof](#13-active-usage-proof)
 - [Contributing](#contributing)
 - [License](#license)
 
@@ -962,6 +963,73 @@ Based on ongoing user feedback, the next phase of CampusChain development will f
    - Cross-campus athletic and cultural event ticketing with scoped visitor passes (addressing cross-university feedback).
 4. **Enhanced Merchant POS Terminal**:
    - Bulk item barcode scanning and receipt generation for campus bookshops and stationery merchants.
+
+---
+
+## 13. Active Usage Proof
+
+Below is the verified proof of active on-chain usage, student profile onboarding registrations, and university administrator verification requests processed on CampusChain across multiple universities on Stellar Testnet:
+
+<table border="0">
+  <tr>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #1</b></p>
+      <img src="screenshots/verification_requests_1.png" alt="Verification Request 1" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #2</b></p>
+      <img src="screenshots/verification_requests_2.png" alt="Verification Request 2" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #3</b></p>
+      <img src="screenshots/verification_requests_3.png" alt="Verification Request 3" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #4</b></p>
+      <img src="screenshots/verification_requests_4.png" alt="Verification Request 4" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #5</b></p>
+      <img src="screenshots/verification_requests_5.png" alt="Verification Request 5" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #6</b></p>
+      <img src="screenshots/verification_requests_6.png" alt="Verification Request 6" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #7</b></p>
+      <img src="screenshots/verification_requests_7.png" alt="Verification Request 7" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #8</b></p>
+      <img src="screenshots/verification_requests_8.png" alt="Verification Request 8" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #9</b></p>
+      <img src="screenshots/verification_requests_9.png" alt="Verification Request 9" />
+    </td>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #10</b></p>
+      <img src="screenshots/verification_requests_10.png" alt="Verification Request 10" />
+    </td>
+  </tr>
+  <tr>
+    <td width="50%" align="center">
+      <p><b>User Verification Request #11</b></p>
+      <img src="screenshots/verification_requests_11.png" alt="Verification Request 11" />
+    </td>
+    <td width="50%" align="center">
+    </td>
+  </tr>
+</table>
 
 ---
 
