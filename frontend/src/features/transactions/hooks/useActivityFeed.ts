@@ -43,7 +43,7 @@ export function useActivityFeed({ address, universityCode }: ActivityFeedOptions
         if (isLoadMore) setLoadingMore(true);
         else setLoading(true);
 
-        const res = await fetchEventsPaginated(nextCursor, 40, address, universityCode);
+        const res = await fetchEventsPaginated(nextCursor, 100, address, universityCode);
 
         if (isLoadMore) {
           setEvents((prev) => {
@@ -91,9 +91,25 @@ export function useActivityFeed({ address, universityCode }: ActivityFeedOptions
       e.message.toLowerCase().includes(query) ||
       e.details.toLowerCase().includes(query) ||
       e.title.toLowerCase().includes(query) ||
+      e.eventName.toLowerCase().includes(query) ||
       e.txHash.toLowerCase().includes(query) ||
-      e.fullTxHash.toLowerCase().includes(query);
-    const matchesType = typeFilter === "all" || e.type === typeFilter;
+      e.fullTxHash.toLowerCase().includes(query) ||
+      (e.topicNative && e.topicNative.some((t) => String(t).toLowerCase().includes(query)));
+
+    const matchesType = (() => {
+      if (typeFilter === "all") return true;
+      if (typeFilter === "role") {
+        return e.type === "role" || e.type === "membership";
+      }
+      if (typeFilter === "order") {
+        return e.type === "order";
+      }
+      if (typeFilter === "scholarship") {
+        return e.type === "scholarship";
+      }
+      return e.type === typeFilter;
+    })();
+
     return matchesSearch && matchesType;
   });
 

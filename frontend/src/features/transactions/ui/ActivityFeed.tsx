@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useWallet } from "@/shared/stellar/useWallet";
 import { Dropdown } from "@/shared/ui/Dropdown";
 import { Skeleton } from "@/shared/ui/Skeleton";
@@ -23,6 +23,8 @@ import {
   ArrowDown,
   ArrowUp,
   ShoppingBag,
+  GraduationCap,
+  Store,
 } from "lucide-react";
 
 function getEventIcon(icon: string) {
@@ -36,7 +38,12 @@ function getEventIcon(icon: string) {
     case "faucet":
       return <Coins className="h-4.5 w-4.5" />;
     case "role":
+    case "membership":
       return <UserCheck className="h-4.5 w-4.5" />;
+    case "scholarship":
+      return <GraduationCap className="h-4.5 w-4.5" />;
+    case "order":
+      return <Store className="h-4.5 w-4.5" />;
     case "university":
       return <Building className="h-4.5 w-4.5" />;
     case "marketplace":
@@ -61,11 +68,15 @@ export function ActivityFeed({
   // - global=true → platform admin: no address filter (all events)
   // - universityCode provided → university admin: campus-scoped feed
   // - default → own-wallet: sub-role personal activity
-  const feedOptions = global
-    ? {}
-    : universityCode
-    ? { address: address ?? undefined, universityCode }
-    : { address: address ?? undefined };
+  const feedOptions = useMemo(
+    () =>
+      global
+        ? {}
+        : universityCode
+        ? { address: address ?? undefined, universityCode }
+        : { address: address ?? undefined },
+    [global, universityCode, address]
+  );
 
   const {
     filteredEvents,
@@ -121,17 +132,19 @@ export function ActivityFeed({
           </div>
           
           {/* Type Filter */}
-          <div className="w-full sm:w-40">
+          <div className="w-full sm:w-48">
             <Dropdown<string>
               options={[
-                { value: "all", label: "All Types", icon: <ListFilter className="h-4 w-4 text-muted-foreground" /> },
+                { value: "all", label: "All Activities", icon: <ListFilter className="h-4 w-4 text-muted-foreground" /> },
+                { value: "role", label: "Verification Requests", icon: <UserCheck className="h-4 w-4 text-purple-500" /> },
+                { value: "scholarship", label: "Scholarships", icon: <GraduationCap className="h-4 w-4 text-amber-500" /> },
+                { value: "order", label: "Orders & Canteen", icon: <Store className="h-4 w-4 text-rose-500" /> },
                 { value: "transfer", label: "Transfers", icon: <ArrowLeftRight className="h-4 w-4 text-sky-500" /> },
-                { value: "escrow", label: "Escrow", icon: <Lock className="h-4 w-4 text-amber-500" /> },
-                { value: "ticket", label: "Ticketing", icon: <Ticket className="h-4 w-4 text-indigo-500" /> },
-                { value: "faucet", label: "Faucet", icon: <Coins className="h-4 w-4 text-emerald-500" /> },
-                { value: "role", label: "Verifications", icon: <UserCheck className="h-4 w-4 text-purple-500" /> },
-                { value: "university", label: "Universities", icon: <Building className="h-4 w-4 text-pink-500" /> },
                 { value: "marketplace", label: "Marketplace", icon: <ShoppingBag className="h-4 w-4 text-teal-500" /> },
+                { value: "escrow", label: "Escrow", icon: <Lock className="h-4 w-4 text-amber-500" /> },
+                { value: "ticket", label: "Ticketing & Events", icon: <Ticket className="h-4 w-4 text-indigo-500" /> },
+                { value: "faucet", label: "Faucet & Purchases", icon: <Coins className="h-4 w-4 text-emerald-500" /> },
+                { value: "university", label: "University Claims", icon: <Building className="h-4 w-4 text-pink-500" /> },
               ]}
               value={typeFilter}
               onChange={setTypeFilter}
