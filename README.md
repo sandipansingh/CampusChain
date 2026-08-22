@@ -924,6 +924,7 @@ CampusChain uses a multi-layered, role-based security architecture:
 |---|---|
 | 🌐 Live demo (Stellar Mainnet/Testnet interface) | [campuschain.sandipansingh.com ↗](https://campuschain.sandipansingh.com) |
 | 🎥 Demo video | [Demo Video ↗](https://youtu.be/j-mF9jHhUKc) |
+| 📊 Pitch deck & presentation | [CampusChain Presentation Slides ↗](https://docs.google.com/presentation/d/1lW_SUVnvQjusWfYn2mQVyPelF82B25vB3d0sCslbLdQ/edit?usp=sharing) |
 | 🧪 Testnet faucet | [Stellar Laboratory Friendbot](https://laboratory.stellar.org/#account-creator?network=testnet) |
 | 📖 Stellar docs | [developers.stellar.org](https://developers.stellar.org) |
 | 🔍 Contract explorer | [StellarExpert Testnet](https://stellar.expert/explorer/testnet) |
