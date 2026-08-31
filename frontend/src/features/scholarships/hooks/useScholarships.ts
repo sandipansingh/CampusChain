@@ -43,18 +43,20 @@ export function useScholarshipApplication(applicationId: number | null, address?
   });
 }
 
-export function useScholarshipPrograms(address?: string) {
+export function useScholarshipPrograms(address?: string, enabled = true) {
   return useQuery({
     queryKey: ["scholarship-programs", address],
     queryFn: () => fetchScholarshipPrograms(address),
+    enabled,
     refetchInterval: 15_000,
   });
 }
 
-export function useScholarshipApplications(address?: string) {
+export function useScholarshipApplications(address?: string, enabled = true) {
   return useQuery({
     queryKey: ["scholarship-applications", address],
     queryFn: () => fetchScholarshipApplications(address),
+    enabled,
     refetchInterval: 15_000,
   });
 }

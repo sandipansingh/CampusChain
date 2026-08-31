@@ -8,7 +8,7 @@ import {
 import { decodeEvent, DecodedEvent } from "@/shared/stellar/eventDecoder";
 import { scValToNative } from "@stellar/stellar-sdk";
 
-type RawEvent = {
+export type RawEvent = {
   id: string;
   ledger: number;
   ledgerClosedAt: string;
@@ -16,6 +16,17 @@ type RawEvent = {
   topic: unknown[];
   value: unknown;
 };
+
+export interface OperationsEventReadResult {
+  events: DecodedEvent[];
+  partial: boolean;
+  truncated: boolean;
+  error?: string;
+  failedContracts?: string[];
+}
+
+const EVENT_PAGE_SIZE = 50;
+const OPERATIONS_EVENT_LIMIT_PER_CONTRACT = 250;
 
 // ── Helpers ────────────────────────────────────────────────────────────────────
 
@@ -107,42 +118,124 @@ function decodeOrNull(evt: RawEvent): DecodedEvent | null {
   }
 }
 
-async function getStartLedger(lookbackBlocks = 100_000): Promise<number> {
-  const server = getRpcServer();
+async function getStartLedger(server: ReturnType<typeof getRpcServer>, lookbackBlocks = 100_000): Promise<number> {
   const latest = await server.getLatestLedger();
   return Math.max(1, latest.sequence - lookbackBlocks);
+}
+
+type EventPageResponse = { events?: RawEvent[]; cursor?: string };
+
+async function getEventPage(
+  server: ReturnType<typeof getRpcServer>,
+  startLedger: number,
+  contractId: string,
+  cursor?: string,
+  limit = EVENT_PAGE_SIZE
+): Promise<EventPageResponse> {
+  return (await getEventsSafe(server, {
+    startLedger,
+    ...(cursor ? { cursor } : {}),
+    filters: [{ type: "contract", contractIds: [contractId] }],
+    limit: Math.min(EVENT_PAGE_SIZE, limit),
+  })) as EventPageResponse;
+}
+
+interface ContractWindowResult {
+  events: RawEvent[];
+  truncated: boolean;
+}
+
+async function readContractEventWindow(
+  server: ReturnType<typeof getRpcServer>,
+  startLedger: number,
+  contractId: string,
+  maxEvents: number
+): Promise<ContractWindowResult> {
+  const events: RawEvent[] = [];
+  let cursor: string | undefined;
+
+  while (events.length < maxEvents) {
+    const limit = Math.min(EVENT_PAGE_SIZE, maxEvents - events.length);
+    const response = await getEventPage(server, startLedger, contractId, cursor, limit);
+    const page = Array.isArray(response.events) ? response.events : [];
+    events.push(...page.slice(0, limit));
+
+    if (events.length >= maxEvents) {
+      return { events, truncated: true };
+    }
+    const nextCursor = response.cursor ? String(response.cursor) : undefined;
+    if (cursor !== undefined && nextCursor === cursor) {
+      throw new Error(`Event cursor did not advance for contract ${contractId}`);
+    }
+    if (page.length === 0 || page.length < limit || !nextCursor) {
+      return { events, truncated: false };
+    }
+    cursor = nextCursor;
+  }
+
+  return { events, truncated: true };
+}
+
+const EVENT_CONTRACTS = [
+  NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+  NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID,
+  NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
+];
+
+/** Operations Center event window: recent 10,000 ledgers, at most 250 events per contract. */
+export async function fetchLedgerEventsForOperations(): Promise<OperationsEventReadResult> {
+  const server = getRpcServer();
+  const startLedger = await getStartLedger(server, 10_000);
+  const results = await Promise.allSettled(
+    EVENT_CONTRACTS.map((contractId) => readContractEventWindow(
+      server,
+      startLedger,
+      contractId,
+      OPERATIONS_EVENT_LIMIT_PER_CONTRACT
+    ))
+  );
+  const rawEvents: RawEvent[] = [];
+  const failedContracts: string[] = [];
+  const errors: string[] = [];
+  let truncated = false;
+
+  results.forEach((result, index) => {
+    if (result.status === "fulfilled") {
+      rawEvents.push(...result.value.events);
+      truncated ||= result.value.truncated;
+    } else {
+      failedContracts.push(EVENT_CONTRACTS[index]);
+      errors.push(`${EVENT_CONTRACTS[index]}: ${result.reason instanceof Error ? result.reason.message : String(result.reason)}`);
+    }
+  });
+
+  if (failedContracts.length === EVENT_CONTRACTS.length) {
+    throw new Error(errors.join("; ") || "All Soroban event sources failed");
+  }
+
+  const events = rawEvents
+    .sort((a, b) => b.ledger - a.ledger)
+    .map(decodeOrNull)
+    .filter((event): event is DecodedEvent => event !== null);
+  const partial = failedContracts.length > 0 || truncated;
+  const notices = [...errors];
+  if (truncated) notices.push("Recent 10,000-ledger activity window reached the 250-event-per-contract cap");
+
+  return {
+    events,
+    partial,
+    truncated,
+    ...(notices.length > 0 ? { error: notices.join("; ") } : {}),
+    ...(failedContracts.length > 0 ? { failedContracts } : {}),
+  };
 }
 
 // ── Public API ────────────────────────────────────────────────────────────────
 
 /** Fetch the last ~50 events across all contracts — used in the notification panel. */
 export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
-  const server = getRpcServer();
-  const startLedger = await getStartLedger(10_000);
-
-  const [sRes, tRes, iRes] = (await Promise.all([
-    getEventsSafe(server, {
-      startLedger,
-      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] }],
-      limit: 50,
-    }),
-    getEventsSafe(server, {
-      startLedger,
-      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] }],
-      limit: 50,
-    }),
-    getEventsSafe(server, {
-      startLedger,
-      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID] }],
-      limit: 50,
-    }),
-  ])) as [{ events: RawEvent[] }, { events: RawEvent[] }, { events: RawEvent[] }];
-
-  return [...sRes.events, ...tRes.events, ...iRes.events]
-    .sort((a, b) => b.ledger - a.ledger)
-    .slice(0, 50)
-    .map(decodeOrNull)
-    .filter((e): e is DecodedEvent => e !== null);
+  const result = await fetchLedgerEventsForOperations();
+  return result.events.slice(0, 50);
 }
 
 /**
@@ -153,35 +246,43 @@ export async function fetchLedgerEventsRaw(): Promise<DecodedEvent[]> {
  * - neither → global filter (platform admins)
  */
 export async function fetchEventsPaginated(
-  _cursor: string | null,
+  cursor: string | null,
   limit = 100,
   address?: string,
   universityCode?: string
 ) {
   const server = getRpcServer();
-  const startLedger = await getStartLedger(100_000);
+  const startLedger = await getStartLedger(server, 100_000);
+  const cursorState: Record<string, string | null> = {};
+  if (cursor) {
+    try {
+      const parsed = JSON.parse(decodeURIComponent(cursor)) as Record<string, unknown>;
+      EVENT_CONTRACTS.forEach((contractId) => {
+        if (typeof parsed[contractId] === "string") cursorState[contractId] = parsed[contractId] as string;
+        else if (parsed[contractId] === null) cursorState[contractId] = null;
+      });
+    } catch {
+      // A malformed cursor is treated as an initial page so the feed remains usable.
+    }
+  }
 
-  const [sRes, tRes, iRes] = (await Promise.all([
-    getEventsSafe(server, {
-      startLedger,
-      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID] }],
-      limit,
-    }),
-    getEventsSafe(server, {
-      startLedger,
-      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_TOKEN_CONTRACT_ID] }],
-      limit,
-    }),
-    getEventsSafe(server, {
-      startLedger,
-      filters: [{ type: "contract", contractIds: [NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID] }],
-      limit,
-    }),
-  ])) as [{ events: RawEvent[] }, { events: RawEvent[] }, { events: RawEvent[] }];
-
-  const combined = [...sRes.events, ...tRes.events, ...iRes.events].sort(
-    (a, b) => b.ledger - a.ledger
-  );
+  const pageLimit = Math.min(EVENT_PAGE_SIZE, Math.max(1, Math.floor(limit)));
+  const results = await Promise.all(EVENT_CONTRACTS.map(async (contractId) => ({
+    contractId,
+    response: cursor && cursorState[contractId] === null
+      ? { events: [] }
+      : await getEventPage(server, startLedger, contractId, cursorState[contractId] ?? undefined, pageLimit),
+  })));
+  const combined = results.flatMap(({ response }) => Array.isArray(response.events) ? response.events : [])
+    .sort((a, b) => b.ledger - a.ledger);
+  const nextCursorState: Record<string, string | null> = {};
+  results.forEach(({ contractId, response }) => {
+    if (response.cursor && String(response.cursor) !== cursorState[contractId]) {
+      nextCursorState[contractId] = String(response.cursor);
+    } else {
+      nextCursorState[contractId] = null;
+    }
+  });
 
   const events = combined.filter((event) => {
     if (universityCode) {
@@ -193,10 +294,11 @@ export async function fetchEventsPaginated(
   });
 
   const decodedEvents = events.map(decodeOrNull).filter((e): e is DecodedEvent => e !== null);
+  const hasMore = Object.values(nextCursorState).some((next) => next !== null);
 
   return {
     events: decodedEvents,
-    cursor: null,
-    hasMore: false,
+    cursor: hasMore ? encodeURIComponent(JSON.stringify(nextCursorState)) : null,
+    hasMore,
   };
 }

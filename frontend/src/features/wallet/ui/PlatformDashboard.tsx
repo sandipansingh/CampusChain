@@ -44,14 +44,15 @@ export function PlatformDashboard() {
   const router = useRouter();
   const role = params?.role as string;
   const activeTab = (params?.slug as string) || "overview";
+  const isOperationsView = activeTab === "operations";
 
   const [isFeedOpen, setIsFeedOpen] = useState(false);
   const unreadCount = useNotificationStore((s) => s.unreadCount);
   const queryClient = useQueryClient();
 
   // Scholarships approvals & applications
-  const scholarshipsQuery = useScholarshipPrograms(address ?? undefined);
-  const applicationsQuery = useScholarshipApplications(address ?? undefined);
+  const scholarshipsQuery = useScholarshipPrograms(address ?? undefined, !isOperationsView);
+  const applicationsQuery = useScholarshipApplications(address ?? undefined, !isOperationsView);
   const reviewScholarship = useAdminReviewScholarshipMutation();
   const suspendScholarship = useAdminSuspendScholarshipMutation();
   const [schNotice, setSchNotice] = useState<string | null>(null);
@@ -71,6 +72,7 @@ export function PlatformDashboard() {
   const universitiesQuery = useQuery({
     queryKey: ["universities"],
     queryFn: () => fetchUniversities(address ?? undefined),
+    enabled: !isOperationsView,
     refetchInterval: 20000,
   });
 
