@@ -38,6 +38,8 @@ describe("Activity Feed & Verification Request Event Handling", () => {
       expect(decoded.title).toBe("Verification Request");
       expect(decoded.message).toContain(ADDR_STUDENT.slice(0, 8));
       expect(decoded.details).toBe("HARVARD");
+      expect(decoded.universityCode).toBe("HARVARD");
+      expect(decoded.status).toBe("pending");
       expect(decoded.icon).toBe("role");
       expect(decoded.color).toBe("purple");
     });
@@ -61,6 +63,8 @@ describe("Activity Feed & Verification Request Event Handling", () => {
       expect(decoded.title).toBe("Profile Verified");
       expect(decoded.message).toContain(ADDR_STUDENT.slice(0, 8));
       expect(decoded.details).toContain(ADDR_ADMIN.slice(0, 8));
+      expect(decoded.universityCode).toBe("HARVARD");
+      expect(decoded.status).toBe("verified");
       expect(decoded.color).toBe("emerald");
     });
 
@@ -105,6 +109,9 @@ describe("Activity Feed & Verification Request Event Handling", () => {
       expect(decoded.type).toBe("scholarship");
       expect(decoded.title).toBe("Scholarship Application Submitted");
       expect(decoded.icon).toBe("scholarship");
+      expect(decoded.entityId).toBe(1);
+      expect(decoded.amountCamp).toBe(50);
+      expect(decoded.universityCode).toBe("HARVARD");
     });
   });
 
