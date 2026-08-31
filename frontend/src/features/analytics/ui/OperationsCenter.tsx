@@ -40,7 +40,7 @@ import {
   universityStatusLabel,
 } from "../aggregation";
 import { useOperationsData } from "../hooks";
-import type { ActivityCategory } from "../types";
+import type { ActivityCategory, OperationsData, OperationsSource, OperationsSourceHealth } from "../types";
 
 const CATEGORY_OPTIONS: Array<{ value: ActivityCategory | "all"; label: string }> = [
   { value: "all", label: "All categories" },
@@ -68,12 +68,104 @@ function formatCamp(value: number): string {
 
 function StatusPill({ status }: { status: string }) {
   const normalized = status.toLowerCase();
-  const color = normalized === "active" || normalized === "approved" || normalized === "verified"
+  const color = normalized === "active" || normalized === "approved" || normalized === "verified" || normalized === "complete" || normalized === "success"
     ? "border-emerald-500/20 bg-emerald-500/10 text-emerald-700 dark:text-emerald-300"
-    : normalized === "pending"
+    : normalized === "pending" || normalized === "partial"
     ? "border-amber-500/20 bg-amber-500/10 text-amber-700 dark:text-amber-300"
     : "border-rose-500/20 bg-rose-500/10 text-rose-700 dark:text-rose-300";
   return <span className={`inline-flex rounded-full border px-2 py-0.5 text-[10px] font-semibold ${color}`}>{status}</span>;
+}
+
+const SOURCE_ORDER: OperationsSource[] = [
+  "universities",
+  "profiles",
+  "scholarships",
+  "applications",
+  "events",
+  "escrows",
+  "listings",
+  "activity",
+];
+
+const SOURCE_LABELS: Record<OperationsSource, string> = {
+  universities: "Universities",
+  profiles: "Profiles",
+  scholarships: "Scholarships",
+  applications: "Applications",
+  events: "Events",
+  escrows: "Escrows",
+  listings: "Listings",
+  activity: "Activity",
+};
+
+function fallbackSourceHealth(data: OperationsData): Record<OperationsSource, OperationsSourceHealth> {
+  const coverage: Record<OperationsSource, OperationsSourceHealth["coverage"]> = {
+    universities: "contract-returned",
+    profiles: "contract-returned",
+    scholarships: "contract-returned",
+    applications: "contract-returned",
+    events: "exhaustive",
+    escrows: "exhaustive",
+    listings: "exhaustive",
+    activity: "recent-window",
+  };
+  return Object.fromEntries(SOURCE_ORDER.map((source) => [source, {
+    status: data.errors[source] ? "failed" : "success",
+    returnedCount: data[source].length,
+    durationMs: 0,
+    ...(data.errors[source] ? { error: data.errors[source] } : {}),
+    truncated: false,
+    coverage: coverage[source],
+  }])) as Record<OperationsSource, OperationsSourceHealth>;
+}
+
+function sourceStatusLabel(health: OperationsSourceHealth): string {
+  if (health.status === "failed") return "Failed";
+  if (health.status === "partial") return "Partial";
+  return "Complete";
+}
+
+function coverageLabel(coverage: OperationsSourceHealth["coverage"]): string {
+  if (coverage === "contract-returned") return "Complete as returned by deployed contract";
+  if (coverage === "exhaustive") return "Exhaustive until the safety cap";
+  return "Recent 10,000-ledger window";
+}
+
+function SourceHealthGrid({ sourceHealth }: { sourceHealth: Record<OperationsSource, OperationsSourceHealth> }) {
+  return (
+    <section className="rounded-xl border border-border bg-card p-5 shadow-sm" aria-label="Operations source health">
+      <div className="flex flex-col justify-between gap-2 sm:flex-row sm:items-start">
+        <div>
+          <h2 className="text-base font-semibold text-balance">Data source health</h2>
+          <p className="mt-1 text-xs text-muted-foreground">Counts and coverage describe the last completed read for each deployed contract source.</p>
+        </div>
+        <span className="text-[11px] text-muted-foreground">RPC reads isolated per source</span>
+      </div>
+      <div className="mt-4 grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
+        {SOURCE_ORDER.map((source) => {
+          const health = sourceHealth[source];
+          const statusTone = health.status === "success"
+            ? "border-emerald-500/20 bg-emerald-500/5"
+            : health.status === "partial"
+            ? "border-amber-500/25 bg-amber-500/5"
+            : "border-rose-500/25 bg-rose-500/5";
+          return (
+            <div key={source} className={`rounded-lg border p-3 ${statusTone}`} data-testid={`source-health-${source}`}>
+              <div className="flex items-center justify-between gap-2">
+                <p className="text-xs font-semibold">{SOURCE_LABELS[source]}</p>
+                <StatusPill status={sourceStatusLabel(health)} />
+              </div>
+              <p className="mt-2 text-lg font-bold tabular-nums">{formatNumber(health.returnedCount)} <span className="text-[10px] font-normal text-muted-foreground">records</span></p>
+              <p className="mt-1 text-[10px] text-muted-foreground">{coverageLabel(health.coverage)} · {health.durationMs}ms</p>
+              {health.truncated && <p className="mt-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300">Safety cap reached; coverage is incomplete.</p>}
+              {health.failedAddresses && health.failedAddresses.length > 0 && <p className="mt-2 text-[10px] font-semibold text-amber-700 dark:text-amber-300">{health.failedAddresses.length} profile address{health.failedAddresses.length === 1 ? "" : "es"} unavailable.</p>}
+              {health.error && <p className="mt-2 line-clamp-2 text-[10px] text-rose-700 dark:text-rose-300">{health.error}</p>}
+            </div>
+          );
+        })}
+      </div>
+    </section>
+  );
 }
 
 function MetricCard({ label, value, detail, icon: Icon }: { label: string; value: string; detail: string; icon: typeof Activity }) {
@@ -213,10 +305,18 @@ export function OperationsCenter() {
 
   if (operationsQuery.isLoading || !data) return <LoadingState />;
 
+  const sourceHealth = data.sourceHealth ?? fallbackSourceHealth(data);
+  const sourceEntries = SOURCE_ORDER.map((source) => sourceHealth[source]);
   const errorEntries = Object.entries(data.errors);
+  const problemSources = SOURCE_ORDER.filter((source) => sourceHealth[source].status !== "success");
+  const hasSourceProblems = errorEntries.length > 0 || problemSources.length > 0;
+  const firstProblemMessage = errorEntries[0]?.[1] ?? sourceHealth[problemSources[0]]?.error ?? "No source details were returned.";
   const hasRecords = data.universities.length + data.profiles.length + data.scholarships.length + data.applications.length
     + data.events.length + data.escrows.length + data.listings.length + data.activity.length > 0;
-  if (!hasRecords && errorEntries.length > 0) {
+  const allSourcesFailed = data.sourceHealth
+    ? sourceEntries.every((health) => health.status === "failed")
+    : errorEntries.length > 0;
+  if (!hasRecords && hasSourceProblems && allSourcesFailed) {
     return (
       <div className="rounded-xl border border-rose-500/20 bg-card px-6 py-12 text-center shadow-sm" role="alert">
         <AlertTriangle className="mx-auto size-10 text-rose-600" />
@@ -224,7 +324,7 @@ export function OperationsCenter() {
         <p className="mx-auto mt-2 max-w-lg text-sm text-pretty text-muted-foreground">
           The Operations Center could not read the connected testnet contracts. Check the RPC connection and try again.
         </p>
-        <p className="mt-3 text-xs text-rose-700 dark:text-rose-300">{errorEntries[0][1]}</p>
+        <p className="mt-3 text-xs text-rose-700 dark:text-rose-300">{firstProblemMessage}</p>
         <button onClick={() => void operationsQuery.refetch()} className="mt-5 inline-flex items-center gap-2 rounded-lg bg-foreground px-4 py-2 text-xs font-semibold text-background">
           <RefreshCw className="size-3.5" /> Retry reads
         </button>
@@ -232,10 +332,12 @@ export function OperationsCenter() {
     );
   }
 
-  if (!hasRecords && errorEntries.length === 0) return <EmptyState onRefresh={() => void operationsQuery.refetch()} />;
+  if (!hasRecords && !hasSourceProblems) return <EmptyState onRefresh={() => void operationsQuery.refetch()} />;
   if (!metrics) return null;
 
   const maxCategoryCount = Math.max(1, ...Object.values(metrics.activity.byCategory));
+  const lastSuccessfulRefreshAt = data.lastSuccessfulRefreshAt ?? (allSourcesFailed ? null : data.loadedAt);
+  const isStale = lastSuccessfulRefreshAt === null || Date.now() - lastSuccessfulRefreshAt > 90_000;
 
   return (
     <div className="mx-auto max-w-[1600px] space-y-6">
@@ -248,13 +350,14 @@ export function OperationsCenter() {
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
-          <span className="mr-1 text-[11px] text-muted-foreground">Updated {new Date(data.loadedAt).toLocaleTimeString()}</span>
+          <span className="mr-1 text-[11px] text-muted-foreground">Last successful refresh {lastSuccessfulRefreshAt ? new Date(lastSuccessfulRefreshAt).toLocaleTimeString() : "never"}</span>
           <button
             onClick={() => void operationsQuery.refetch()}
             disabled={operationsQuery.isFetching}
+            aria-label="Retry all Operations Center sources"
             className="inline-flex items-center gap-2 rounded-lg border border-border bg-card px-3 py-2 text-xs font-semibold text-foreground hover:bg-muted disabled:opacity-60"
           >
-            <RefreshCw className={`size-3.5 ${operationsQuery.isFetching ? "animate-spin" : ""}`} /> Refresh
+            <RefreshCw className={`size-3.5 ${operationsQuery.isFetching ? "animate-spin" : ""}`} /> {operationsQuery.isFetching ? "Refreshing" : "Refresh all sources"}
           </button>
           <button onClick={exportCsv} className="inline-flex items-center gap-2 rounded-lg bg-foreground px-3 py-2 text-xs font-semibold text-background hover:opacity-90">
             <Download className="size-3.5" /> Export CSV
@@ -262,10 +365,17 @@ export function OperationsCenter() {
         </div>
       </div>
 
-      {errorEntries.length > 0 && (
+      {hasSourceProblems && (
         <div className="flex items-start gap-3 rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-xs text-amber-800 dark:text-amber-200" role="status">
           <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-          <p><span className="font-semibold">Partial RPC read:</span> {errorEntries.length} data source{errorEntries.length === 1 ? "" : "s"} failed. Showing the sources that are available.</p>
+          <p><span className="font-semibold">Partial RPC read:</span> {problemSources.length} data source{problemSources.length === 1 ? "" : "s"} need attention. Showing the sources that are available.</p>
+        </div>
+      )}
+
+      {isStale && (
+        <div className="flex items-start gap-3 rounded-lg border border-amber-500/25 bg-amber-500/5 px-4 py-3 text-xs text-amber-800 dark:text-amber-200" role="status">
+          <Clock3 className="mt-0.5 size-4 shrink-0" />
+          <p><span className="font-semibold">Data may be stale.</span> The dashboard is showing the last successful source snapshot; refresh to try again.</p>
         </div>
       )}
 
@@ -276,11 +386,13 @@ export function OperationsCenter() {
         </div>
       )}
 
+      <SourceHealthGrid sourceHealth={sourceHealth} />
+
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
         <MetricCard label="Active universities" value={formatNumber(metrics.activeUniversities)} detail={`${formatNumber(metrics.totalUniversities)} registered total`} icon={Building2} />
         <MetricCard label="Profiles indexed" value={formatNumber(metrics.totalProfiles)} detail={`${formatNumber(metrics.profilesByVerification.Verified ?? 0)} verified identities`} icon={Users} />
         <MetricCard label="Approval workload" value={formatNumber(metrics.pendingApprovals.total)} detail={`${metrics.pendingApprovals.universities} university · ${metrics.pendingApprovals.scholarships} scholarship`} icon={Clock3} />
-        <MetricCard label="Recent transactions" value={formatNumber(metrics.activity.recentTransactionVolume)} detail={`${formatNumber(metrics.activity.total)} decoded events loaded`} icon={Activity} />
+        <MetricCard label="Recent transactions" value={formatNumber(metrics.activity.recentTransactionVolume)} detail={`${formatNumber(metrics.activity.total)} decoded events in the loaded window`} icon={Activity} />
       </div>
 
       <div className="grid gap-6 xl:grid-cols-3">
@@ -350,7 +462,7 @@ export function OperationsCenter() {
           </div>
           <div className="mt-5 grid gap-3 sm:grid-cols-2"><ProgressRow label="Ticket utilization" value={metrics.events.ticketsSold} total={metrics.events.capacity} tone="bg-foreground" /><ProgressRow label="Funded escrow share" value={metrics.escrows.funded} total={metrics.escrows.total} tone="bg-amber-500" /></div>
         </section>
-        <section className="rounded-xl border border-border bg-card p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><h2 className="text-base font-semibold text-balance">Activity mix</h2><p className="mt-1 text-xs text-muted-foreground">Decoded Soroban events by category.</p></div><BarChart3 className="size-5 text-muted-foreground" /></div><div className="mt-5 space-y-3">{Object.entries(metrics.activity.byCategory).map(([key, count]) => <div key={key} className="flex items-center gap-3"><span className="w-28 truncate text-[11px] text-muted-foreground">{CATEGORY_LABELS[key as ActivityCategory]}</span><div className="h-2 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-foreground" style={{ width: `${(count / maxCategoryCount) * 100}%` }} /></div><span className="w-7 text-right text-[11px] font-semibold tabular-nums">{count}</span></div>)}</div></section>
+        <section className="rounded-xl border border-border bg-card p-5 shadow-sm"><div className="flex items-start justify-between gap-3"><div><h2 className="text-base font-semibold text-balance">Activity mix</h2><p className="mt-1 text-xs text-muted-foreground">Decoded Soroban events from the recent 10,000-ledger window; this is not complete history.</p>{sourceHealth.activity.truncated && <p className="mt-1 text-[10px] font-semibold text-amber-700 dark:text-amber-300">The 250-event-per-contract window cap was reached.</p>}</div><BarChart3 className="size-5 text-muted-foreground" /></div><div className="mt-5 space-y-3">{Object.entries(metrics.activity.byCategory).map(([key, count]) => <div key={key} className="flex items-center gap-3"><span className="w-28 truncate text-[11px] text-muted-foreground">{CATEGORY_LABELS[key as ActivityCategory]}</span><div className="h-2 flex-1 overflow-hidden rounded-full bg-muted"><div className="h-full rounded-full bg-foreground" style={{ width: `${(count / maxCategoryCount) * 100}%` }} /></div><span className="w-7 text-right text-[11px] font-semibold tabular-nums">{count}</span></div>)}</div></section>
       </div>
 
       <section className="rounded-xl border border-border bg-card shadow-sm">

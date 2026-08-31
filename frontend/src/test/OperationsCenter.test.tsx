@@ -1,7 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { fireEvent, render, screen, waitFor } from "@testing-library/react";
-import type { OperationsData } from "@/features/analytics/types";
+import type { OperationsData, OperationsSource, OperationsSourceHealth } from "@/features/analytics/types";
 import { OperationsCenter } from "@/features/analytics/ui/OperationsCenter";
 
 const mocks = vi.hoisted(() => ({
@@ -45,6 +45,18 @@ const baseData = (): OperationsData => ({
   errors: {},
   loadedAt: 1,
 });
+
+const sourceHealth = (overrides: Partial<Record<OperationsSource, Partial<OperationsSourceHealth>>> = {}) =>
+  Object.fromEntries(([
+    "universities", "profiles", "scholarships", "applications", "events", "escrows", "listings", "activity",
+  ] as OperationsSource[]).map((source) => [source, {
+    status: "success",
+    returnedCount: 1,
+    durationMs: 12,
+    truncated: false,
+    coverage: source === "activity" ? "recent-window" : source === "events" || source === "escrows" || source === "listings" ? "exhaustive" : "contract-returned",
+    ...overrides[source],
+  }])) as Record<OperationsSource, OperationsSourceHealth>;
 
 function renderOperations() {
   return render(<QueryClientProvider client={new QueryClient()}><OperationsCenter /></QueryClientProvider>);
@@ -93,5 +105,26 @@ describe("OperationsCenter states and controls", () => {
 
     fireEvent.click(screen.getByRole("button", { name: /Approve/ }));
     await waitFor(() => expect(mocks.approveUniversity).toHaveBeenCalledWith("GADMIN", "NORTH"));
+  });
+
+  it("renders source-level partial coverage, failed addresses, and stale data messaging", () => {
+    mocks.query.isLoading = false;
+    mocks.query.data = {
+      ...baseData(),
+      sourceHealth: sourceHealth({
+        profiles: { status: "partial", returnedCount: 1, failedAddresses: ["GFAILED", "GFAILED2"], error: "2 profile reads failed" },
+        activity: { status: "partial", truncated: true, error: "Activity window cap reached" },
+      }),
+      errors: { profiles: "2 profile reads failed", activity: "Activity window cap reached" },
+      lastSuccessfulRefreshAt: 1,
+    };
+
+    renderOperations();
+
+    expect(screen.getByRole("region", { name: "Operations source health" })).toBeInTheDocument();
+    expect(screen.getByTestId("source-health-profiles")).toHaveTextContent("Partial");
+    expect(screen.getByTestId("source-health-profiles")).toHaveTextContent("2 profile addresses unavailable");
+    expect(screen.getByText("Data may be stale.")).toBeInTheDocument();
+    expect(screen.getByText(/250-event-per-contract window cap was reached/)).toBeInTheDocument();
   });
 });
