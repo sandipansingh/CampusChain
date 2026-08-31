@@ -15,6 +15,19 @@ export type OperationsSource =
   | "listings"
   | "activity";
 
+export type OperationsSourceStatus = "success" | "partial" | "failed";
+export type OperationsSourceCoverage = "contract-returned" | "exhaustive" | "recent-window";
+
+export interface OperationsSourceHealth {
+  status: OperationsSourceStatus;
+  returnedCount: number;
+  durationMs: number;
+  error?: string;
+  truncated: boolean;
+  coverage: OperationsSourceCoverage;
+  failedAddresses?: string[];
+}
+
 export interface OperationsData {
   universities: UniversityRecord[];
   profiles: UserProfile[];
@@ -24,8 +37,11 @@ export interface OperationsData {
   escrows: EscrowAgreement[];
   listings: Listing[];
   activity: DecodedEvent[];
+  /** Optional for compatibility with cached/legacy callers; Operations reads always populate it. */
+  sourceHealth?: Record<OperationsSource, OperationsSourceHealth>;
   errors: Partial<Record<OperationsSource, string>>;
   loadedAt: number;
+  lastSuccessfulRefreshAt?: number | null;
 }
 export type ActivityCategory =
   | "identity"

@@ -50,6 +50,25 @@ export interface UserProfile {
   createdAt: number;
 }
 
+export interface ProfileReadFailure {
+  address: string;
+  error: string;
+}
+
+export interface ProfilesReadResult {
+  profiles: UserProfile[];
+  failedAddresses: string[];
+  failures: ProfileReadFailure[];
+  totalAddresses: number;
+}
+
+export interface ProfilesReadOptions {
+  concurrency?: number;
+  retries?: number;
+  retryDelayMs?: number;
+  profileReader?: (address: string, caller: string) => Promise<UserProfile | null>;
+}
+
 export type ProfileRegistration =
   | { role: "Student"; department: string; program: string; graduationYear: number; studentIdentifier: string }
   | { role: "Merchant"; businessName: string; category: number; businessDescription: string }
@@ -278,12 +297,47 @@ export async function fetchUniversityProfiles(universityCode: string, address?: 
   }
 }
 
+/** Platform-admin profile reads are bounded by the detailed reader below. */
+function profileErrorMessage(error: unknown): string {
+  return error instanceof Error ? error.message : String(error);
+}
+
+/** RPC and transport failures are worth retrying; contract-level errors are not. */
+export function isTransientProfileError(error: unknown): boolean {
+  const message = profileErrorMessage(error).toLowerCase();
+  return /timeout|timed out|network|fetch failed|connection reset|socket|rate limit|too many requests|\b429\b|\b502\b|\b503\b|\b504\b|temporar|unavailable|rpc/i.test(message);
+}
+
+function wait(milliseconds: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, milliseconds));
+}
+
+async function readProfileWithRetry(
+  profileAddress: string,
+  caller: string,
+  retries: number,
+  retryDelayMs: number,
+  profileReader: (address: string, caller: string) => Promise<UserProfile | null>
+): Promise<UserProfile | null> {
+  for (let attempt = 0; ; attempt += 1) {
+    try {
+      return await profileReader(profileAddress, caller);
+    } catch (error) {
+      if (!isTransientProfileError(error) || attempt >= retries) throw error;
+      await wait(retryDelayMs * (attempt + 1));
+    }
+  }
+}
+
 /**
  * Platform-admin read of every profile currently indexed by CampusIdentity.
- * Individual profile reads are deliberately parallel so one inaccessible or
- * expired record does not prevent the rest of the registry from loading.
+ * Individual profile reads use a bounded worker pool so a large registry does
+ * not create an unbounded burst of RPC simulations.
  */
-export async function fetchAllProfiles(address?: string): Promise<UserProfile[]> {
+export async function fetchAllProfilesWithFailures(
+  address?: string,
+  options: ProfilesReadOptions = {}
+): Promise<ProfilesReadResult> {
   const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
   const rawAddresses = await readContract(
     NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
@@ -292,20 +346,53 @@ export async function fetchAllProfiles(address?: string): Promise<UserProfile[]>
     caller
   );
 
-  if (!Array.isArray(rawAddresses)) return [];
+  const addresses = Array.from(new Set(
+    Array.isArray(rawAddresses)
+      ? rawAddresses.map((rawAddress) => String(rawAddress)).filter(Boolean)
+      : []
+  ));
+  const concurrency = Math.max(1, Math.min(8, Math.floor(options.concurrency ?? 8)));
+  const retries = Math.max(0, Math.floor(options.retries ?? 2));
+  const retryDelayMs = Math.max(0, options.retryDelayMs ?? 75);
+  const profileReader = options.profileReader ?? fetchUserProfile;
+  const profilesByIndex: Array<UserProfile | null> = Array(addresses.length).fill(null);
+  const failuresByIndex: Array<ProfileReadFailure | null> = Array(addresses.length).fill(null);
+  let nextIndex = 0;
 
-  const profiles = await Promise.all(
-    rawAddresses.map(async (rawAddress) => {
-      const profileAddress = String(rawAddress);
+  const worker = async () => {
+    while (nextIndex < addresses.length) {
+      const index = nextIndex;
+      nextIndex += 1;
+      const profileAddress = addresses[index];
       try {
-        return await fetchUserProfile(profileAddress, caller);
-      } catch {
-        return null;
+        profilesByIndex[index] = await readProfileWithRetry(
+          profileAddress,
+          caller,
+          retries,
+          retryDelayMs,
+          profileReader
+        );
+      } catch (error) {
+        failuresByIndex[index] = { address: profileAddress, error: profileErrorMessage(error) };
       }
-    })
-  );
+    }
+  };
 
-  return profiles.filter((profile): profile is UserProfile => profile !== null);
+  await Promise.all(Array.from({ length: Math.min(concurrency, addresses.length) }, worker));
+
+  const failures = failuresByIndex.filter((failure): failure is ProfileReadFailure => failure !== null);
+  return {
+    profiles: profilesByIndex.filter((profile): profile is UserProfile => profile !== null),
+    failedAddresses: failures.map((failure) => failure.address),
+    failures,
+    totalAddresses: addresses.length,
+  };
+}
+
+/** Backward-compatible profile reader for existing dashboard consumers. */
+export async function fetchAllProfiles(address?: string): Promise<UserProfile[]> {
+  const result = await fetchAllProfilesWithFailures(address);
+  return result.profiles;
 }
 
 export async function executeSuspendUniversity(caller: string, code: string): Promise<string> {

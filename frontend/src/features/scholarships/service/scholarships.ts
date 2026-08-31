@@ -81,6 +81,50 @@ export async function fetchScholarshipProgram(id: number, address?: string): Pro
   }
 }
 
+/** Strict Operations Center readers: RPC failures must remain observable. */
+export async function fetchScholarshipProgramsStrict(address?: string): Promise<Scholarship[]> {
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
+  const list = await readContract(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "get_scholarships",
+    [addressToScVal(caller)],
+    address
+  );
+  if (!Array.isArray(list)) return [];
+  return list.map((item: any) => ({
+    id: Number(item.id),
+    title: String(item.title || ""),
+    description: String(item.description || ""),
+    criteria: String(item.criteria || ""),
+    amount: Number(item.amount) / 10_000_000,
+    deadline: String(item.deadline || ""),
+    slots: Number(item.slots),
+    createdByUniversityId: String(item.created_by || ""),
+    adminApprovalStatus: parseStatus(item.admin_approval_status),
+    createdAt: Number(item.created_at) * 1000,
+  }));
+}
+
+export async function fetchScholarshipApplicationsStrict(address?: string): Promise<ScholarshipApplication[]> {
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
+  const list = await readContract(
+    NEXT_PUBLIC_CAMPUS_SERVICE_CONTRACT_ID,
+    "get_scholarship_applications",
+    [addressToScVal(caller)],
+    address
+  );
+  if (!Array.isArray(list)) return [];
+  return list.map((item: any) => ({
+    id: Number(item.id),
+    scholarshipId: Number(item.scholarship_id),
+    studentId: String(item.student || ""),
+    status: parseStatus(item.status),
+    appliedAt: Number(item.applied_at) * 1000,
+    decidedAt: Number(item.decided_at) * 1000,
+    decidedBy: String(item.decided_by || ""),
+  }));
+}
+
 export async function fetchScholarshipPrograms(address?: string): Promise<Scholarship[]> {
   try {
     const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
