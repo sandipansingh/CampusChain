@@ -34,6 +34,7 @@ import {
 } from "@/features/scholarships/hooks/useScholarships";
 import { Settings as SettingsView } from "./Settings";
 import { ActivityFeed } from "@/features/transactions/ui/ActivityFeed";
+import { useEvents } from "@/features/events/hooks/useEvents";
 
 import { useNotificationStore } from "@/shared/hooks/useNotificationStore";
 
@@ -65,6 +66,8 @@ export function UniversityDashboard() {
   // Scholarships data
   const { data: programs = [], isLoading: isLoadingProgs } = useScholarshipPrograms(address ?? undefined);
   const { data: applications = [], isLoading: isLoadingApps } = useScholarshipApplications(address ?? undefined);
+  const eventsQuery = useEvents(address ?? undefined);
+  const events = eventsQuery.data ?? [];
 
   // Mutations
   const verifyProfile = useVerifyProfileMutation();
@@ -594,9 +597,45 @@ export function UniversityDashboard() {
       <div className="bg-card rounded-xl border border-border shadow-sm p-6 space-y-4">
         <h3 className="text-lg font-bold">Events Oversight</h3>
         <p className="text-sm text-muted-foreground">List of all events created by university organizers.</p>
-        <p className="text-xs text-muted-foreground mt-4 py-8 text-center bg-muted/20 border border-border border-dashed rounded-lg">
-          Oversight features will scale automatically with organizer activity.
-        </p>
+        {eventsQuery.isLoading ? (
+          <Skeleton className="h-40 w-full" />
+        ) : eventsQuery.isError ? (
+          <p className="rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-8 text-center text-xs text-destructive">
+            Unable to load event oversight data. Refresh the page and try again.
+          </p>
+        ) : events.length === 0 ? (
+          <p className="rounded-lg border border-border border-dashed bg-muted/20 px-4 py-8 text-center text-xs text-muted-foreground">
+            No events have been created by organizers in this university yet.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full min-w-[680px] text-left text-sm">
+              <thead>
+                <tr className="border-b border-border text-xs font-semibold text-muted-foreground">
+                  <th className="px-3 py-3">Event ID</th>
+                  <th className="px-3 py-3">Organizer</th>
+                  <th className="px-3 py-3 text-right">Capacity</th>
+                  <th className="px-3 py-3 text-right">Tickets sold</th>
+                  <th className="px-3 py-3 text-right">Utilization</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {events.map((event) => {
+                  const utilization = event.capacity > 0 ? Math.round((event.tickets_sold / event.capacity) * 100) : 0;
+                  return (
+                    <tr key={event.id} className="hover:bg-muted/30">
+                      <td className="px-3 py-3 font-mono text-xs">#{event.id}</td>
+                      <td className="px-3 py-3 font-mono text-xs text-muted-foreground">{event.host}</td>
+                      <td className="px-3 py-3 text-right tabular-nums">{event.capacity}</td>
+                      <td className="px-3 py-3 text-right tabular-nums">{event.tickets_sold}</td>
+                      <td className="px-3 py-3 text-right font-semibold tabular-nums">{utilization}%</td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     );
   };
@@ -630,7 +669,7 @@ export function UniversityDashboard() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+    <div className="flex h-dvh w-full bg-background text-foreground overflow-hidden">
       {/* Sidebar */}
       <nav className="hidden md:flex flex-col w-64 bg-card border-r border-border h-full fixed left-0 top-0 py-6 px-4 z-40">
         <div className="flex items-center gap-3 mb-8 px-2">

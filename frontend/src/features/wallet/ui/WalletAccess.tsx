@@ -45,11 +45,11 @@ export function WalletAccess({
       // Determine correct path based on role
       let targetPath = "";
       if (isPlatformAdmin) {
-        targetPath = "/platform/overview";
+        targetPath = "/platform/operations";
       } else if (profile) {
         const roleStr = ROLE_STRINGS[profile.role];
         if (roleStr) {
-          const defaultSlug = (profile.role === 4 || profile.role === 5) ? "overview" : "dashboard";
+          const defaultSlug = profile.role === 5 ? "operations" : profile.role === 4 ? "overview" : "dashboard";
           targetPath = `/${roleStr}/${defaultSlug}`;
         }
       }

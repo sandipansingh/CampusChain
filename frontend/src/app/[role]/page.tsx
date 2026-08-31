@@ -6,9 +6,10 @@ interface RolePageProps {
 
 export default async function RolePage({ params }: RolePageProps) {
   const { role } = await params;
-  const defaultSlug =
-    role === "university" || role === "platform"
-      ? "overview"
-      : "dashboard";
+  const defaultSlug = role === "platform"
+    ? "operations"
+    : role === "university"
+    ? "overview"
+    : "dashboard";
   redirect(`/${role}/${defaultSlug}`);
 }

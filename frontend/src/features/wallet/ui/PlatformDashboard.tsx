@@ -36,6 +36,7 @@ import {
   useAdminReviewScholarshipMutation,
   useAdminSuspendScholarshipMutation,
 } from "@/features/scholarships/hooks/useScholarships";
+import { OperationsCenter } from "@/features/analytics/ui/OperationsCenter";
 
 export function PlatformDashboard() {
   const { address, disconnect } = useWallet();
@@ -582,6 +583,8 @@ export function PlatformDashboard() {
 
   const renderContentView = () => {
     switch (activeTab) {
+      case "operations":
+        return <OperationsCenter />;
       case "queue":
         return renderQueue();
       case "universities":
@@ -599,7 +602,7 @@ export function PlatformDashboard() {
   };
 
   return (
-    <div className="flex h-screen w-full bg-background text-foreground overflow-hidden">
+    <div className="flex h-dvh w-full bg-background text-foreground overflow-hidden">
       {/* Sidebar */}
       <nav className="hidden md:flex flex-col w-64 bg-card border-r border-border h-full fixed left-0 top-0 py-6 px-4 z-40">
         <div className="flex items-center gap-3 mb-8 px-2">
@@ -618,6 +621,7 @@ export function PlatformDashboard() {
 
         <div className="flex-1 space-y-1">
           {[
+            { value: "operations", label: "Operations Center", icon: LayoutDashboard },
             { value: "overview", label: "Overview", icon: LayoutDashboard },
             { value: "queue", label: "Approval Queue", icon: Clock3 },
             { value: "universities", label: "Universities", icon: Building2 },
