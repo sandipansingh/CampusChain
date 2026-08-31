@@ -18,12 +18,13 @@ export async function fetchListing(id: number, address?: string) {
     "get_listing",
     [u64ToScVal(id), addressToScVal(address)],
     address
-  )) as unknown as { id: bigint; seller: string; title: string; description: string; image_url?: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
+  )) as unknown as { id: bigint; seller: string; university_code?: string; title: string; description: string; image_url?: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
 
   if (!res) return null;
   return {
     id: Number(res.id),
     seller: String(res.seller),
+    universityCode: String(res.university_code ?? ""),
     title: String(res.title),
     description: String(res.description),
     imageUrl: res.image_url ? String(res.image_url) : "",
@@ -34,12 +35,13 @@ export async function fetchListing(id: number, address?: string) {
   };
 }
 
-type RawListing = { id: bigint; seller: string; title: string; description: string; image_url?: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
+type RawListing = { id: bigint; seller: string; university_code?: string; title: string; description: string; image_url?: string; price: bigint; category: number; status: number; escrow_enabled: boolean };
 
 function parseListing(res: RawListing) {
   return {
     id: Number(res.id),
     seller: String(res.seller),
+    universityCode: String(res.university_code ?? ""),
     title: String(res.title),
     description: String(res.description),
     imageUrl: res.image_url ? String(res.image_url) : "",

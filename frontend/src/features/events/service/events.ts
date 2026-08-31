@@ -16,21 +16,22 @@ export async function fetchEvent(eventId: number, address?: string) {
     "get_event",
     [u64ToScVal(eventId), addressToScVal(caller)],
     address
-  )) as unknown as { id: bigint; host: string; price: bigint; capacity: number; tickets_sold: number };
+  )) as unknown as { id: bigint; host: string; university_code?: string; price: bigint; capacity: number; tickets_sold: number };
 
   if (!res) return null;
   return {
     id: Number(res.id),
     host: String(res.host),
+    university_code: String(res.university_code ?? ""),
     price: Number(res.price) / 10_000_000,
     capacity: Number(res.capacity),
     tickets_sold: Number(res.tickets_sold),
   };
 }
 
-type RawEvent = { id: bigint; host: string; price: bigint; capacity: number; tickets_sold: number };
+type RawEvent = { id: bigint; host: string; university_code?: string; price: bigint; capacity: number; tickets_sold: number };
 function parseEvent(res: RawEvent) {
-  return { id: Number(res.id), host: String(res.host), price: Number(res.price) / 10_000_000, capacity: Number(res.capacity), tickets_sold: Number(res.tickets_sold) };
+  return { id: Number(res.id), host: String(res.host), university_code: String(res.university_code ?? ""), price: Number(res.price) / 10_000_000, capacity: Number(res.capacity), tickets_sold: Number(res.tickets_sold) };
 }
 
 export async function fetchEvents(startAfter = 0, limit = 50, address?: string) {

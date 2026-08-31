@@ -278,6 +278,36 @@ export async function fetchUniversityProfiles(universityCode: string, address?: 
   }
 }
 
+/**
+ * Platform-admin read of every profile currently indexed by CampusIdentity.
+ * Individual profile reads are deliberately parallel so one inaccessible or
+ * expired record does not prevent the rest of the registry from loading.
+ */
+export async function fetchAllProfiles(address?: string): Promise<UserProfile[]> {
+  const caller = address || "GCFIRY65OQE7DFP5KLNS2PF2LVZMUZYJX4OZIEQ36N2IQANUB5XVYOJR";
+  const rawAddresses = await readContract(
+    NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID,
+    "list_profiles",
+    [addressToScVal(caller)],
+    caller
+  );
+
+  if (!Array.isArray(rawAddresses)) return [];
+
+  const profiles = await Promise.all(
+    rawAddresses.map(async (rawAddress) => {
+      const profileAddress = String(rawAddress);
+      try {
+        return await fetchUserProfile(profileAddress, caller);
+      } catch {
+        return null;
+      }
+    })
+  );
+
+  return profiles.filter((profile): profile is UserProfile => profile !== null);
+}
+
 export async function executeSuspendUniversity(caller: string, code: string): Promise<string> {
   const { signTx } = await import("./wallet");
   return invokeContractMethod(NEXT_PUBLIC_CAMPUS_IDENTITY_CONTRACT_ID, "suspend_university", [addressToScVal(caller), stringToScVal(code)], caller, signTx);

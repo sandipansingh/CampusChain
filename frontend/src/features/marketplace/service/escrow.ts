@@ -16,13 +16,14 @@ export async function fetchEscrow(escrowId: number, address?: string) {
     "get_escrow",
     [u64ToScVal(escrowId), addressToScVal(caller)],
     address
-  )) as unknown as { id: bigint; buyer: string; seller: string; amount: bigint; status: number };
+  )) as unknown as { id: bigint; buyer: string; seller: string; university_code?: string; amount: bigint; status: number };
 
   if (!res) return null;
   return {
     id: Number(res.id),
     buyer: String(res.buyer),
     seller: String(res.seller),
+    universityCode: String(res.university_code ?? ""),
     amount: Number(res.amount) / 10_000_000,
     status: Number(res.status),
   };
@@ -38,8 +39,8 @@ export async function fetchEscrows(startAfter = 0, limit = 50, address?: string)
   ) as unknown[];
   if (!Array.isArray(res)) return [];
   return res.map((entry) => {
-    const escrow = entry as { id: bigint; buyer: string; seller: string; amount: bigint; status: number };
-    return { id: Number(escrow.id), buyer: String(escrow.buyer), seller: String(escrow.seller), amount: Number(escrow.amount) / 10_000_000, status: Number(escrow.status) };
+    const escrow = entry as { id: bigint; buyer: string; seller: string; university_code?: string; amount: bigint; status: number };
+    return { id: Number(escrow.id), buyer: String(escrow.buyer), seller: String(escrow.seller), universityCode: String(escrow.university_code ?? ""), amount: Number(escrow.amount) / 10_000_000, status: Number(escrow.status) };
   });
 }
 

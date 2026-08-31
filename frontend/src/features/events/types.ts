@@ -1,6 +1,7 @@
 export interface EventDetails {
   id: number;
   host: string;
+  university_code?: string;
   price: number;
   capacity: number;
   tickets_sold: number;

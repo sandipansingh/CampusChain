@@ -15,6 +15,11 @@ export interface DecodedEvent {
   icon: "transfer" | "escrow" | "ticket" | "role" | "university" | "membership" | "faucet" | "marketplace" | "system" | "scholarship" | "order";
   ledgerClosedAt: string;
   topicNative?: unknown[];
+  /** Machine-readable values for analytics and filtering. */
+  amountCamp?: number;
+  entityId?: number;
+  status?: string | number;
+  universityCode?: string;
 }
 
 export function shortAddr(addr: string): string {
@@ -80,6 +85,11 @@ function decodeNative(val: unknown): string | number | null | undefined {
   return String(val);
 }
 
+function nativeField(value: unknown, field: string): unknown {
+  if (!value || typeof value !== "object") return undefined;
+  return (value as Record<string, unknown>)[field];
+}
+
 export function decodeEvent(evt: {
   id: string;
   ledger: number;
@@ -113,7 +123,7 @@ export function decodeEvent(evt: {
     const to = extractAddress(topicNative[2]);
     const amountI128 = decodeNative(valueNative) ?? 0;
     const amount = Number(amountI128) / 10_000_000;
-    return { ...baseEvent, type: "transfer", title: "Token Transfer", message: `${shortAddr(from)} → ${shortAddr(to)}`, details: `${amount.toFixed(2)} CAMP`, color: "blue", icon: "transfer" };
+    return { ...baseEvent, type: "transfer", title: "Token Transfer", message: `${shortAddr(from)} → ${shortAddr(to)}`, details: `${amount.toFixed(2)} CAMP`, amountCamp: amount, color: "blue", icon: "transfer" };
   }
 
   if (eventName === "approve") {
@@ -127,7 +137,7 @@ export function decodeEvent(evt: {
     const to = extractAddress(topicNative[2]);
     const amountI128 = decodeNative(valueNative) ?? 0;
     const amount = Number(amountI128) / 10_000_000;
-    return { ...baseEvent, type: "transfer", title: eventName === "mint" ? "Tokens Minted" : "Tokens Burned", message: eventName === "mint" ? `to ${shortAddr(to)}` : `by ${shortAddr(from)}`, details: `${amount.toFixed(2)} CAMP`, color: "blue", icon: "transfer" };
+    return { ...baseEvent, type: "transfer", title: eventName === "mint" ? "Tokens Minted" : "Tokens Burned", message: eventName === "mint" ? `to ${shortAddr(to)}` : `by ${shortAddr(from)}`, details: `${amount.toFixed(2)} CAMP`, amountCamp: amount, color: "blue", icon: "transfer" };
   }
 
   if (eventName === "role_updated") {
@@ -146,7 +156,7 @@ export function decodeEvent(evt: {
     const buyer = extractAddress(topicNative[1]);
     const vals = valueNative as unknown as [number, number] | null;
     const campAmt = vals ? Number(vals[1] ?? 0) / 10_000_000 : 0;
-    return { ...baseEvent, type: "faucet", title: "Token Purchase", message: `${shortAddr(buyer)} bought CAMP with XLM`, details: `${campAmt.toFixed(2)} CAMP`, color: "cyan", icon: "faucet" };
+    return { ...baseEvent, type: "faucet", title: "Token Purchase", message: `${shortAddr(buyer)} bought CAMP with XLM`, details: `${campAmt.toFixed(2)} CAMP`, amountCamp: campAmt, color: "cyan", icon: "faucet" };
   }
 
   if (eventName === "escrow_created") {
@@ -155,7 +165,7 @@ export function decodeEvent(evt: {
     const seller = extractAddress(topicNative[3]);
     const amountI128 = decodeNative(valueNative) ?? 0;
     const amount = Number(amountI128) / 10_000_000;
-    return { ...baseEvent, type: "escrow", title: "Escrow Created", message: `#${counter} — ${shortAddr(buyer)} → ${shortAddr(seller)}`, details: `${amount.toFixed(2)} CAMP`, color: "orange", icon: "escrow" };
+    return { ...baseEvent, type: "escrow", title: "Escrow Created", message: `#${counter} — ${shortAddr(buyer)} → ${shortAddr(seller)}`, details: `${amount.toFixed(2)} CAMP`, amountCamp: amount, entityId: Number(counter), status: "funded", color: "orange", icon: "escrow" };
   }
 
   if (eventName === "escrow_released") {
@@ -163,7 +173,7 @@ export function decodeEvent(evt: {
     const seller = extractAddress(topicNative[3]);
     const amountI128 = decodeNative(valueNative) ?? 0;
     const amount = Number(amountI128) / 10_000_000;
-    return { ...baseEvent, type: "escrow", title: "Escrow Released", message: `#${id} — paid ${shortAddr(seller)}`, details: `${amount.toFixed(2)} CAMP`, color: "emerald", icon: "escrow" };
+    return { ...baseEvent, type: "escrow", title: "Escrow Released", message: `#${id} — paid ${shortAddr(seller)}`, details: `${amount.toFixed(2)} CAMP`, amountCamp: amount, entityId: Number(id), status: "released", color: "emerald", icon: "escrow" };
   }
 
   if (eventName === "escrow_refunded") {
@@ -171,13 +181,15 @@ export function decodeEvent(evt: {
     const buyer = extractAddress(topicNative[2]);
     const amountI128 = decodeNative(valueNative) ?? 0;
     const amount = Number(amountI128) / 10_000_000;
-    return { ...baseEvent, type: "escrow", title: "Escrow Refunded", message: `#${id} — refunded to ${shortAddr(buyer)}`, details: `${amount.toFixed(2)} CAMP`, color: "orange", icon: "escrow" };
+    return { ...baseEvent, type: "escrow", title: "Escrow Refunded", message: `#${id} — refunded to ${shortAddr(buyer)}`, details: `${amount.toFixed(2)} CAMP`, amountCamp: amount, entityId: Number(id), status: "refunded", color: "orange", icon: "escrow" };
   }
 
   if (eventName === "event_created") {
     const counter = decodeNative(topicNative[1]);
     const host = extractAddress(topicNative[2]);
-    return { ...baseEvent, type: "ticket", title: "Event Created", message: `Event #${counter} by ${shortAddr(host)}`, details: "new event published", color: "emerald", icon: "ticket" };
+    const priceI128 = decodeNative(valueNative) ?? 0;
+    const price = Number(priceI128) / 10_000_000;
+    return { ...baseEvent, type: "ticket", title: "Event Created", message: `Event #${counter} by ${shortAddr(host)}`, details: `${price.toFixed(2)} CAMP ticket price`, amountCamp: price, entityId: Number(counter), color: "emerald", icon: "ticket" };
   }
 
   if (eventName === "ticket_bought") {
@@ -186,20 +198,20 @@ export function decodeEvent(evt: {
     const buyer = extractAddress(topicNative[3]);
     const amountI128 = decodeNative(valueNative) ?? 0;
     const amount = Number(amountI128) / 10_000_000;
-    return { ...baseEvent, type: "ticket", title: "Ticket Purchased", message: `Ticket #${ticketId} for Event #${eventId}`, details: `${shortAddr(buyer)} paid ${amount.toFixed(2)} CAMP`, color: "emerald", icon: "ticket" };
+    return { ...baseEvent, type: "ticket", title: "Ticket Purchased", message: `Ticket #${ticketId} for Event #${eventId}`, details: `${shortAddr(buyer)} paid ${amount.toFixed(2)} CAMP`, amountCamp: amount, entityId: Number(eventId), status: "sold", color: "emerald", icon: "ticket" };
   }
 
   if (eventName === "ticket_redeemed") {
     const ticketId = decodeNative(topicNative[1]);
     const eventId = decodeNative(topicNative[2]);
     const host = extractAddress(topicNative[3]);
-    return { ...baseEvent, type: "ticket", title: "Ticket Redeemed", message: `Ticket #${ticketId} for Event #${eventId}`, details: `by ${shortAddr(host)}`, color: "emerald", icon: "ticket" };
+    return { ...baseEvent, type: "ticket", title: "Ticket Redeemed", message: `Ticket #${ticketId} for Event #${eventId}`, details: `by ${shortAddr(host)}`, entityId: Number(eventId), status: "redeemed", color: "emerald", icon: "ticket" };
   }
 
   if (eventName === "university_registered") {
     const counter = decodeNative(topicNative[1]);
     const admin = extractAddress(topicNative[2]);
-    return { ...baseEvent, type: "university", title: "University Registered", message: `#${counter} by ${shortAddr(admin)}`, details: "on-chain registry updated", color: "indigo", icon: "university" };
+    return { ...baseEvent, type: "university", title: "University Registered", message: `#${counter} by ${shortAddr(admin)}`, details: "on-chain registry updated", entityId: Number(counter), color: "indigo", icon: "university" };
   }
 
   if (eventName === "join_requested") {
@@ -234,17 +246,18 @@ export function decodeEvent(evt: {
   if (eventName === "UniversityRegistered") {
     const admin = extractAddress(topicNative[1]);
     const name = valueNative && typeof valueNative === "object" && "name" in valueNative ? String((valueNative as { name: unknown }).name) : "";
-    return { ...baseEvent, type: "university", title: "University Registered", message: `New claim: ${name || "Unknown University"}`, details: shortAddr(admin), color: "indigo", icon: "university" };
+    const code = String(nativeField(valueNative, "code") ?? nativeField(valueNative, "university_code") ?? "");
+    return { ...baseEvent, type: "university", title: "University Registered", message: `New claim: ${name || "Unknown University"}`, details: shortAddr(admin), universityCode: code || undefined, color: "indigo", icon: "university" };
   }
 
   if (eventName === "UniversityApproved") {
     const code = extractStr(valueNative);
-    return { ...baseEvent, type: "university", title: "University Approved", message: `University Approved: ${code}`, details: code, color: "emerald", icon: "university" };
+    return { ...baseEvent, type: "university", title: "University Approved", message: `University Approved: ${code}`, details: code, universityCode: code, status: "approved", color: "emerald", icon: "university" };
   }
 
   if (eventName === "UniversityRejected") {
     const code = extractStr(valueNative);
-    return { ...baseEvent, type: "university", title: "University Rejected", message: `University Rejected: ${code}`, details: code, color: "orange", icon: "university" };
+    return { ...baseEvent, type: "university", title: "University Rejected", message: `University Rejected: ${code}`, details: code, universityCode: code, status: "rejected", color: "orange", icon: "university" };
   }
 
   if (eventName === "ProfileSubmittedForVerification") {
@@ -256,6 +269,8 @@ export function decodeEvent(evt: {
       title: "Verification Request",
       message: `Applicant ${shortAddr(applicant)} requested verification`,
       details: code || "Pending Verification",
+      universityCode: code || undefined,
+      status: "pending",
       color: "purple",
       icon: "role",
     };
@@ -271,6 +286,8 @@ export function decodeEvent(evt: {
       title: "Profile Verified",
       message: `Profile ${shortAddr(target)} verified for ${code || "campus"}`,
       details: `Approved by ${shortAddr(verifier)}`,
+      universityCode: code || undefined,
+      status: "verified",
       color: "emerald",
       icon: "role",
     };
@@ -286,6 +303,8 @@ export function decodeEvent(evt: {
       title: "Profile Rejected",
       message: `Profile ${shortAddr(target)} rejected for ${code || "campus"}`,
       details: `Rejected by ${shortAddr(rejector)}`,
+      universityCode: code || undefined,
+      status: "rejected",
       color: "orange",
       icon: "role",
     };
@@ -303,6 +322,10 @@ export function decodeEvent(evt: {
       title: "New Order Placed",
       message: `Order #${id} placed by ${shortAddr(student)}`,
       details: `${uniCode ? `${uniCode} · ` : ""}${amount.toFixed(2)} CAMP`,
+      amountCamp: amount,
+      entityId: Number(id),
+      universityCode: uniCode || undefined,
+      status: "placed",
       color: "blue",
       icon: "order",
     };
@@ -326,6 +349,8 @@ export function decodeEvent(evt: {
       title: "Order Status Update",
       message: `Order #${id} is now ${label}`,
       details: statusText,
+      entityId: Number(id),
+      status: statusText,
       color: label === "Completed" ? "emerald" : label === "Cancelled" ? "orange" : "amber",
       icon: "order",
     };
@@ -343,6 +368,9 @@ export function decodeEvent(evt: {
       title: "Menu Item Published",
       message: `Item #${id} listed by ${shortAddr(merchant)}`,
       details: `${uniCode ? `${uniCode} · ` : ""}${price.toFixed(2)} CAMP`,
+      amountCamp: price,
+      entityId: Number(id),
+      universityCode: uniCode || undefined,
       color: "emerald",
       icon: "order",
     };
@@ -360,6 +388,9 @@ export function decodeEvent(evt: {
       title: "Item Listed",
       message: `${shortAddr(seller)} listed item #${id} for sale`,
       details: `${uniCode ? `${uniCode} · ` : ""}${price.toFixed(2)} CAMP`,
+      amountCamp: price,
+      entityId: Number(id),
+      universityCode: uniCode || undefined,
       color: "emerald",
       icon: "marketplace",
       topicNative: [...topicNative, uniCode],
@@ -372,7 +403,7 @@ export function decodeEvent(evt: {
     const uniCode = extractStr(topicNative[3]);
     const amountI128 = decodeNative(valueNative) ?? 0;
     const amount = Number(amountI128) / 10_000_000;
-    return { ...baseEvent, type: "scholarship", title: "Scholarship Created", message: `#${id} submitted by ${shortAddr(university)}`, details: `${uniCode} · ${amount.toFixed(2)} CAMP`, color: "amber", icon: "scholarship" };
+    return { ...baseEvent, type: "scholarship", title: "Scholarship Created", message: `#${id} submitted by ${shortAddr(university)}`, details: `${uniCode} · ${amount.toFixed(2)} CAMP`, amountCamp: amount, entityId: Number(id), universityCode: uniCode || undefined, status: "pending", color: "amber", icon: "scholarship" };
   }
 
   if (eventName === "ScholarshipApproved") {
@@ -383,6 +414,7 @@ export function decodeEvent(evt: {
       ...baseEvent, type: "scholarship", title: "Scholarship Approved",
       message: `Scholarship #${id} (${uniCode || "university"}) approved by ${shortAddr(admin)}`,
       details: shortAddr(admin), color: "emerald", icon: "scholarship",
+      entityId: Number(id), universityCode: uniCode || undefined, status: "approved",
     };
   }
 
@@ -394,6 +426,7 @@ export function decodeEvent(evt: {
       ...baseEvent, type: "scholarship", title: "Scholarship Rejected",
       message: `Scholarship #${id} (${uniCode || "university"}) rejected by ${shortAddr(admin)}`,
       details: shortAddr(admin), color: "orange", icon: "scholarship",
+      entityId: Number(id), universityCode: uniCode || undefined, status: "rejected",
     };
   }
 
@@ -405,6 +438,7 @@ export function decodeEvent(evt: {
       ...baseEvent, type: "scholarship", title: "Scholarship Suspended",
       message: `Scholarship #${id} (${uniCode || "university"}) suspended by ${shortAddr(admin)}`,
       details: shortAddr(admin), color: "orange", icon: "scholarship",
+      entityId: Number(id), universityCode: uniCode || undefined, status: "suspended",
     };
   }
 
@@ -422,6 +456,7 @@ export function decodeEvent(evt: {
       title: "Scholarship Application Submitted",
       message: `App #${appId}: Student ${shortAddr(student)} applied for ${title || `Scholarship #${scholarshipId}`}`,
       details: `${uniCode ? `${uniCode} · ` : ""}${amount.toFixed(2)} CAMP`,
+      amountCamp: amount, entityId: Number(appId), universityCode: uniCode || undefined, status: "pending",
       color: "amber",
       icon: "scholarship",
     };
@@ -441,6 +476,7 @@ export function decodeEvent(evt: {
       title: "Scholarship Application Approved",
       message: `App #${appId} (Scholarship #${scholarshipId}) for ${shortAddr(student)} approved by ${shortAddr(university)}`,
       details: `${uniCode ? `${uniCode} · ` : ""}+${amount.toFixed(2)} CAMP`,
+      amountCamp: amount, entityId: Number(appId), universityCode: uniCode || undefined, status: "approved",
       color: "emerald",
       icon: "scholarship",
     };
@@ -459,6 +495,7 @@ export function decodeEvent(evt: {
       title: "Scholarship Application Rejected",
       message: `App #${appId} (Scholarship #${scholarshipId}) for ${shortAddr(student)} rejected by ${shortAddr(university)}`,
       details: `${uniCode ? `${uniCode} · ` : ""}Rejected`,
+      entityId: Number(appId), universityCode: uniCode || undefined, status: "rejected",
       color: "orange",
       icon: "scholarship",
     };
@@ -476,6 +513,7 @@ export function decodeEvent(evt: {
       title: "CAMP Withdrawn to XLM",
       message: `${shortAddr(student)} withdrawn ${campAmt.toFixed(2)} CAMP to ${xlmAmt.toFixed(2)} XLM`,
       details: `${uniCode ? `${uniCode} · ` : ""}-${campAmt.toFixed(2)} CAMP`,
+      amountCamp: campAmt, universityCode: uniCode || undefined, status: "withdrawn",
       color: "amber",
       icon: "faucet",
     };
